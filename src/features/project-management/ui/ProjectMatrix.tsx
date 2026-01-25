@@ -116,21 +116,23 @@ export const ProjectMatrix = () => {
         if (isTopLevel) {
             // Top level - render as a card group
             return (
-                <Card key={category.id} className="border-gray-200 shadow-sm">
-                    <CardHeader>
+                <Card key={category.id} className="border-none shadow-md bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden">
+                    <CardHeader className="border-b border-gray-50 dark:border-zinc-800 pb-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-1 h-6 bg-blue-500 rounded-full" />
-                                <CardTitle className="text-lg">{category.name}</CardTitle>
-                                <Badge variant="outline">{hasChildren ? category.children!.length : 0}</Badge>
+                                <div className="w-1.5 h-6 bg-blue-500 rounded-full" />
+                                <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">{category.name}</CardTitle>
+                                <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-blue-100 px-2.5 py-0.5 rounded-full text-xs">
+                                    {hasChildren ? category.children!.length : 0}
+                                </Badge>
                                 {isAdminMode && (
-                                    <Button variant="ghost" size="sm" onClick={() => handleDeleteCategory(category.id)}>
+                                    <Button variant="ghost" size="sm" onClick={() => handleDeleteCategory(category.id)} className="h-8 w-8 p-0">
                                         <TrashIcon className="h-4 w-4 text-red-500" />
                                     </Button>
                                 )}
                             </div>
                             {isAdminMode && (
-                                <Button size="sm" onClick={() => {
+                                <Button size="sm" className="rounded-full shadow-sm" onClick={() => {
                                     setTechData({ ...techData, parentId: category.id });
                                     setShowTechModal(true);
                                 }}>
@@ -140,30 +142,50 @@ export const ProjectMatrix = () => {
                             )}
                         </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-6">
                         {!hasChildren ? (
-                            <p className="text-sm text-gray-400 text-center py-8">아직 항목이 없습니다</p>
+                            <p className="text-sm text-gray-400 text-center py-12">아직 항목이 없습니다</p>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {category.children!.map((child) => (
-                                    <div key={child.id} className="bg-gray-50 border border-gray-100 rounded-xl p-4 hover:bg-white hover:border-gray-200 hover:shadow-sm transition-all group">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => router.push(`/projects?tech=${child.techType || child.id}`)}>
-                                                {child.icon && (
-                                                    <div className="p-2 bg-white rounded-lg text-gray-500 inline-block mb-2">
-                                                        <span className="text-xl">{child.icon}</span>
-                                                    </div>
-                                                )}
-                                                <h3 className="font-medium text-sm text-gray-800 truncate">{child.name}</h3>
-                                                {child.description && (
-                                                    <p className="text-xs text-gray-400 truncate mt-0.5">{child.description}</p>
+                                    <div
+                                        key={child.id}
+                                        className="bg-white dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5 cursor-pointer 
+                                            hover:border-blue-400/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative"
+                                        onClick={() => router.push(`/projects?tech=${child.techType || child.id}`)}
+                                    >
+                                        <div className="flex flex-col gap-3">
+                                            <div className="flex items-start justify-between">
+                                                <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform duration-300">
+                                                    {child.icon ? (
+                                                        <span className="text-2xl">{child.icon}</span>
+                                                    ) : (
+                                                        <PlusIcon className="w-6 h-6 rotate-45" />
+                                                    )}
+                                                </div>
+                                                <Badge className="bg-emerald-50 text-emerald-600 border-none text-[10px] font-bold uppercase tracking-wider">Active</Badge>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <h3 className="font-bold text-base text-gray-900 dark:text-gray-100 group-hover:text-blue-600 transition-colors">
+                                                    {child.name}
+                                                </h3>
+                                                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed h-10">
+                                                    {child.description || '상세 정보를 확인하려면 클릭하세요.'}
+                                                </p>
+                                            </div>
+
+                                            <div className="pt-2 flex items-center justify-between border-t border-gray-50 dark:border-zinc-800">
+                                                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">{child.techType || 'No Code'}</span>
+                                                {isAdminMode && (
+                                                    <Button variant="ghost" size="sm" onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteCategory(child.id);
+                                                    }} className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100">
+                                                        <TrashIcon className="h-3.5 w-3.5 text-red-500" />
+                                                    </Button>
                                                 )}
                                             </div>
-                                            {isAdminMode && (
-                                                <Button variant="ghost" size="sm" onClick={() => handleDeleteCategory(child.id)} className="opacity-0 group-hover:opacity-100">
-                                                    <TrashIcon className="h-4 w-4 text-red-500" />
-                                                </Button>
-                                            )}
                                         </div>
                                     </div>
                                 ))}

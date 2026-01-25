@@ -22,13 +22,13 @@ export const Header = () => {
                 </Link>
 
                 {/* Center Navigation */}
-                <nav className="flex items-center gap-6">
+                <nav className="flex items-center gap-8 ml-8">
                     {mounted && user && (
                         <>
-                            <Link href="/projects" className="text-sm font-medium hover:text-primary transition-colors">
+                            <Link href="/projects" className="text-[15px] font-semibold text-gray-600 hover:text-primary transition-colors">
                                 Projects
                             </Link>
-                            <Link href="/users" className="text-sm font-medium hover:text-primary transition-colors">
+                            <Link href="/users" className="text-[15px] font-semibold text-gray-600 hover:text-primary transition-colors">
                                 Users
                             </Link>
                         </>

@@ -31,7 +31,7 @@ export default function RootLayout({
       >
         <AuthInitializer>
           <Header />
-          <main className="pt-16 min-h-screen">
+          <main className="pt-16 min-h-screen bg-[#F8F9FA] dark:bg-zinc-950">
             {children}
           </main>
         </AuthInitializer>
