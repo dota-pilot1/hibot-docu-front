@@ -36,13 +36,13 @@ export const MarkdownCodeBlock = ({ inline, className, children, ...props }: Mar
         const isSingleLine = !code.includes('\n') && code.length < 50;
         if (isSingleLine) {
             return (
-                <span className="inline-block px-1.5 py-0.5 mx-1 bg-gray-50 dark:bg-gray-800/50 rounded border border-gray-200 dark:border-gray-700 text-sm font-sans text-gray-700 dark:text-gray-300">
+                <span className="font-semibold text-blue-600 dark:text-blue-400 mx-0.5">
                     {children}
                 </span>
             );
         }
         return (
-            <div className={`my-3 p-3 rounded-md bg-gray-50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-800 whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300 font-sans ${className || ''}`} {...props}>
+            <div className={`my-3 p-3 rounded-md bg-gray-50/50 dark:bg-gray-800/20 border border-gray-100 dark:border-gray-800/50 whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300 font-sans ${className || ''}`} {...props}>
                 {children}
             </div>
         );
