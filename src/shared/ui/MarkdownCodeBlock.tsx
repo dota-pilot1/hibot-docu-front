@@ -74,7 +74,7 @@ export const MarkdownCodeBlock = ({ inline, className, children, ...props }: Mar
                     )}
                 </button>
             </div>
-            <pre className={`py-2 px-3 overflow-x-auto text-sm font-mono leading-relaxed text-gray-300 bg-transparent m-0 ${className || ''}`} {...props}>
+            <pre className={`py-1 px-3 overflow-x-auto text-sm font-mono leading-relaxed text-gray-300 bg-transparent m-0 ${className || ''}`} {...props}>
                 <code>{children}</code>
             </pre>
         </div>
