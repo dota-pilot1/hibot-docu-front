@@ -270,7 +270,7 @@ export const ProjectDetailView = () => {
                                         {content.content && (
                                             <CardContent>
                                                 <div className="relative max-h-[160px] overflow-hidden transition-all duration-300">
-                                                    <div className="prose prose-sm max-w-none dark:prose-invert prose-pre:bg-transparent prose-pre:p-0 prose-pre:my-0 prose-code:before:content-none prose-code:after:content-none prose-code:bg-transparent prose-code:border-none prose-code:p-0">
+                                                    <div className="prose prose-sm max-w-none dark:prose-invert prose-pre:bg-transparent prose-pre:p-0 prose-code:before:content-none prose-code:after:content-none prose-code:bg-transparent prose-code:border-none prose-code:p-0">
                                                         <ReactMarkdown
                                                             remarkPlugins={[remarkGfm, remarkBreaks]}
                                                             components={{
@@ -427,7 +427,7 @@ export const ProjectDetailView = () => {
                         <DialogTitle className="text-xl font-bold">{viewingContent?.title}</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
-                        <div className="prose prose-sm max-w-none dark:prose-invert prose-pre:bg-transparent prose-pre:p-0 prose-pre:my-0 prose-code:before:content-none prose-code:after:content-none prose-code:bg-transparent prose-code:border-none prose-code:p-0 font-sans">
+                        <div className="prose prose-sm max-w-none dark:prose-invert prose-pre:bg-transparent prose-pre:p-0 prose-code:before:content-none prose-code:after:content-none prose-code:bg-transparent prose-code:border-none prose-code:p-0 font-sans">
                             <ReactMarkdown
                                 remarkPlugins={[remarkGfm, remarkBreaks]}
                                 components={{

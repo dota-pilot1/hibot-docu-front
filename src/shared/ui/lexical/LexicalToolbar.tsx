@@ -608,7 +608,7 @@ export function LexicalToolbar({ hideAiButton = false }: LexicalToolbarProps) {
                   }`}
               >
                 {msg.role === "assistant" ? (
-                  <div className="prose prose-sm max-w-none px-2 py-1 prose-pre:bg-transparent prose-pre:p-0 prose-pre:my-0 prose-code:before:content-none prose-code:after:content-none prose-code:bg-transparent prose-code:border-none prose-code:p-0">
+                  <div className="prose prose-sm max-w-none px-2 py-1 prose-pre:bg-transparent prose-pre:p-0 prose-code:before:content-none prose-code:after:content-none prose-code:bg-transparent prose-code:border-none prose-code:p-0">
                     <div className="flex justify-end mb-2">
                       <button
                         onClick={() => {
