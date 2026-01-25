@@ -49,7 +49,7 @@ export const MarkdownCodeBlock = ({ inline, className, children, ...props }: Mar
     }
 
     return (
-        <div className="relative group my-6 overflow-hidden bg-gray-950 rounded-lg">
+        <div className="relative group my-4 overflow-hidden bg-gray-950 rounded-lg">
             <div className="flex items-center justify-between px-3 py-1.5 bg-gray-900 border-b border-gray-800">
                 <span className="text-[10px] font-mono text-gray-500 uppercase tracking-wider">
                     {lang}
@@ -74,7 +74,7 @@ export const MarkdownCodeBlock = ({ inline, className, children, ...props }: Mar
                     )}
                 </button>
             </div>
-            <pre className={`p-4 overflow-x-auto text-sm font-mono leading-relaxed text-gray-300 bg-transparent m-0 ${className || ''}`} {...props}>
+            <pre className={`py-2 px-3 overflow-x-auto text-sm font-mono leading-relaxed text-gray-300 bg-transparent m-0 ${className || ''}`} {...props}>
                 <code>{children}</code>
             </pre>
         </div>
