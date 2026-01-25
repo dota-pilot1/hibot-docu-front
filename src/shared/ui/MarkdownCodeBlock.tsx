@@ -42,7 +42,7 @@ export const MarkdownCodeBlock = ({ inline, className, children, ...props }: Mar
             );
         }
         return (
-            <div className={`my-3 p-3 rounded-md bg-gray-50/50 dark:bg-gray-800/20 border border-gray-100 dark:border-gray-800/50 whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300 font-sans ${className || ''}`} {...props}>
+            <div className={`my-3 py-1 whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300 font-sans ${className || ''}`} {...props}>
                 {children}
             </div>
         );

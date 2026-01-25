@@ -602,9 +602,9 @@ export function LexicalToolbar({ hideAiButton = false }: LexicalToolbarProps) {
               className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
             >
               <div
-                className={`max-w-[85%] rounded-lg p-3 ${msg.role === "user"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-800"
+                className={`max-w-[100%] rounded-lg ${msg.role === "user"
+                  ? "p-3 bg-blue-600 text-white shadow-sm"
+                  : "p-0 text-gray-800"
                   }`}
               >
                 {msg.role === "assistant" ? (
