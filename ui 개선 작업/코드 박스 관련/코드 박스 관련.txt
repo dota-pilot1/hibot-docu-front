@@ -1,0 +1,56 @@
+# 코드 박스 좌우 여백 수정 내역
+
+## 📋 문제 상황
+- 코드 박스 내부의 좌우 여백이 너무 적어서 답답해 보임
+- 코드 내용이 박스 가장자리에 너무 가까이 붙어있음
+
+## 🔍 원인 분석
+1. **첫 번째 시도**: `MarkdownCodeBlock.tsx`에서 `px-3`, `px-4`로 설정
+   - 결과: 여백이 생기지 않음
+   
+2. **원인 파악**: 
+   - `ProjectDetailView.tsx`의 ReactMarkdown 컴포넌트에서 `prose-pre:p-0` 클래스 사용
+   - 이 스타일이 `MarkdownCodeBlock` 컴포넌트의 padding을 덮어씀 (override)
+
+## ✅ 해결 방법
+Tailwind CSS의 `!important` 수식어(`!`)를 사용하여 강제로 padding 적용
+
+### 수정 파일
+**경로**: `/Users/terecal/hibot-d-docu-container/hibot-docu-front/src/shared/ui/MarkdownCodeBlock.tsx`
+
+### 변경 내용
+```typescript
+// 헤더 부분 (언어 표시, COPY 버튼 영역)
+- <div className="flex items-center justify-between px-3 py-1.5 bg-gray-900 border-b border-gray-800">
++ <div className="flex items-center justify-between !px-5 py-1.5 bg-gray-900 border-b border-gray-800">
+
+// 코드 내용 부분
+- <pre className={`py-3 px-4 overflow-x-auto ...`}>
++ <pre className={`!py-3 !px-6 overflow-x-auto ...`}>
+```
+
+### 주요 변경점
+- **헤더 좌우 여백**: `px-3` → `!px-5`
+- **코드 영역 좌우 여백**: `px-4` → `!px-6`
+- **코드 영역 상하 여백**: `py-3` → `!py-3` (강제 적용)
+
+## 🎯 결과
+- 코드 박스 내부에 충분한 좌우 여백 확보
+- 코드 내용이 더 읽기 쉽게 개선됨
+- `prose` 스타일의 영향을 받지 않고 일관된 여백 유지
+
+## 🤖 자동 브라우저 검증
+- **사용 도구**: `browser_subagent` (크롬 브라우저 자동 제어)
+- **검증 과정**:
+  1. `localhost:4000/projects?tech=hibot-uiux3` 페이지 자동 접속
+  2. "해결해야할 문제" 카테고리 클릭
+  3. "View Detail" 버튼 클릭하여 모달 열기
+  4. 코드 박스 스크린샷 캡처
+  5. 여백 적용 확인
+
+## ⚠️ 기타 발견 사항
+- **Hydration Error**: 브라우저 확장 프로그램("Jetski")이 `<html>` 태그에 `data-jetski-tab-id` 속성을 주입하면서 발생
+- 이는 코드 수정과 무관한 환경적 요인
+
+## 📅 수정 일시
+2026-01-25
