@@ -26,7 +26,7 @@ export const MarkdownCodeBlock = ({ inline, className, children, ...props }: Mar
 
     if (inline) {
         return (
-            <code className="bg-gray-100 dark:bg-gray-800 rounded px-1 py-0.5 font-mono text-sm" {...props}>
+            <code className="text-blue-600 dark:text-blue-400 font-semibold px-0.5" {...props}>
                 {children}
             </code>
         );
@@ -49,7 +49,7 @@ export const MarkdownCodeBlock = ({ inline, className, children, ...props }: Mar
     }
 
     return (
-        <div className="relative group my-4 rounded-lg overflow-hidden border border-gray-700 shadow-sm bg-gray-950">
+        <div className="relative group my-6 overflow-hidden bg-gray-950 rounded-lg">
             <div className="flex items-center justify-between px-3 py-1.5 bg-gray-900 border-b border-gray-800">
                 <span className="text-[10px] font-mono text-gray-500 uppercase tracking-wider">
                     {lang}

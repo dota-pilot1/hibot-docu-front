@@ -602,13 +602,13 @@ export function LexicalToolbar({ hideAiButton = false }: LexicalToolbarProps) {
               className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
             >
               <div
-                className={`max-w-[100%] rounded-lg ${msg.role === "user"
-                  ? "p-3 bg-blue-600 text-white shadow-sm"
+                className={`max-w-[100%] ${msg.role === "user"
+                  ? "p-3 bg-blue-600 text-white rounded-lg shadow-sm"
                   : "p-0 text-gray-800"
                   }`}
               >
                 {msg.role === "assistant" ? (
-                  <div className="prose prose-sm max-w-none px-2 py-1">
+                  <div className="prose prose-sm max-w-none px-2 py-1 prose-pre:bg-transparent prose-code:before:content-none prose-code:after:content-none prose-code:bg-transparent prose-code:border-none prose-code:p-0">
                     <div className="flex justify-end mb-2">
                       <button
                         onClick={() => {
