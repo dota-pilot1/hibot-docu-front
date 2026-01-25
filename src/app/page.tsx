@@ -2,11 +2,17 @@
 
 import Image from "next/image";
 import { Button } from "@/shared/ui/button";
-import { useUserStore } from "@/entities/user/model/store";
+import { useUserStore, userStore } from "@/entities/user/model/store";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function Home() {
-  const { user } = useUserStore();
+  const user = useUserStore((state) => state.user);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-zinc-50 font-sans dark:bg-black">
@@ -20,7 +26,7 @@ export default function Home() {
           priority
         />
         <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left mb-12">
-          {user ? (
+          {mounted && (user ? (
             <>
               <h1 className="max-w-md text-4xl font-bold tracking-tight text-black dark:text-zinc-50">
                 Welcome back, <span className="text-primary">{user.email}</span>!
@@ -38,13 +44,13 @@ export default function Home() {
                 Manage your documents smarter. Please login or register to get started.
               </p>
             </>
-          )}
+          ))}
         </div>
         <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          {user ? (
+          {mounted && (user ? (
             <>
-              <Button size="lg" className="rounded-full px-8">
-                Go to Dashboard
+              <Button size="lg" className="rounded-full px-8" asChild>
+                <Link href="/projects">Go to Dashboard</Link>
               </Button>
               <Button size="lg" variant="outline" className="rounded-full px-8" asChild>
                 <Link href="/users">User List</Link>
@@ -52,16 +58,20 @@ export default function Home() {
             </>
           ) : (
             <>
-              <Button asChild className="rounded-full h-12 px-8">
-                <Link href="/login">Login</Link>
+              <Button
+                className="rounded-full h-12 px-8"
+                onClick={() => userStore.state.triggerLoginFocus()}
+              >
+                Get Started
               </Button>
               <Button variant="outline" asChild className="rounded-full h-12 px-8">
                 <Link href="/register">Register</Link>
               </Button>
             </>
-          )}
+          ))}
         </div>
       </main>
     </div>
   );
 }
+

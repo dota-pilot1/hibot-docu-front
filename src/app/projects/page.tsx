@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
-import { useUserStore } from "@/entities/user/model/store";
+import { useUserStore, userStore } from "@/entities/user/model/store";
 import { ProjectMatrix } from "@/features/project-management/ui/ProjectMatrix";
 import { ProjectDetailView } from "@/features/project-management/ui/ProjectDetailView";
 
@@ -12,18 +12,21 @@ function ProjectsContent() {
     const searchParams = useSearchParams();
     const tech = searchParams.get("tech");
     const user = useUserStore((state) => state.user);
+    const [hasMounted, setHasMounted] = useState(false);
 
     useEffect(() => {
-        // Check if user is logged in
-        const token = localStorage.getItem("access_token");
-        if (!token && !user) {
-            // Redirect to login if not authenticated
-            router.push("/login");
-        }
-    }, [user, router]);
+        setHasMounted(true);
+    }, []);
 
-    // Show loading while checking authentication
-    if (!user) {
+    useEffect(() => {
+        if (hasMounted && !user) {
+            userStore.state.triggerLoginFocus();
+            router.push("/");
+        }
+    }, [user, router, hasMounted]);
+
+    // Show loading while checking authentication and during initial mount to prevent hydration mismatch
+    if (!hasMounted || !user) {
         return (
             <div className="container mx-auto py-10 px-4">
                 <div className="text-center">

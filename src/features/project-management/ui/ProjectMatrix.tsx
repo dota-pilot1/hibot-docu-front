@@ -7,7 +7,8 @@ import { useProjectMutations } from '../model/useProjectMutations';
 import { Card, CardHeader, CardTitle, CardContent } from '@/shared/ui/card';
 import { Button } from '@/shared/ui/button';
 import { Badge } from '@/shared/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/ui/dialog';
+import { FormDialog } from '@/shared/ui/dialogs/FormDialog';
+import { ConfirmDialog } from '@/shared/ui/dialogs/ConfirmDialog';
 import { Input } from '@/shared/ui/input';
 import { Textarea } from '@/shared/ui/textarea';
 import type { ProjectCategory } from '@/entities/project/model/types';
@@ -23,6 +24,10 @@ export const ProjectMatrix = () => {
     const [showTechModal, setShowTechModal] = useState(false);
     const [groupName, setGroupName] = useState('');
     const [techData, setTechData] = useState({ name: '', techType: '', description: '', parentId: null as number | null });
+
+    // Confirm Modal states
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+    const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
 
     const { createCategory, deleteCategory } = useProjectMutations();
 
@@ -76,14 +81,9 @@ export const ProjectMatrix = () => {
         }
     };
 
-    const handleDeleteCategory = async (id: number) => {
-        if (!confirm('삭제하시겠습니까?')) return;
-        try {
-            await deleteCategory(id);
-            fetchData();
-        } catch (err) {
-            console.error('Failed to delete:', err);
-        }
+    const handleDeleteCategory = (id: number) => {
+        setCategoryToDelete(id);
+        setConfirmDeleteOpen(true);
     };
 
     if (isLoading) {
@@ -213,38 +213,48 @@ export const ProjectMatrix = () => {
             )}
 
             {/* Group Modal */}
-            <Dialog open={showGroupModal} onOpenChange={setShowGroupModal}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>새 그룹 추가</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <Input placeholder="그룹 이름" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
-                        <div className="flex gap-2">
-                            <Button variant="outline" onClick={() => setShowGroupModal(false)} className="flex-1">취소</Button>
-                            <Button onClick={handleAddGroup} className="flex-1">생성</Button>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <FormDialog
+                open={showGroupModal}
+                onOpenChange={setShowGroupModal}
+                title="새 그룹 추가"
+                submitLabel="생성"
+                onSubmit={handleAddGroup}
+            >
+                <div className="space-y-4">
+                    <Input placeholder="그룹 이름" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
+                </div>
+            </FormDialog>
 
             {/* Tech Modal */}
-            <Dialog open={showTechModal} onOpenChange={setShowTechModal}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>새 기술 스택 추가</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <Input placeholder="표시 이름 (예: React)" value={techData.name} onChange={(e) => setTechData({ ...techData, name: e.target.value })} />
-                        <Input placeholder="식별 코드 (예: react)" value={techData.techType} onChange={(e) => setTechData({ ...techData, techType: e.target.value })} />
-                        <Textarea placeholder="설명 (선택)" value={techData.description} onChange={(e) => setTechData({ ...techData, description: e.target.value })} rows={3} />
-                        <div className="flex gap-2">
-                            <Button variant="outline" onClick={() => setShowTechModal(false)} className="flex-1">취소</Button>
-                            <Button onClick={handleAddTech} className="flex-1">추가</Button>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <FormDialog
+                open={showTechModal}
+                onOpenChange={setShowTechModal}
+                title="새 기술 스택 추가"
+                submitLabel="추가"
+                onSubmit={handleAddTech}
+            >
+                <div className="space-y-4">
+                    <Input placeholder="표시 이름 (예: React)" value={techData.name} onChange={(e) => setTechData({ ...techData, name: e.target.value })} />
+                    <Input placeholder="식별 코드 (예: react)" value={techData.techType} onChange={(e) => setTechData({ ...techData, techType: e.target.value })} />
+                    <Textarea placeholder="설명 (선택)" value={techData.description} onChange={(e) => setTechData({ ...techData, description: e.target.value })} rows={3} />
+                </div>
+            </FormDialog>
+
+            {/* Delete Confirmation */}
+            <ConfirmDialog
+                open={confirmDeleteOpen}
+                onOpenChange={setConfirmDeleteOpen}
+                title="삭제 확인"
+                description="정말로 삭제하시겠습니까?"
+                variant="destructive"
+                onConfirm={async () => {
+                    if (categoryToDelete) {
+                        await deleteCategory(categoryToDelete);
+                        fetchData();
+                        setCategoryToDelete(null);
+                    }
+                }}
+            />
         </div>
     );
 };

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { userStore } from '@/entities/user/model/store';
 
 export const api = axios.create({
     baseURL: 'http://localhost:4001',
@@ -9,7 +10,7 @@ export const api = axios.create({
 
 // Add a request interceptor to include the JWT token in all requests
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('access_token');
+    const token = userStore.state.accessToken;
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -21,11 +22,15 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // Clear token and redirect to login
-            localStorage.removeItem('access_token');
-            if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-                alert('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
-                window.location.href = '/login';
+            const isHomePage = typeof window !== 'undefined' && window.location.pathname === '/';
+
+            // Clear state
+            userStore.state.logout();
+
+            if (typeof window !== 'undefined' && !isHomePage) {
+                alert('로그인이 필요합니다. 메인 페이지로 이동합니다.');
+                userStore.state.triggerLoginFocus();
+                window.location.href = '/';
             }
         }
         return Promise.reject(error);

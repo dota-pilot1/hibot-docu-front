@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { api } from "@/shared/api";
-import { useUserStore } from "@/entities/user/model/store";
+import { useUserStore, userStore } from "@/entities/user/model/store";
 import { useRouter } from "next/navigation";
 
 const loginSchema = z.object({
@@ -24,8 +24,8 @@ export const useHeaderAuth = () => {
     const form = useForm<HeaderLoginFormValues>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
-            email: "",
-            password: "",
+            email: "admin@daum.net",
+            password: "admin123",
         },
     });
 
@@ -35,7 +35,7 @@ export const useHeaderAuth = () => {
         try {
             const response = await api.post("/auth/login", data);
             const { access_token } = response.data;
-            localStorage.setItem("access_token", access_token);
+            userStore.state.setAccessToken(access_token);
 
             const profile = await api.get("/auth/profile");
             setUser(profile.data);

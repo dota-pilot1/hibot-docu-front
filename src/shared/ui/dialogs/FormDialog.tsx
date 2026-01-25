@@ -1,0 +1,62 @@
+"use client";
+
+import * as React from "react";
+import { BaseDialog } from "./BaseDialog";
+import { Button } from "@/shared/ui/button";
+
+interface FormDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    title: string;
+    description?: string;
+    submitLabel?: string;
+    cancelLabel?: string;
+    onSubmit: (e: React.FormEvent) => void | Promise<void>;
+    children: React.ReactNode;
+    isLoading?: boolean;
+    maxWidth?: string;
+}
+
+export function FormDialog({
+    open,
+    onOpenChange,
+    title,
+    description,
+    submitLabel = "저장",
+    cancelLabel = "취소",
+    onSubmit,
+    children,
+    isLoading = false,
+    maxWidth,
+}: FormDialogProps) {
+    const handleOnSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await onSubmit(e);
+    };
+
+    return (
+        <BaseDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            title={title}
+            description={description}
+            maxWidth={maxWidth}
+        >
+            <form onSubmit={handleOnSubmit} className="space-y-4">
+                <div className="py-2">{children}</div>
+                <div className="flex justify-end gap-2 mt-4">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => onOpenChange(false)}
+                    >
+                        {cancelLabel}
+                    </Button>
+                    <Button type="submit" isLoading={isLoading}>
+                        {submitLabel}
+                    </Button>
+                </div>
+            </form>
+        </BaseDialog>
+    );
+}

@@ -5,7 +5,10 @@ import { Button } from "@/shared/ui/button";
 import { User } from "lucide-react";
 
 export const UserMenu = () => {
-    const { user, logout } = useUserStore();
+    const { user, logout } = useUserStore((state) => ({
+        user: state.user,
+        logout: state.logout,
+    }));
 
     if (!user) return null;
 

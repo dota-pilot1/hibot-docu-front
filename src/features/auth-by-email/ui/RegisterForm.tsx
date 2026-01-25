@@ -8,9 +8,9 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/shared/ui/card";
 import { api } from "@/shared/api";
+import { userStore } from "@/entities/user/model/store";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Link from "next/link";
 
 const registerSchema = z.object({
     email: z.string().email("Invalid email address"),
@@ -45,8 +45,9 @@ export const RegisterForm = () => {
                 password: data.password,
             });
 
-            // After registration, redirect to login
-            router.push("/login");
+            // After registration, redirect to home and trigger login focus
+            userStore.state.triggerLoginFocus();
+            router.push("/");
         } catch (err: any) {
             setError(err.response?.data?.message || "Registration failed. Please try again.");
         } finally {
@@ -96,12 +97,6 @@ export const RegisterForm = () => {
                     <Button type="submit" className="w-full" disabled={isLoading}>
                         {isLoading ? "Creating account..." : "Register"}
                     </Button>
-                    <div className="text-sm text-center text-zinc-600 dark:text-zinc-400">
-                        Already have an account?{" "}
-                        <Link href="/login" className="font-medium text-primary hover:underline">
-                            Login
-                        </Link>
-                    </div>
                 </CardFooter>
             </form>
         </Card>

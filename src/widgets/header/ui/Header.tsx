@@ -4,20 +4,15 @@ import Link from "next/link";
 import { useUserStore } from "@/entities/user/model/store";
 import { HeaderLoginForm } from "./HeaderLoginForm";
 import { UserMenu } from "./UserMenu";
-import { useEffect } from "react";
-import { api } from "@/shared/api";
+import { useEffect, useState } from "react";
 
 export const Header = () => {
-    const { user, setUser, logout } = useUserStore();
+    const user = useUserStore((state) => state.user);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        const token = localStorage.getItem("access_token");
-        if (token && !user) {
-            api.get("/auth/profile")
-                .then((res) => setUser(res.data))
-                .catch(() => logout());
-        }
-    }, [user, setUser, logout]);
+        setMounted(true);
+    }, []);
 
     return (
         <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 h-16">
@@ -28,7 +23,7 @@ export const Header = () => {
 
                 {/* Center Navigation */}
                 <nav className="flex items-center gap-6">
-                    {user && (
+                    {mounted && user && (
                         <>
                             <Link href="/projects" className="text-sm font-medium hover:text-primary transition-colors">
                                 Projects
@@ -42,7 +37,7 @@ export const Header = () => {
 
                 {/* Right Side - User Menu or Login */}
                 <div className="flex items-center gap-4">
-                    {user ? <UserMenu /> : <HeaderLoginForm />}
+                    {mounted && (user ? <UserMenu /> : <HeaderLoginForm />)}
                 </div>
             </div>
         </header>
