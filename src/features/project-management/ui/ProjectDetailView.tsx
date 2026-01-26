@@ -949,7 +949,7 @@ export const ProjectDetailView = () => {
 
       {/* Content View Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-none shadow-2xl">
+        <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-none shadow-2xl">
           <DialogHeader className="p-6 bg-gray-200 border-b border-gray-300">
             <div className="flex items-center gap-3">
               <ContentTypeIcon
