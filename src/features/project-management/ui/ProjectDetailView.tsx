@@ -190,7 +190,7 @@ export const ProjectDetailView = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="md:col-span-1">
                     <CardHeader>
-                        <CardTitle>Project Tree</CardTitle>
+                        <CardTitle>Project Tree (Padding Test)</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {treeLoading ? (
@@ -205,7 +205,7 @@ export const ProjectDetailView = () => {
 
                 <Card className="md:col-span-2">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                        <CardTitle>Contents</CardTitle>
+                        <CardTitle>Contents (Padding Test)</CardTitle>
                         {isAdminMode && selectedCategory && (
                             <Button size="sm" onClick={() => {
                                 setContentModalMode('create');
@@ -347,6 +347,7 @@ export const ProjectDetailView = () => {
                 open={isContentModalOpen}
                 onOpenChange={setIsContentModalOpen}
                 title={contentModalMode === 'create' ? 'Add Content' : 'Edit Content'}
+                description={contentModalMode === 'create' ? '새로운 콘텐츠를 추가합니다. 제목과 내용을 입력하세요.' : '콘텐츠를 수정합니다.'}
                 submitLabel={contentModalMode === 'create' ? 'Add' : 'Save'}
                 maxWidth="sm:max-w-7xl"
                 onSubmit={async () => {

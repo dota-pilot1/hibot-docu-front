@@ -35,7 +35,7 @@ export function BaseDialog({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className={cn("max-h-[90vh] flex flex-col p-0 gap-0", maxWidth, className)}>
-                <DialogHeader className="p-6 pb-2 shrink-0">
+                <DialogHeader className="shrink-0">
                     <DialogTitle>{title}</DialogTitle>
                     {description && <DialogDescription>{description}</DialogDescription>}
                 </DialogHeader>
