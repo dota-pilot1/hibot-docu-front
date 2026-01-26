@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useProjectTree } from '../model/useProjectTree';
 import { useProjectContents } from '../model/useProjectContents';
 import { Card, CardHeader, CardTitle, CardContent } from '@/shared/ui/card';
 import { Button } from '@/shared/ui/button';
-import { ArrowLeft, Plus, Pencil, Trash2, FolderPlus } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Trash2, FolderPlus, ChevronRight, ChevronDown, Folder, FolderOpen } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/shared/ui/dialog';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
@@ -36,6 +36,7 @@ export const ProjectDetailView = () => {
     const [isAdminMode, setIsAdminMode] = useState(false);
     const { tree, isLoading: treeLoading, refetch: refetchTree } = useProjectTree();
     const { contents, isLoading: contentsLoading, refetch: refetchContents } = useProjectContents(selectedCategory);
+    const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
     // Modal states
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -92,6 +93,37 @@ export const ProjectDetailView = () => {
         filteredTree = getAllChildren(tree);
     }
 
+    // Initialize expandedIds with depth 1 items when filteredTree changes
+    useEffect(() => {
+        if (filteredTree.length > 0) {
+            const collectDepth1 = (categories: ProjectCategory[]): number[] => {
+                const ids: number[] = [];
+                for (const cat of categories) {
+                    if (cat.depth === 1) {
+                        ids.push(cat.id);
+                    }
+                    if (cat.children && cat.children.length > 0) {
+                        ids.push(...collectDepth1(cat.children));
+                    }
+                }
+                return ids;
+            };
+            setExpandedIds(new Set(collectDepth1(filteredTree)));
+        }
+    }, [filteredTree.length]);
+
+    const toggleExpand = (id: number) => {
+        setExpandedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    };
+
     const renderTree = (categories: ProjectCategory[]) => {
         return categories.map((cat) => (
             <div key={cat.id} className="my-1">
@@ -99,13 +131,37 @@ export const ProjectDetailView = () => {
                     style={{ marginLeft: `${(cat.depth - 1) * 20}px` }}
                     className={`group flex items-center gap-1 rounded-md transition-colors ${selectedCategory === cat.id ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
                 >
+                    {cat.children && cat.children.length > 0 ? (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => toggleExpand(cat.id)}
+                            className="h-8 w-6 p-0 hover:bg-transparent shrink-0"
+                        >
+                            {expandedIds.has(cat.id) ? (
+                                <ChevronDown className="h-4 w-4" />
+                            ) : (
+                                <ChevronRight className="h-4 w-4" />
+                            )}
+                        </Button>
+                    ) : (
+                        <div className="w-6 shrink-0" />
+                    )}
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setSelectedCategory(cat.id)}
                         className={`flex-1 justify-start h-8 px-2 hover:bg-transparent ${selectedCategory === cat.id ? 'text-blue-900' : ''}`}
                     >
-                        {cat.icon && <span className="mr-2">{cat.icon}</span>}
+                        {cat.children && cat.children.length > 0 ? (
+                            expandedIds.has(cat.id) ? (
+                                <FolderOpen className="h-4 w-4 mr-2" />
+                            ) : (
+                                <Folder className="h-4 w-4 mr-2" />
+                            )
+                        ) : (
+                            cat.icon && <span className="mr-2">{cat.icon}</span>
+                        )}
                         <span className="truncate">{cat.name}</span>
                     </Button>
 
@@ -153,7 +209,7 @@ export const ProjectDetailView = () => {
                         </div>
                     )}
                 </div>
-                {cat.children && cat.children.length > 0 && renderTree(cat.children)}
+                {cat.children && cat.children.length > 0 && expandedIds.has(cat.id) && renderTree(cat.children)}
             </div>
         ));
     };
