@@ -35,7 +35,7 @@ export const QAEditor: React.FC<QAEditorProps> = ({
     };
 
     return (
-        <div className="qa-editor space-y-6">
+        <div className="qa-editor space-y-10">
             <div className="space-y-4">
                 <Textarea
                     id="answer"
@@ -47,7 +47,7 @@ export const QAEditor: React.FC<QAEditorProps> = ({
                 />
             </div>
 
-            <div className="border-t border-gray-100" />
+            <div className="border-t border-gray-100 my-8" />
 
             <div className="space-y-4">
                 <Label htmlFor="tags" className="text-gray-400 text-[10px] uppercase tracking-wider font-bold">태그 (Tags)</Label>
