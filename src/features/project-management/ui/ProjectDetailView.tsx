@@ -97,13 +97,13 @@ export const ProjectDetailView = () => {
             <div key={cat.id} className="my-1">
                 <div
                     style={{ marginLeft: `${(cat.depth - 1) * 20}px` }}
-                    className={`group flex items-center gap-1 rounded-md transition-colors ${selectedCategory === cat.id ? 'bg-secondary' : 'hover:bg-ghost'}`}
+                    className={`group flex items-center gap-1 rounded-md transition-colors ${selectedCategory === cat.id ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
                 >
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setSelectedCategory(cat.id)}
-                        className="flex-1 justify-start h-8 px-2"
+                        className={`flex-1 justify-start h-8 px-2 hover:bg-transparent ${selectedCategory === cat.id ? 'text-blue-900' : ''}`}
                     >
                         {cat.icon && <span className="mr-2">{cat.icon}</span>}
                         <span className="truncate">{cat.name}</span>
