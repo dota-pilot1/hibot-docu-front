@@ -1,4 +1,5 @@
-export type ProjectType = 'NOTE' | 'GITHUB' | 'FAQ' | 'MEMBER';
+export type ProjectType = 'ROOT' | 'NOTE' | 'MERMAID' | 'QA' | 'GITHUB' | 'FAQ' | 'MEMBER';
+export type ContentType = 'NOTE' | 'MERMAID' | 'QA';
 
 export interface ProjectCategory {
     id: number;
@@ -23,6 +24,8 @@ export interface ProjectContent {
     userId: number;
     title: string;
     content: string | null;
+    contentType: ContentType;
+    metadata: Record<string, any> | null;
     displayOrder: number;
     isActive: boolean;
     createdAt: string;
@@ -51,11 +54,15 @@ export interface CreateContentRequest {
     categoryId: number;
     title: string;
     content?: string;
+    contentType?: ContentType;
+    metadata?: Record<string, any>;
 }
 
 export interface UpdateContentRequest {
     title?: string;
     content?: string;
+    contentType?: ContentType;
+    metadata?: Record<string, any>;
     displayOrder?: number;
     isActive?: boolean;
 }

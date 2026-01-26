@@ -150,41 +150,46 @@ export const ProjectMatrix = () => {
                                 {category.children!.map((child) => (
                                     <div
                                         key={child.id}
-                                        className="bg-white dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5 cursor-pointer 
-                                            hover:border-blue-400/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative"
+                                        className="bg-slate-50/50 dark:bg-zinc-800/30 border border-gray-200 dark:border-zinc-700 rounded-2xl p-5 cursor-pointer 
+                                            shadow-sm hover:border-blue-500/50 hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 group relative"
                                         onClick={() => router.push(`/projects?tech=${child.techType || child.id}`)}
                                     >
-                                        <div className="flex flex-col gap-3">
+                                        <div className="flex flex-col gap-4">
                                             <div className="flex items-start justify-between">
-                                                <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform duration-300">
+                                                <div className="p-3 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform duration-300">
                                                     {child.icon ? (
                                                         <span className="text-2xl">{child.icon}</span>
                                                     ) : (
                                                         <PlusIcon className="w-6 h-6 rotate-45" />
                                                     )}
                                                 </div>
-                                                <Badge className="bg-emerald-50 text-emerald-600 border-none text-[10px] font-bold uppercase tracking-wider">Active</Badge>
+                                                <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border-none text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">Active</Badge>
                                             </div>
 
-                                            <div className="space-y-1">
+                                            <div className="space-y-1.5">
                                                 <h3 className="font-bold text-base text-gray-900 dark:text-gray-100 group-hover:text-blue-600 transition-colors">
                                                     {child.name}
                                                 </h3>
-                                                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed h-10">
+                                                <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed h-10">
                                                     {child.description || '상세 정보를 확인하려면 클릭하세요.'}
                                                 </p>
                                             </div>
 
-                                            <div className="pt-2 flex items-center justify-between border-t border-gray-50 dark:border-zinc-800">
-                                                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">{child.techType || 'No Code'}</span>
-                                                {isAdminMode && (
-                                                    <Button variant="ghost" size="sm" onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDeleteCategory(child.id);
-                                                    }} className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100">
-                                                        <TrashIcon className="h-3.5 w-3.5 text-red-500" />
-                                                    </Button>
-                                                )}
+                                            <div className="pt-3 flex items-center justify-between border-t border-gray-200 dark:border-zinc-700">
+                                                <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">{child.techType || 'General'}</span>
+                                                <div className="flex items-center gap-2">
+                                                    {isAdminMode && (
+                                                        <Button variant="ghost" size="sm" onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteCategory(child.id);
+                                                        }} className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <TrashIcon className="h-3.5 w-3.5 text-red-500" />
+                                                        </Button>
+                                                    )}
+                                                    <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-gray-400 border border-gray-200 dark:border-zinc-700">
+                                                        {'>'}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

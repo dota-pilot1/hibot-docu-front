@@ -62,4 +62,18 @@ export const projectApi = {
     deleteContent: async (id: number): Promise<void> => {
         await api.delete(`/projects/contents/${id}`);
     },
+
+    reorderCategories: async (
+        categoryIds: number[],
+        parentId: number | null,
+    ): Promise<void> => {
+        await api.patch('/projects/categories/reorder', { categoryIds, parentId });
+    },
+
+    reorderContents: async (
+        categoryId: number,
+        contentIds: number[],
+    ): Promise<void> => {
+        await api.patch('/projects/contents/reorder', { categoryId, contentIds });
+    },
 };
