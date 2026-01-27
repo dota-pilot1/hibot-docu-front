@@ -147,6 +147,11 @@ export const ProjectDetailView = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingContent, setViewingContent] = useState<any | null>(null);
 
+  // Answer Modal states (for QA)
+  const [isAnswerModalOpen, setIsAnswerModalOpen] = useState(false);
+  const [answerContent, setAnswerContent] = useState<any | null>(null);
+  const [answerText, setAnswerText] = useState("");
+
   // Confirm Modal states
   const [confirmDeleteCategoryOpen, setConfirmDeleteCategoryOpen] =
     useState(false);
@@ -680,7 +685,13 @@ export const ProjectDetailView = () => {
                                   )}
                                   {content.contentType === "QA" && (
                                     <div className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm">
-                                      {content.content}
+                                      {content.content ? (
+                                        content.content
+                                      ) : (
+                                        <span className="text-gray-400 italic">
+                                          답변 대기 중
+                                        </span>
+                                      )}
                                     </div>
                                   )}
                                   {/* Gradient Overlay for Fade Out */}
@@ -784,7 +795,7 @@ export const ProjectDetailView = () => {
             : "콘텐츠를 수정합니다."
         }
         submitLabel={contentModalMode === "create" ? "Add" : "Save"}
-        maxWidth="sm:max-w-4xl"
+        fullScreen
         onSubmit={async () => {
           if (contentModalMode === "create" && selectedCategory) {
             await projectApi.createContent({
@@ -864,52 +875,35 @@ export const ProjectDetailView = () => {
             </div>
           </div>
 
-          <div className="space-y-3">
-            <Label
-              htmlFor="content-body"
-              className={
-                contentForm.contentType === "QA"
-                  ? "text-blue-600 font-bold text-base block"
-                  : "block text-gray-700 font-semibold"
-              }
-            >
-              {contentForm.contentType === "QA" ? "답변" : "내용"}
-            </Label>
-            <div className="mt-2">
-              {contentForm.contentType === "NOTE" && (
-                <LexicalEditor
-                  value={contentForm.content}
-                  onChange={(text) =>
-                    setContentForm({ ...contentForm, content: text })
-                  }
-                  placeholder="내용을 입력하세요 (AI assisted rich text supported)"
-                />
-              )}
-              {contentForm.contentType === "MERMAID" && (
-                <MermaidEditor
-                  content={contentForm.content}
-                  onChange={(text) =>
-                    setContentForm({ ...contentForm, content: text })
-                  }
-                />
-              )}
-              {contentForm.contentType === "QA" && (
-                <QAEditor
-                  answer={contentForm.content}
-                  tags={contentForm.metadata?.tags || []}
-                  onAnswerChange={(val) =>
-                    setContentForm({ ...contentForm, content: val })
-                  }
-                  onTagsChange={(tags) =>
-                    setContentForm({
-                      ...contentForm,
-                      metadata: { ...contentForm.metadata, tags },
-                    })
-                  }
-                />
-              )}
+          {contentForm.contentType !== "QA" && (
+            <div className="space-y-3">
+              <Label
+                htmlFor="content-body"
+                className="block text-gray-700 font-semibold"
+              >
+                내용
+              </Label>
+              <div className="mt-2">
+                {contentForm.contentType === "NOTE" && (
+                  <LexicalEditor
+                    value={contentForm.content}
+                    onChange={(text) =>
+                      setContentForm({ ...contentForm, content: text })
+                    }
+                    placeholder="내용을 입력하세요 (AI assisted rich text supported)"
+                  />
+                )}
+                {contentForm.contentType === "MERMAID" && (
+                  <MermaidEditor
+                    content={contentForm.content}
+                    onChange={(text) =>
+                      setContentForm({ ...contentForm, content: text })
+                    }
+                  />
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </FormDialog>
 
@@ -980,13 +974,67 @@ export const ProjectDetailView = () => {
               </div>
             )}
             {viewingContent?.contentType === "QA" && (
-              <div className="text-gray-800 whitespace-pre-wrap leading-relaxed text-lg">
-                {viewingContent.content}
+              <div className="space-y-4">
+                {viewingContent.content ? (
+                  <div className="text-gray-800 whitespace-pre-wrap leading-relaxed text-lg">
+                    {viewingContent.content}
+                  </div>
+                ) : (
+                  <div className="text-gray-400 italic text-lg">
+                    답변 대기 중
+                  </div>
+                )}
+                {isAdminMode && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setAnswerContent(viewingContent);
+                      setAnswerText(viewingContent.content || "");
+                      setIsViewModalOpen(false);
+                      setIsAnswerModalOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    {viewingContent.content ? "답변 수정" : "답변 추가"}
+                  </Button>
+                )}
               </div>
             )}
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Answer Modal for QA */}
+      <FormDialog
+        open={isAnswerModalOpen}
+        onOpenChange={setIsAnswerModalOpen}
+        title={answerContent?.content ? "답변 수정" : "답변 추가"}
+        description={`질문: ${answerContent?.title || ""}`}
+        submitLabel="저장"
+        maxWidth="sm:max-w-3xl"
+        onSubmit={async () => {
+          if (answerContent) {
+            await projectApi.updateContent(answerContent.id, {
+              content: answerText,
+            });
+            setIsAnswerModalOpen(false);
+            setAnswerContent(null);
+            setAnswerText("");
+            refetchContents();
+          }
+        }}
+      >
+        <div className="space-y-4">
+          <Textarea
+            value={answerText}
+            onChange={(e) => setAnswerText(e.target.value)}
+            placeholder="답변을 입력하세요"
+            rows={10}
+            className="w-full"
+          />
+        </div>
+      </FormDialog>
     </div>
   );
 };
