@@ -684,13 +684,31 @@ export const ProjectDetailView = () => {
                                     />
                                   )}
                                   {content.contentType === "QA" && (
-                                    <div className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm">
-                                      {content.content ? (
-                                        content.content
-                                      ) : (
-                                        <span className="text-gray-400 italic">
-                                          답변 대기 중
-                                        </span>
+                                    <div className="space-y-2">
+                                      <div className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm">
+                                        {content.content ? (
+                                          content.content
+                                        ) : (
+                                          <span className="text-gray-400 italic">
+                                            답변 대기 중
+                                          </span>
+                                        )}
+                                      </div>
+                                      {isAdminMode && !content.content && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-7 text-xs"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setAnswerContent(content);
+                                            setAnswerText("");
+                                            setIsAnswerModalOpen(true);
+                                          }}
+                                        >
+                                          <Plus className="h-3 w-3 mr-1" />
+                                          답변 추가
+                                        </Button>
                                       )}
                                     </div>
                                   )}
@@ -976,8 +994,15 @@ export const ProjectDetailView = () => {
             {viewingContent?.contentType === "QA" && (
               <div className="space-y-4">
                 {viewingContent.content ? (
-                  <div className="text-gray-800 whitespace-pre-wrap leading-relaxed text-lg">
-                    {viewingContent.content}
+                  <div className="prose prose-lg max-w-none dark:prose-invert prose-pre:bg-gray-900 prose-pre:p-4 prose-code:text-blue-600">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm, remarkBreaks]}
+                      components={{
+                        code: MarkdownCodeBlock as any,
+                      }}
+                    >
+                      {viewingContent.content}
+                    </ReactMarkdown>
                   </div>
                 ) : (
                   <div className="text-gray-400 italic text-lg">
@@ -1010,9 +1035,8 @@ export const ProjectDetailView = () => {
         open={isAnswerModalOpen}
         onOpenChange={setIsAnswerModalOpen}
         title={answerContent?.content ? "답변 수정" : "답변 추가"}
-        description={`질문: ${answerContent?.title || ""}`}
         submitLabel="저장"
-        maxWidth="sm:max-w-3xl"
+        fullScreen
         onSubmit={async () => {
           if (answerContent) {
             await projectApi.updateContent(answerContent.id, {
@@ -1025,14 +1049,52 @@ export const ProjectDetailView = () => {
           }
         }}
       >
-        <div className="space-y-4">
-          <Textarea
-            value={answerText}
-            onChange={(e) => setAnswerText(e.target.value)}
-            placeholder="답변을 입력하세요"
-            rows={10}
-            className="w-full"
-          />
+        <div className="grid grid-cols-2 gap-8 h-full">
+          {/* 왼쪽: 질문 정보 */}
+          <div className="space-y-6 border-r border-gray-200 pr-8">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                질문
+              </h3>
+              <p className="text-xl font-bold text-gray-900">
+                {answerContent?.title}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                카테고리
+              </h3>
+              <p className="text-gray-700">
+                {selectedCategoryData?.name || "-"}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                등록일
+              </h3>
+              <p className="text-gray-700">
+                {answerContent?.createdAt
+                  ? new Date(answerContent.createdAt).toLocaleDateString(
+                      "ko-KR",
+                    )
+                  : "-"}
+              </p>
+            </div>
+          </div>
+
+          {/* 오른쪽: 답변 입력 (렉시컬 에디터) */}
+          <div className="flex flex-col h-full">
+            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
+              답변
+            </h3>
+            <div className="flex-1">
+              <LexicalEditor
+                value={answerText}
+                onChange={(text) => setAnswerText(text)}
+                placeholder="답변을 입력하세요 (AI assisted rich text supported)"
+              />
+            </div>
+          </div>
         </div>
       </FormDialog>
     </div>
