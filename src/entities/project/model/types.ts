@@ -7,7 +7,7 @@ export type ProjectType =
   | "GITHUB"
   | "FAQ"
   | "MEMBER";
-export type ContentType = "NOTE" | "MERMAID" | "QA";
+export type ContentType = "NOTE" | "MERMAID" | "QA" | "FIGMA";
 
 // File types
 export type CategoryFileType =

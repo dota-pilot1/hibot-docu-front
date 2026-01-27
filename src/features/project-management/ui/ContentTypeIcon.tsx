@@ -4,6 +4,7 @@ import {
   MessageCircleQuestion,
   Folder,
   FileUp,
+  Figma,
 } from "lucide-react";
 import { ContentType, ProjectType } from "@/entities/project/model/types";
 
@@ -27,6 +28,8 @@ export const ContentTypeIcon = ({
       return <MessageCircleQuestion className={className} />;
     case "FILE":
       return <FileUp className={className} />;
+    case "FIGMA":
+      return <Figma className={className} />;
     default:
       if (type === "GITHUB" || type === "FAQ" || type === "MEMBER") {
         return <Folder className={className} />;

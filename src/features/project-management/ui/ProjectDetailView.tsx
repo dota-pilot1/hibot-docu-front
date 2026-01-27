@@ -72,6 +72,7 @@ import remarkBreaks from "remark-breaks";
 import { MarkdownCodeBlock } from "@/shared/ui/MarkdownCodeBlock";
 import { ContentTypeIcon } from "./ContentTypeIcon";
 import { MermaidRenderer } from "@/shared/ui/MermaidRenderer";
+import { FigmaRenderer } from "@/shared/ui/FigmaRenderer";
 import { MermaidEditor } from "@/shared/ui/MermaidEditor";
 import { QARenderer } from "@/shared/ui/QARenderer";
 import { QAEditor } from "@/shared/ui/QAEditor";
@@ -683,6 +684,11 @@ export const ProjectDetailView = () => {
                                       content={content.content || ""}
                                     />
                                   )}
+                                  {content.contentType === "FIGMA" && (
+                                    <FigmaRenderer
+                                      url={content.content || ""}
+                                    />
+                                  )}
                                   {content.contentType === "QA" && (
                                     <div className="space-y-2">
                                       <div className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm">
@@ -835,8 +841,8 @@ export const ProjectDetailView = () => {
           refetchContents();
         }}
       >
-        <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 rounded-lg">
-          {(["NOTE", "MERMAID", "QA"] as const).map((type) => (
+        <div className="grid grid-cols-4 gap-2 p-1 bg-gray-100 rounded-lg">
+          {(["NOTE", "MERMAID", "QA", "FIGMA"] as const).map((type) => (
             <button
               key={type}
               type="button"
@@ -899,7 +905,7 @@ export const ProjectDetailView = () => {
                 htmlFor="content-body"
                 className="block text-gray-700 font-semibold"
               >
-                내용
+                {contentForm.contentType === "FIGMA" ? "Figma URL" : "내용"}
               </Label>
               <div className="mt-2">
                 {contentForm.contentType === "NOTE" && (
@@ -918,6 +924,26 @@ export const ProjectDetailView = () => {
                       setContentForm({ ...contentForm, content: text })
                     }
                   />
+                )}
+                {contentForm.contentType === "FIGMA" && (
+                  <div className="space-y-4">
+                    <Input
+                      value={contentForm.content}
+                      onChange={(e) =>
+                        setContentForm({
+                          ...contentForm,
+                          content: e.target.value,
+                        })
+                      }
+                      placeholder="https://www.figma.com/file/... 또는 https://www.figma.com/design/..."
+                    />
+                    {contentForm.content && (
+                      <div className="border rounded-lg p-4 bg-gray-50">
+                        <p className="text-sm text-gray-500 mb-2">미리보기:</p>
+                        <FigmaRenderer url={contentForm.content} />
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -990,6 +1016,9 @@ export const ProjectDetailView = () => {
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
                 <MermaidRenderer content={viewingContent.content || ""} />
               </div>
+            )}
+            {viewingContent?.contentType === "FIGMA" && (
+              <FigmaRenderer url={viewingContent.content || ""} />
             )}
             {viewingContent?.contentType === "QA" && (
               <div className="space-y-4">
