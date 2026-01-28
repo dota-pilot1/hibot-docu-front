@@ -2,18 +2,30 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { type ColumnDef, type SortingState, type PaginationState } from "@tanstack/react-table";
+import {
+  type ColumnDef,
+  type SortingState,
+  type PaginationState,
+} from "@tanstack/react-table";
 import { DataTable } from "@/shared/ui/DataTable";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { usePosts } from "../model/usePosts";
+import { ConfirmDialog } from "@/shared/ui/dialogs/ConfirmDialog";
+import { usePosts, useDeletePost } from "../model/usePosts";
+import { useUserStore } from "@/entities/user/model/store";
 import type { Post } from "../api/postsApi";
-import { Eye, PenSquare, Search } from "lucide-react";
+import { Eye, PenSquare, Search, Trash2 } from "lucide-react";
 
 export function PostList() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Post | null>(null);
+
+  const user = useUserStore((state) => state.user);
+  const isAdmin = user?.role === "ADMIN";
+
+  const { mutate: deletePost, isPending: isDeleting } = useDeletePost();
 
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -40,8 +52,8 @@ export function PostList() {
 
   const { data, isLoading } = usePosts(queryParams);
 
-  const columns: ColumnDef<Post>[] = useMemo(
-    () => [
+  const columns: ColumnDef<Post>[] = useMemo(() => {
+    const cols: ColumnDef<Post>[] = [
       {
         accessorKey: "id",
         header: "번호",
@@ -89,9 +101,29 @@ export function PostList() {
         },
         enableSorting: true,
       },
-    ],
-    []
-  );
+    ];
+
+    if (isAdmin) {
+      cols.push({
+        id: "actions",
+        header: "",
+        size: 60,
+        cell: ({ row }) => (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setDeleteTarget(row.original);
+            }}
+            className="p-1 text-gray-400 hover:text-red-500"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        ),
+      });
+    }
+
+    return cols;
+  }, [isAdmin]);
 
   const handleSearch = () => {
     setSearch(searchInput);
@@ -100,6 +132,13 @@ export function PostList() {
 
   const handleRowClick = (post: Post) => {
     router.push(`/posts/${post.id}`);
+  };
+
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    deletePost(deleteTarget.id, {
+      onSuccess: () => setDeleteTarget(null),
+    });
   };
 
   return (
@@ -138,6 +177,15 @@ export function PostList() {
         onSortingChange={setSorting}
         isLoading={isLoading}
         onRowClick={handleRowClick}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="게시글 삭제"
+        description={`"${deleteTarget?.title}" 게시글을 삭제하시겠습니까?`}
+        onConfirm={handleDelete}
+        isLoading={isDeleting}
       />
     </div>
   );
