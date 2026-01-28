@@ -50,8 +50,8 @@ const features = [
     iconClass: "text-teal-600",
   },
   {
-    title: "앱 다운로드",
-    description: "QR 코드로 키오스크 앱을 다운로드하고 테스트합니다.",
+    title: "버전 관리 및 다운로드",
+    description: "앱 버전을 관리하고 QR 코드로 다운로드합니다.",
     icon: Download,
     href: "#",
     iconClass: "text-blue-600",
