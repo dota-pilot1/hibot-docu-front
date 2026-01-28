@@ -7,6 +7,7 @@ import {
   type ColumnDef,
   type SortingState,
   type PaginationState,
+  type RowSelectionState,
 } from "@tanstack/react-table";
 import {
   Table,
@@ -41,6 +42,10 @@ interface DataTableProps<TData> {
   isLoading?: boolean;
   // 행 클릭
   onRowClick?: (row: TData) => void;
+  // 행 선택
+  rowSelection?: RowSelectionState;
+  onRowSelectionChange?: (rowSelection: RowSelectionState) => void;
+  enableRowSelection?: boolean;
 }
 
 export function DataTable<TData>({
@@ -53,6 +58,9 @@ export function DataTable<TData>({
   onSortingChange,
   isLoading = false,
   onRowClick,
+  rowSelection,
+  onRowSelectionChange,
+  enableRowSelection = false,
 }: DataTableProps<TData>) {
   const table = useReactTable({
     data,
@@ -61,6 +69,7 @@ export function DataTable<TData>({
     state: {
       pagination,
       sorting,
+      rowSelection: rowSelection || {},
     },
     onPaginationChange: onPaginationChange
       ? (updater) => {
@@ -76,6 +85,16 @@ export function DataTable<TData>({
           onSortingChange(newSorting);
         }
       : undefined,
+    onRowSelectionChange: onRowSelectionChange
+      ? (updater) => {
+          const newRowSelection =
+            typeof updater === "function"
+              ? updater(rowSelection || {})
+              : updater;
+          onRowSelectionChange(newRowSelection);
+        }
+      : undefined,
+    enableRowSelection,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
     manualSorting: true,
@@ -107,7 +126,7 @@ export function DataTable<TData>({
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                         {canSort && (
                           <span className="text-gray-400">
@@ -145,14 +164,16 @@ export function DataTable<TData>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className={onRowClick ? "cursor-pointer hover:bg-gray-50" : ""}
+                  className={
+                    onRowClick ? "cursor-pointer hover:bg-gray-50" : ""
+                  }
                   onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

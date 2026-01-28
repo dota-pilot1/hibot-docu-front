@@ -6,6 +6,7 @@ import {
   type ColumnDef,
   type SortingState,
   type PaginationState,
+  type RowSelectionState,
 } from "@tanstack/react-table";
 import { DataTable } from "@/shared/ui/DataTable";
 import { Button } from "@/shared/ui/button";
@@ -21,6 +22,8 @@ export function PostList() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Post | null>(null);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 
   const user = useUserStore((state) => state.user);
   const isAdmin = user?.role === "ADMIN";
@@ -53,7 +56,37 @@ export function PostList() {
   const { data, isLoading } = usePosts(queryParams);
 
   const columns: ColumnDef<Post>[] = useMemo(() => {
-    const cols: ColumnDef<Post>[] = [
+    const cols: ColumnDef<Post>[] = [];
+
+    if (isAdmin) {
+      cols.push({
+        id: "select",
+        header: ({ table }) => (
+          <input
+            type="checkbox"
+            checked={table.getIsAllPageRowsSelected()}
+            onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+        ),
+        cell: ({ row }) => (
+          <input
+            type="checkbox"
+            checked={row.getIsSelected()}
+            onChange={(e) => {
+              e.stopPropagation();
+              row.toggleSelected(e.target.checked);
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+        ),
+        size: 40,
+        enableSorting: false,
+      });
+    }
+
+    cols.push(
       {
         accessorKey: "id",
         header: "번호",
@@ -101,7 +134,7 @@ export function PostList() {
         },
         enableSorting: true,
       },
-    ];
+    );
 
     if (isAdmin) {
       cols.push({
@@ -141,11 +174,50 @@ export function PostList() {
     });
   };
 
+  const selectedPosts = useMemo(() => {
+    if (!data?.data) return [];
+    return Object.keys(rowSelection)
+      .filter((key) => rowSelection[key])
+      .map((key) => data.data[parseInt(key)]);
+  }, [rowSelection, data?.data]);
+
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    try {
+      await Promise.all(
+        selectedPosts.map(
+          (post) =>
+            new Promise<void>((resolve) => {
+              deletePost(post.id, { onSuccess: () => resolve() });
+            }),
+        ),
+      );
+      setRowSelection({});
+      setShowBulkDeleteDialog(false);
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* 헤더 */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">게시판</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold text-gray-900">게시판</h1>
+          {isAdmin && selectedPosts.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowBulkDeleteDialog(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              {selectedPosts.length}개 삭제
+            </Button>
+          )}
+        </div>
         <Button onClick={() => router.push("/posts/write")}>
           <PenSquare className="h-4 w-4 mr-2" />
           글쓰기
@@ -177,6 +249,9 @@ export function PostList() {
         onSortingChange={setSorting}
         isLoading={isLoading}
         onRowClick={handleRowClick}
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
+        enableRowSelection={isAdmin}
       />
 
       <ConfirmDialog
@@ -186,6 +261,16 @@ export function PostList() {
         description={`"${deleteTarget?.title}" 게시글을 삭제하시겠습니까?`}
         onConfirm={handleDelete}
         isLoading={isDeleting}
+      />
+
+      <ConfirmDialog
+        open={showBulkDeleteDialog}
+        onOpenChange={setShowBulkDeleteDialog}
+        title="게시글 일괄 삭제"
+        description={`선택한 ${selectedPosts.length}개의 게시글을 삭제하시겠습니까?`}
+        onConfirm={handleBulkDelete}
+        isLoading={bulkDeleting}
+        variant="destructive"
       />
     </div>
   );
