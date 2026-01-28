@@ -54,7 +54,7 @@ import {
 } from "@dnd-kit/sortable";
 import { SortableTreeItem } from "./SortableTreeItem";
 import { SortableContentItem } from "./SortableContentItem";
-import { GripVertical } from "lucide-react";
+import { GripVertical, X } from "lucide-react";
 
 const LexicalEditor = dynamic(
   () => import("@/shared/ui/lexical/LexicalEditor"),
@@ -70,6 +70,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import { MarkdownCodeBlock } from "@/shared/ui/MarkdownCodeBlock";
+import { MarkdownImage } from "@/shared/ui/MarkdownImage";
 import { ContentTypeIcon } from "./ContentTypeIcon";
 import { MermaidRenderer } from "@/shared/ui/MermaidRenderer";
 import { FigmaRenderer } from "@/shared/ui/FigmaRenderer";
@@ -501,8 +502,8 @@ export const ProjectDetailView = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="md:col-span-1">
-          <CardHeader>
-            <CardTitle>Project Tree (Padding Test)</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3 bg-gray-200">
+            <CardTitle>Project Tree</CardTitle>
           </CardHeader>
           <CardContent>
             {treeLoading ? (
@@ -526,10 +527,8 @@ export const ProjectDetailView = () => {
         </Card>
 
         <Card className="md:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <CardTitle>
-              {isFileCategory ? "Files" : "Contents"} (Padding Test)
-            </CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3 bg-gray-200">
+            <CardTitle>{isFileCategory ? "Files" : "Contents"}</CardTitle>
             {isAdminMode && selectedCategory && !isFileCategory && (
               <Button
                 size="sm"
@@ -673,6 +672,7 @@ export const ProjectDetailView = () => {
                                         ]}
                                         components={{
                                           code: MarkdownCodeBlock as any,
+                                          img: MarkdownImage as any,
                                         }}
                                       >
                                         {content.content}
@@ -987,25 +987,39 @@ export const ProjectDetailView = () => {
 
       {/* Content View Modal */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-none shadow-2xl">
-          <DialogHeader className="p-6 bg-gray-200 border-b border-gray-300">
-            <div className="flex items-center gap-3">
-              <ContentTypeIcon
-                type={viewingContent?.contentType}
-                className="h-5 w-5 text-blue-600"
-              />
-              <DialogTitle className="text-xl font-bold text-gray-900">
-                {viewingContent?.title}
-              </DialogTitle>
+        <DialogContent
+          className="sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-none shadow-2xl"
+          showCloseButton={false}
+        >
+          <DialogHeader className="px-6 py-3 bg-gray-200 border-b border-gray-300">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <ContentTypeIcon
+                  type={viewingContent?.contentType}
+                  className="h-5 w-5 text-blue-600"
+                />
+                <DialogTitle className="text-lg font-bold text-gray-900">
+                  {viewingContent?.title}
+                </DialogTitle>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setIsViewModalOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto p-8 bg-white">
+          <div className="flex-1 overflow-y-auto px-8 py-2 bg-white">
             {viewingContent?.contentType === "NOTE" && (
-              <div className="prose prose-lg max-w-none dark:prose-invert prose-pre:bg-gray-900 prose-pre:p-4 prose-code:text-blue-600 font-sans">
+              <div className="prose prose-lg max-w-none dark:prose-invert prose-pre:bg-transparent prose-pre:p-0 prose-pre:m-0 prose-code:text-blue-600 prose-code:before:content-none prose-code:after:content-none font-sans">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm, remarkBreaks]}
                   components={{
                     code: MarkdownCodeBlock as any,
+                    img: MarkdownImage as any,
                   }}
                 >
                   {viewingContent?.content || ""}
@@ -1023,11 +1037,12 @@ export const ProjectDetailView = () => {
             {viewingContent?.contentType === "QA" && (
               <div className="space-y-4">
                 {viewingContent.content ? (
-                  <div className="prose prose-lg max-w-none dark:prose-invert prose-pre:bg-gray-900 prose-pre:p-4 prose-code:text-blue-600">
+                  <div className="prose prose-lg max-w-none dark:prose-invert prose-pre:bg-transparent prose-pre:p-0 prose-pre:m-0 prose-code:text-blue-600 prose-code:before:content-none prose-code:after:content-none">
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm, remarkBreaks]}
                       components={{
                         code: MarkdownCodeBlock as any,
+                        img: MarkdownImage as any,
                       }}
                     >
                       {viewingContent.content}

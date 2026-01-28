@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { projectApi } from "../api/projectApi";
 import { useProjectMutations } from "../model/useProjectMutations";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
@@ -11,11 +10,11 @@ import { FormDialog } from "@/shared/ui/dialogs/FormDialog";
 import { ConfirmDialog } from "@/shared/ui/dialogs/ConfirmDialog";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
+import { ProjectCard } from "./ProjectCard";
 import type { ProjectCategory } from "@/entities/project/model/types";
 import { PlusIcon, TrashIcon } from "lucide-react";
 
 export const ProjectMatrix = () => {
-  const router = useRouter();
   const [tree, setTree] = useState<ProjectCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,7 +95,7 @@ export const ProjectMatrix = () => {
       <div className="space-y-6">
         <p className="text-center text-gray-500">Loading projects...</p>
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-32 bg-gray-100 animate-pulse rounded-xl" />
+          <div key={i} className="h-32 bg-gray-100 animate-pulse" />
         ))}
       </div>
     );
@@ -125,18 +124,18 @@ export const ProjectMatrix = () => {
       return (
         <Card
           key={category.id}
-          className="border-none shadow-md bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden"
+          className="border-none shadow-md bg-white dark:bg-zinc-900 overflow-hidden"
         >
-          <CardHeader className="border-b border-gray-50 dark:border-zinc-800 pb-4">
+          <CardHeader className="border-b border-gray-200 dark:border-zinc-800 pb-4 bg-gray-300">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-1.5 h-6 bg-blue-500 rounded-full" />
+                <div className="w-1.5 h-6 bg-blue-500" />
                 <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">
                   {category.name}
                 </CardTitle>
                 <Badge
                   variant="secondary"
-                  className="bg-blue-50 text-blue-600 border-blue-100 px-2.5 py-0.5 rounded-full text-xs"
+                  className="bg-blue-50 text-blue-600 border-blue-100 px-2.5 py-0.5 text-xs"
                 >
                   {hasChildren ? category.children!.length : 0}
                 </Badge>
@@ -154,7 +153,7 @@ export const ProjectMatrix = () => {
               {isAdminMode && (
                 <Button
                   size="sm"
-                  className="rounded-full shadow-sm"
+                  className="shadow-sm"
                   onClick={() => {
                     setTechData({ ...techData, parentId: category.id });
                     setShowTechModal(true);
@@ -172,60 +171,14 @@ export const ProjectMatrix = () => {
                 아직 항목이 없습니다
               </p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {category.children!.map((child) => (
-                  <div
+                  <ProjectCard
                     key={child.id}
-                    className="bg-slate-50/50 dark:bg-zinc-800/30 border border-gray-200 dark:border-zinc-700 rounded-2xl p-5 cursor-pointer
-                                            shadow-sm hover:border-blue-500/50 hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 group relative"
-                    onClick={() =>
-                      router.push(
-                        `/projects?tech=${child.techType || child.id}`,
-                      )
-                    }
-                  >
-                    <div className="flex flex-col gap-4">
-                      <div className="flex items-start justify-end">
-                        <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border-none text-[10px] font-bold uppercase tracking-wider px-2 py-0.5">
-                          Active
-                        </Badge>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <h3 className="font-bold text-base text-gray-900 dark:text-gray-100 group-hover:text-blue-600 transition-colors">
-                          {child.name}
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed h-10">
-                          {child.description ||
-                            "상세 정보를 확인하려면 클릭하세요."}
-                        </p>
-                      </div>
-
-                      <div className="pt-3 flex items-center justify-between border-t border-gray-200 dark:border-zinc-700">
-                        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
-                          {child.techType || "General"}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {isAdminMode && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteCategory(child.id);
-                              }}
-                              className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <TrashIcon className="h-3.5 w-3.5 text-red-500" />
-                            </Button>
-                          )}
-                          <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-gray-400 border border-gray-200 dark:border-zinc-700">
-                            {">"}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                    project={child}
+                    isAdminMode={isAdminMode}
+                    onDelete={handleDeleteCategory}
+                  />
                 ))}
               </div>
             )}

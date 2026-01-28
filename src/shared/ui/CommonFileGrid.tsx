@@ -29,7 +29,6 @@ export interface FileItem {
   originalName: string;
   fileSize: number;
   fileType: FileType;
-  [key: string]: unknown;
 }
 
 interface CommonFileGridProps<T extends FileItem = FileItem> {
@@ -41,19 +40,17 @@ interface CommonFileGridProps<T extends FileItem = FileItem> {
   emptyMessage?: string;
 }
 
-const FILE_TYPE_CONFIG: Record<
-  FileType,
-  { icon: typeof File; color: string }
-> = {
-  PDF: { icon: FileText, color: "text-red-500" },
-  DOCX: { icon: File, color: "text-blue-500" },
-  XLSX: { icon: Table, color: "text-green-500" },
-  TXT: { icon: File, color: "text-gray-500" },
-  IMAGE: { icon: Image, color: "text-purple-500" },
-  VIDEO: { icon: Film, color: "text-orange-500" },
-  AUDIO: { icon: Music, color: "text-pink-500" },
-  OTHER: { icon: Paperclip, color: "text-gray-400" },
-};
+const FILE_TYPE_CONFIG: Record<FileType, { icon: typeof File; color: string }> =
+  {
+    PDF: { icon: FileText, color: "text-red-500" },
+    DOCX: { icon: File, color: "text-blue-500" },
+    XLSX: { icon: Table, color: "text-green-500" },
+    TXT: { icon: File, color: "text-gray-500" },
+    IMAGE: { icon: Image, color: "text-purple-500" },
+    VIDEO: { icon: Film, color: "text-orange-500" },
+    AUDIO: { icon: Music, color: "text-pink-500" },
+    OTHER: { icon: Paperclip, color: "text-gray-400" },
+  };
 
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 B";

@@ -1,16 +1,16 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, memo } from "react";
 
 interface FigmaRendererProps {
   url: string;
   className?: string;
 }
 
-export const FigmaRenderer: React.FC<FigmaRendererProps> = ({
+export const FigmaRenderer = memo(function FigmaRenderer({
   url,
   className = "",
-}) => {
+}: FigmaRendererProps) {
   const embedUrl = useMemo(() => {
     // Figma URL을 embed URL로 변환
     // https://www.figma.com/file/xxx... -> https://www.figma.com/embed?embed_host=share&url=...
@@ -42,10 +42,11 @@ export const FigmaRenderer: React.FC<FigmaRendererProps> = ({
   return (
     <div className={`figma-renderer ${className}`}>
       <iframe
+        key={embedUrl}
         src={embedUrl}
         className="w-full h-[600px] border border-gray-200 rounded-lg"
         allowFullScreen
       />
     </div>
   );
-};
+});
