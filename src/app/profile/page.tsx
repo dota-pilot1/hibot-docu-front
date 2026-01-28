@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Mail, Calendar, Shield } from "lucide-react";
+import Link from "next/link";
+import { User, Mail, Calendar, Shield, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { useUserStore } from "@/entities/user/model/store";
 import { api } from "@/shared/api";
@@ -17,11 +18,19 @@ interface Profile {
   updatedAt: string;
 }
 
+interface Post {
+  id: number;
+  title: string;
+  createdAt: string;
+  viewCount: number;
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const user = useUserStore((state) => state.user);
   const accessToken = useUserStore((state) => state.accessToken);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [myPosts, setMyPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -30,18 +39,22 @@ export default function ProfilePage() {
       return;
     }
 
-    const fetchProfile = async () => {
+    const fetchData = async () => {
       try {
-        const response = await api.get("/auth/profile");
-        setProfile(response.data);
+        const [profileRes, postsRes] = await Promise.all([
+          api.get("/auth/profile"),
+          api.get("/posts/my"),
+        ]);
+        setProfile(profileRes.data);
+        setMyPosts(postsRes.data);
       } catch (error) {
-        console.error("Failed to fetch profile:", error);
+        console.error("Failed to fetch data:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchProfile();
+    fetchData();
   }, [user, accessToken, router]);
 
   if (isLoading) {
@@ -113,6 +126,39 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* 내가 쓴 글 */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              내가 쓴 글 ({myPosts.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {myPosts.length === 0 ? (
+              <p className="text-gray-500 text-sm">작성한 글이 없습니다.</p>
+            ) : (
+              <ul className="space-y-2">
+                {myPosts.map((post) => (
+                  <li key={post.id}>
+                    <Link
+                      href={`/posts/${post.id}`}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <span className="font-medium text-gray-900 truncate">
+                        {post.title}
+                      </span>
+                      <span className="text-xs text-gray-500 shrink-0 ml-4">
+                        {new Date(post.createdAt).toLocaleDateString("ko-KR")}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
       </div>
