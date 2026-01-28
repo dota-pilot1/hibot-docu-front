@@ -2,6 +2,7 @@ export interface User {
   userId: number;
   email: string;
   role: "ADMIN" | "USER";
+  profileImage?: string | null;
 }
 
 export interface UserState {

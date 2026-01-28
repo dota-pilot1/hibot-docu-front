@@ -19,8 +19,16 @@ export const UserMenu = () => {
         href="/profile"
         className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-blue-600 transition-colors"
       >
-        <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-          <User className="w-4 h-4 text-zinc-500" />
+        <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center overflow-hidden">
+          {user.profileImage ? (
+            <img
+              src={user.profileImage}
+              alt="프로필"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <User className="w-4 h-4 text-zinc-500" />
+          )}
         </div>
         <span className="hidden sm:inline-block truncate max-w-[150px]">
           {user.email}
