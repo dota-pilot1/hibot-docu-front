@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { User, Mail, Calendar, Shield, FileText } from "lucide-react";
+import { User, Mail, Calendar, Shield, FileText, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Button } from "@/shared/ui/button";
+import { ConfirmDialog } from "@/shared/ui/dialogs/ConfirmDialog";
 import { useUserStore } from "@/entities/user/model/store";
 import { api } from "@/shared/api";
 
@@ -29,9 +31,12 @@ export default function ProfilePage() {
   const router = useRouter();
   const user = useUserStore((state) => state.user);
   const accessToken = useUserStore((state) => state.accessToken);
+  const logout = useUserStore((state) => state.logout);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [myPosts, setMyPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!user || !accessToken) {
@@ -56,6 +61,19 @@ export default function ProfilePage() {
 
     fetchData();
   }, [user, accessToken, router]);
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      await api.delete("/users/me");
+      logout();
+      router.push("/");
+    } catch (error) {
+      console.error("Failed to delete account:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -161,6 +179,35 @@ export default function ProfilePage() {
             )}
           </CardContent>
         </Card>
+
+        {/* 회원 탈퇴 */}
+        <Card className="mt-6 border-red-200">
+          <CardHeader>
+            <CardTitle className="text-lg text-red-600">회원 탈퇴</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-500 mb-4">
+              회원 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.
+            </p>
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              회원 탈퇴
+            </Button>
+          </CardContent>
+        </Card>
+
+        <ConfirmDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          title="회원 탈퇴"
+          description="정말로 탈퇴하시겠습니까? 모든 데이터가 삭제되며 복구할 수 없습니다."
+          onConfirm={handleDeleteAccount}
+          isLoading={isDeleting}
+          variant="destructive"
+        />
       </div>
     </div>
   );
