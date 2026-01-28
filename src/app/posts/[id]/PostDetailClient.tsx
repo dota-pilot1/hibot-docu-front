@@ -55,15 +55,36 @@ export default function PostDetailClient() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => router.push("/posts")}
-        className="mb-4"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        목록으로
-      </Button>
+      <div className="flex items-center justify-between mb-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => router.push("/posts")}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          목록으로
+        </Button>
+        {isAuthor && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/posts/write?edit=${id}`)}
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              수정
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setConfirmDelete(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              삭제
+            </Button>
+          </div>
+        )}
+      </div>
 
       <Card>
         <CardHeader className="border-b bg-gray-50">
@@ -105,22 +126,6 @@ export default function PostDetailClient() {
           </div>
         </CardContent>
       </Card>
-
-      {isAuthor && (
-        <div className="flex justify-end gap-2 mt-4">
-          <Button
-            variant="outline"
-            onClick={() => router.push(`/posts/write?edit=${id}`)}
-          >
-            <Pencil className="h-4 w-4 mr-2" />
-            수정
-          </Button>
-          <Button variant="destructive" onClick={() => setConfirmDelete(true)}>
-            <Trash2 className="h-4 w-4 mr-2" />
-            삭제
-          </Button>
-        </div>
-      )}
 
       <ConfirmDialog
         open={confirmDelete}
