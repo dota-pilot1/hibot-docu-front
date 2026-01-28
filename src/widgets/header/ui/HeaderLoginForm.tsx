@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { AlertDialog } from "@/shared/ui/dialogs/AlertDialog";
@@ -13,6 +14,7 @@ export const HeaderLoginForm = () => {
   const loginFocusTrigger = useUserStore((state) => state.loginFocusTrigger);
   const emailRef = useRef<HTMLInputElement>(null);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Effect to focus email input when triggered
   useEffect(() => {
@@ -50,10 +52,17 @@ export const HeaderLoginForm = () => {
         <Input
           {...form.register("password")}
           placeholder="Password"
-          type="password"
-          className="h-8 w-32 text-xs"
+          type={showPassword ? "text" : "password"}
+          className="h-8 w-32 text-xs pr-7"
           disabled={isLoading}
         />
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+        >
+          {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+        </button>
       </div>
       <Button
         type="submit"
