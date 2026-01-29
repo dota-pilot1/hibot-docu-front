@@ -1,11 +1,21 @@
 import axios from "axios";
 import { userStore } from "@/entities/user/model/store";
 
+// export const api = axios.create({
+//   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4001",
+//   headers: {
+//     "Content-Type": "application/json",
+//   },
+// });
+//
+
+if (!process.env.NEXT_PUBLIC_API_URL) {
+  throw new Error("NEXT_PUBLIC_API_URL is not defined");
+}
+
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4001",
-  headers: {
-    "Content-Type": "application/json",
-  },
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  headers: { "Content-Type": "application/json" },
 });
 
 // Add a request interceptor to include the JWT token in all requests
