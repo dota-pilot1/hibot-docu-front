@@ -10,6 +10,9 @@ import {
   BookOpen,
   StickyNote,
   CheckSquare,
+  GraduationCap,
+  Component,
+  Rocket,
 } from "lucide-react";
 import { FeatureCard } from "@/shared/ui/feature-card";
 
@@ -76,6 +79,27 @@ const features = [
     icon: Palette,
     href: "#",
     iconClass: "text-pink-600",
+  },
+  {
+    title: "학습 관리",
+    description: "기술 학습 자료와 진행 상황을 관리합니다.",
+    icon: GraduationCap,
+    href: "#",
+    iconClass: "text-red-600",
+  },
+  {
+    title: "공통 컴포넌트",
+    description: "재사용 가능한 UI 컴포넌트를 관리합니다.",
+    icon: Component,
+    href: "#",
+    iconClass: "text-cyan-600",
+  },
+  {
+    title: "파일럿 프로젝트",
+    description: "신규 기술 검증을 위한 파일럿 프로젝트를 관리합니다.",
+    icon: Rocket,
+    href: "#",
+    iconClass: "text-amber-600",
   },
 ];
 
