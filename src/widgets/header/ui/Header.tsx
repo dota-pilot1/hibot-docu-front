@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useUserStore } from "@/entities/user/model/store";
 import { HeaderLoginForm } from "./HeaderLoginForm";
+import { HeaderMenu } from "./HeaderMenu";
 import { UserMenu } from "./UserMenu";
 import { useEffect, useState } from "react";
 
@@ -22,30 +23,13 @@ export const Header = () => {
         </Link>
 
         {/* Center Navigation */}
-        <nav className="flex items-center gap-8 ml-8">
-          {mounted && user && (
-            <>
-              <Link
-                href="/projects"
-                className="text-[15px] font-semibold text-gray-600 hover:text-primary transition-colors"
-              >
-                프로젝트 관리
-              </Link>
-              <Link
-                href="/posts"
-                className="text-[15px] font-semibold text-gray-600 hover:text-primary transition-colors"
-              >
-                게시판
-              </Link>
-              <Link
-                href="/users"
-                className="text-[15px] font-semibold text-gray-600 hover:text-primary transition-colors"
-              >
-                사용자
-              </Link>
-            </>
-          )}
-        </nav>
+        <div className="ml-8">
+          {mounted && user && <HeaderMenu items={[
+            { label: "프로젝트 관리", href: "/projects" },
+            { label: "게시판", href: "/posts" },
+            { label: "사용자", href: "/users" },
+          ]} />}
+        </div>
 
         {/* Right Side - User Menu or Login */}
         <div className="flex items-center gap-4">
