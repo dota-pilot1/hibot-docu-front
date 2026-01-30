@@ -6,7 +6,7 @@ import { HeaderLoginForm } from "./HeaderLoginForm";
 import { HeaderMenu } from "./HeaderMenu";
 import { UserMenu } from "./UserMenu";
 import { useEffect, useState } from "react";
-import { useSidebarStore } from "@/widgets/sidebar";
+import { sidebarStore } from "@/widgets/sidebar/model/useSidebarStore";
 import { Button } from "@/shared/ui/button";
 import { Menu } from "lucide-react";
 
@@ -27,7 +27,7 @@ export const Header = () => {
               variant="ghost"
               size="icon"
               className="lg:hidden h-8 w-8"
-              onClick={() => useSidebarStore.getState().toggle()}
+              onClick={() => sidebarStore.state.toggle()}
             >
               <Menu className="h-5 w-5" />
             </Button>
