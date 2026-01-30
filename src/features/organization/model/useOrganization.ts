@@ -82,3 +82,30 @@ export const useUpdateUserDepartment = () => {
     },
   });
 };
+
+export const useDeleteUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: number) => organizationApi.deleteUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["organization", "users"],
+      });
+    },
+  });
+};
+
+export const useUpdateUserRole = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, role }: { userId: number; role: string }) =>
+      organizationApi.updateUserRole(userId, role),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["organization", "users"],
+      });
+    },
+  });
+};

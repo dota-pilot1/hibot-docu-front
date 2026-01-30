@@ -71,4 +71,16 @@ export const organizationApi = {
     });
     return response.data;
   },
+
+  deleteUser: async (userId: number): Promise<void> => {
+    await api.delete(`/users/${userId}`);
+  },
+
+  updateUserRole: async (
+    userId: number,
+    role: string,
+  ): Promise<OrganizationUser> => {
+    const response = await api.patch(`/users/${userId}/role`, { role });
+    return response.data;
+  },
 };

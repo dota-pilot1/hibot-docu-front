@@ -1,7 +1,5 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
-import { api } from "@/shared/api";
 import { useUserStore } from "@/entities/user/model/store";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -24,7 +22,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { useOrganizationUsers } from "@/features/organization/model/useOrganization";
+import {
+  useOrganizationUsers,
+  useDeleteUser,
+  useUpdateUserRole,
+} from "@/features/organization/model/useOrganization";
 
 interface User {
   id: number;
@@ -35,9 +37,8 @@ interface User {
 export const UserList = () => {
   const { data: users, isLoading, error } = useOrganizationUsers();
   const [deleteUserId, setDeleteUserId] = useState<number | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [updatingRoleId, setUpdatingRoleId] = useState<number | null>(null);
-  const queryClient = useQueryClient();
+  const deleteUserMutation = useDeleteUser();
+  const updateUserRoleMutation = useUpdateUserRole();
 
   const currentUser = useUserStore((state) => state.user);
   const isAdmin = currentUser?.role === "ADMIN";
@@ -45,39 +46,21 @@ export const UserList = () => {
   const handleDeleteUser = async () => {
     if (!deleteUserId) return;
 
-    setIsDeleting(true);
     try {
-      await api.delete(`/users/${deleteUserId}`);
-
-      // TanStack Query 캐시 무효화 - 사이드바도 자동 업데이트
-      queryClient.invalidateQueries({
-        queryKey: ["organization", "users"],
-      });
-
+      await deleteUserMutation.mutateAsync(deleteUserId);
       setDeleteUserId(null);
       toast.success("사용자가 삭제되었습니다");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "사용자 삭제에 실패했습니다");
-    } finally {
-      setIsDeleting(false);
     }
   };
 
   const handleRoleChange = async (userId: number, newRole: string) => {
-    setUpdatingRoleId(userId);
     try {
-      await api.patch(`/users/${userId}/role`, { role: newRole });
-
-      // TanStack Query 캐시 무효화 - 사이드바도 자동 업데이트
-      queryClient.invalidateQueries({
-        queryKey: ["organization", "users"],
-      });
-
+      await updateUserRoleMutation.mutateAsync({ userId, role: newRole });
       toast.success(`권한이 ${newRole}으로 변경되었습니다`);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "권한 변경에 실패했습니다");
-    } finally {
-      setUpdatingRoleId(null);
     }
   };
 
@@ -120,9 +103,9 @@ export const UserList = () => {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
-                            disabled={updatingRoleId === user.id}
+                            disabled={updateUserRoleMutation.isPending}
                             className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-all duration-200 ${
-                              updatingRoleId === user.id
+                              updateUserRoleMutation.isPending
                                 ? "opacity-50 cursor-not-allowed"
                                 : ""
                             } ${
@@ -200,9 +183,9 @@ export const UserList = () => {
         description={`정말로 이 사용자를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`}
         variant="destructive"
         onConfirm={handleDeleteUser}
-        confirmText={isDeleting ? "삭제 중..." : "삭제"}
+        confirmText={deleteUserMutation.isPending ? "삭제 중..." : "삭제"}
         cancelText="취소"
-        disabled={isDeleting}
+        disabled={deleteUserMutation.isPending}
       />
     </>
   );
