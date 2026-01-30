@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useUserStore } from "@/entities/user/model/store";
 import { Button } from "@/shared/ui/button";
-import { User } from "lucide-react";
+import { User, Shield } from "lucide-react";
 
 export const UserMenu = () => {
   const { user, logout } = useUserStore((state) => ({
@@ -12,6 +12,8 @@ export const UserMenu = () => {
   }));
 
   if (!user) return null;
+
+  const isAdmin = user.role === "ADMIN";
 
   return (
     <div className="flex items-center gap-3">
@@ -30,9 +32,15 @@ export const UserMenu = () => {
             <User className="w-4 h-4 text-zinc-500" />
           )}
         </div>
-        <span className="hidden sm:inline-block truncate max-w-[150px]">
-          {user.email}
-        </span>
+        <div className="hidden sm:flex items-center gap-1.5">
+          <span className="truncate max-w-[150px]">{user.email}</span>
+          {isAdmin && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+              <Shield className="w-3 h-3" />
+              관리자
+            </span>
+          )}
+        </div>
       </Link>
       <Button
         variant="ghost"
