@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -11,6 +11,9 @@ import {
   useSensor,
   useSensors,
   closestCenter,
+  CollisionDetection,
+  pointerWithin,
+  rectIntersection,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -21,12 +24,14 @@ import {
   useDepartmentTree,
   useUpdateUserDepartment,
   useReorderUsers,
+  useReorderDepartments,
 } from "@/features/organization/model/useOrganization";
 import { useSidebarStore } from "../model/useSidebarStore";
 import { useUserStore } from "@/entities/user/model/store";
 import { SidebarDepartment } from "./SidebarDepartment";
 import { SidebarUserItem } from "./SidebarUserItem";
 import { DragPreview } from "./DragPreview";
+import { DepartmentDragPreview } from "./DepartmentDragPreview";
 import { Loader2, Users } from "lucide-react";
 import { useDroppable } from "@dnd-kit/core";
 import { cn } from "@/shared/lib/utils";
@@ -56,8 +61,13 @@ export const SidebarOrgTree = ({
   const { data, isLoading, error } = useDepartmentTree();
   const updateUserDepartment = useUpdateUserDepartment();
   const reorderUsers = useReorderUsers();
+  const reorderDepartments = useReorderDepartments();
 
+  // 드래그 중인 아이템
   const [activeUser, setActiveUser] = useState<OrganizationUser | null>(null);
+  const [activeDepartment, setActiveDepartment] = useState<Department | null>(
+    null,
+  );
   const [activeDepartmentId, setActiveDepartmentId] = useState<number | null>(
     null,
   );
@@ -81,6 +91,24 @@ export const SidebarOrgTree = ({
       },
     }),
   );
+
+  // 커스텀 충돌 감지: 부서 드래그 시 부서만, 사용자 드래그 시 사용자/부서 감지
+  const customCollisionDetection: CollisionDetection = (args) => {
+    const { active } = args;
+    const activeData = active.data.current;
+
+    if (activeData?.type === "dept-sortable") {
+      // 부서 드래그 시: dept- 로 시작하는 요소만 감지
+      const collisions = rectIntersection(args);
+      return collisions.filter((collision) => {
+        const id = String(collision.id);
+        return id.startsWith("dept-");
+      });
+    }
+
+    // 사용자 드래그 시: 기본 closestCenter 사용
+    return closestCenter(args);
+  };
 
   // 부서에서 사용자 목록 찾기
   const findUsersInDepartment = (
@@ -123,20 +151,76 @@ export const SidebarOrgTree = ({
     });
   };
 
+  // 부서의 형제 목록 찾기
+  const findSiblingDepartments = (
+    departments: TempDepartment[],
+    targetId: number,
+    parentId: number | null = null,
+  ): { siblings: TempDepartment[]; parentId: number | null } | null => {
+    for (const dept of departments) {
+      if (dept.id === targetId) {
+        return { siblings: departments, parentId };
+      }
+      if (dept.children.length > 0) {
+        const found = findSiblingDepartments(dept.children, targetId, dept.id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  // 부서 형제 목록 교체
+  const replaceSiblingDepartments = (
+    departments: TempDepartment[],
+    targetId: number,
+    newSiblings: TempDepartment[],
+  ): TempDepartment[] => {
+    // 현재 레벨에서 찾으면 교체
+    if (departments.some((d) => d.id === targetId)) {
+      return newSiblings;
+    }
+
+    // 자식에서 찾기
+    return departments.map((dept) => {
+      if (dept.children.length > 0) {
+        const found = dept.children.some((c) => c.id === targetId);
+        if (found) {
+          return { ...dept, children: newSiblings };
+        }
+        return {
+          ...dept,
+          children: replaceSiblingDepartments(
+            dept.children,
+            targetId,
+            newSiblings,
+          ),
+        };
+      }
+      return dept;
+    });
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    if (active.data.current?.type === "user") {
-      const user = active.data.current.user as OrganizationUser;
-      const departmentId = active.data.current.departmentId as number | null;
+    const activeData = active.data.current;
 
+    // 임시 상태 초기화
+    setTempDepartments(
+      JSON.parse(JSON.stringify(data?.departments ?? [])) as TempDepartment[],
+    );
+    setTempUnassigned([...(data?.unassignedUsers ?? [])]);
+
+    if (activeData?.type === "user") {
+      const user = activeData.user as OrganizationUser;
+      const departmentId = activeData.departmentId as number | null;
       setActiveUser(user);
       setActiveDepartmentId(departmentId);
-
-      // 임시 상태 초기화
-      setTempDepartments(
-        JSON.parse(JSON.stringify(data?.departments ?? [])) as TempDepartment[],
-      );
-      setTempUnassigned([...(data?.unassignedUsers ?? [])]);
+      setActiveDepartment(null);
+    } else if (activeData?.type === "dept-sortable") {
+      const department = activeData.department as Department;
+      setActiveDepartment(department);
+      setActiveUser(null);
+      setActiveDepartmentId(null);
     }
   };
 
@@ -147,7 +231,7 @@ export const SidebarOrgTree = ({
     const activeData = active.data.current;
     const overData = over.data.current;
 
-    // 사용자 간 순서 변경만 처리
+    // 사용자 순서 변경
     if (activeData?.type === "user" && overData?.type === "user") {
       const activeDeptId = activeData.departmentId as number | null;
       const overDeptId = overData.departmentId as number | null;
@@ -177,21 +261,63 @@ export const SidebarOrgTree = ({
         }
       }
     }
+
+    // 부서 순서 변경
+    if (
+      activeData?.type === "dept-sortable" &&
+      overData?.type === "dept-sortable"
+    ) {
+      const activeDept = activeData.department as Department;
+      const overDept = overData.department as Department;
+
+      // 같은 레벨(형제)인지 확인
+      const activeResult = findSiblingDepartments(
+        tempDepartments,
+        activeDept.id,
+      );
+      const overResult = findSiblingDepartments(tempDepartments, overDept.id);
+
+      if (
+        activeResult &&
+        overResult &&
+        activeResult.parentId === overResult.parentId
+      ) {
+        const siblings = activeResult.siblings;
+        const oldIndex = siblings.findIndex((d) => d.id === activeDept.id);
+        const newIndex = siblings.findIndex((d) => d.id === overDept.id);
+
+        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+          const newSiblings = arrayMove(siblings, oldIndex, newIndex);
+          setTempDepartments(
+            replaceSiblingDepartments(
+              tempDepartments,
+              activeDept.id,
+              newSiblings,
+            ),
+          );
+        }
+      }
+    }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
+    console.log("handleDragEnd", { active, over });
+
     const currentActiveUser = activeUser;
+    const currentActiveDept = activeDepartment;
     const currentActiveDeptId = activeDepartmentId;
     const currentTempDepartments = tempDepartments;
     const currentTempUnassigned = tempUnassigned;
 
     // 상태 초기화
     setActiveUser(null);
+    setActiveDepartment(null);
     setActiveDepartmentId(null);
 
-    if (!over || !isAdmin || !currentActiveUser) {
+    if (!over || !isAdmin) {
+      console.log("Early return: no over or not admin", { over, isAdmin });
       setTempDepartments(null);
       setTempUnassigned(null);
       return;
@@ -199,8 +325,13 @@ export const SidebarOrgTree = ({
 
     const activeData = active.data.current;
     const overData = over.data.current;
+    console.log("Data types", {
+      activeType: activeData?.type,
+      overType: overData?.type,
+    });
 
-    if (activeData?.type === "user") {
+    // 사용자 드래그 처리
+    if (activeData?.type === "user" && currentActiveUser) {
       const userId = currentActiveUser.id;
 
       // 부서 이동
@@ -225,7 +356,6 @@ export const SidebarOrgTree = ({
         const overDeptId = overData.departmentId as number | null;
 
         if (currentActiveDeptId === overDeptId) {
-          // 순서가 바뀌었으면 API 호출
           let userIds: number[] = [];
 
           if (currentActiveDeptId === null && currentTempUnassigned) {
@@ -249,6 +379,65 @@ export const SidebarOrgTree = ({
             } catch (error) {
               console.error("Failed to reorder users:", error);
             }
+          }
+        }
+      }
+    }
+
+    // 부서 드래그 처리
+    console.log("Checking dept drag", {
+      activeType: activeData?.type,
+      currentActiveDept,
+      currentTempDepartments: !!currentTempDepartments,
+    });
+    if (
+      activeData?.type === "dept-sortable" &&
+      currentActiveDept &&
+      currentTempDepartments
+    ) {
+      console.log("Department drag detected", { overData, overId: over.id });
+
+      // over.id에서 부서 ID 추출 (dept-{id} 형식)
+      const overIdStr = String(over.id);
+      let overDeptId: number | null = null;
+
+      if (overData?.type === "dept-sortable" && overData.department) {
+        overDeptId = (overData.department as Department).id;
+      } else if (overIdStr.startsWith("dept-")) {
+        overDeptId = parseInt(overIdStr.replace("dept-", ""), 10);
+      }
+
+      console.log("Over department ID", { overDeptId });
+
+      if (overDeptId !== null) {
+        const activeResult = findSiblingDepartments(
+          currentTempDepartments,
+          currentActiveDept.id,
+        );
+        const overResult = findSiblingDepartments(
+          currentTempDepartments,
+          overDeptId,
+        );
+
+        console.log("Sibling results", { activeResult, overResult });
+
+        if (
+          activeResult &&
+          overResult &&
+          activeResult.parentId === overResult.parentId
+        ) {
+          const departmentIds = activeResult.siblings.map((d) => d.id);
+          console.log("Reordering departments", {
+            departmentIds,
+            parentId: activeResult.parentId,
+          });
+          try {
+            await reorderDepartments.mutateAsync({
+              departmentIds,
+              parentId: activeResult.parentId,
+            });
+          } catch (error) {
+            console.error("Failed to reorder departments:", error);
           }
         }
       }
@@ -284,7 +473,15 @@ export const SidebarOrgTree = ({
     );
   };
 
-  const renderDepartment = (dept: TempDepartment): React.ReactNode => {
+  // 같은 레벨의 부서 ID 목록 추출
+  const getDepartmentIds = (departments: TempDepartment[]): string[] => {
+    return departments.map((d) => `dept-${d.id}`);
+  };
+
+  const renderDepartment = (
+    dept: TempDepartment,
+    siblingIds: string[],
+  ): React.ReactNode => {
     const filteredUsers = filterUsers(dept.users);
     const hasMatchingUsers = searchQuery ? filteredUsers.length > 0 : true;
     const hasMatchingChildren = dept.children.some((child) => {
@@ -296,14 +493,24 @@ export const SidebarOrgTree = ({
       return null;
     }
 
+    const childSiblingIds = getDepartmentIds(dept.children);
+
     return (
       <SidebarDepartment
         key={dept.id}
         department={dept as Department}
         collapsed={!isOpen}
         onAddSubDepartment={onAddSubDepartment}
+        isDragDisabled={!isAdmin || !!searchQuery}
       >
-        {dept.children.map((child) => renderDepartment(child))}
+        <SortableContext
+          items={childSiblingIds}
+          strategy={verticalListSortingStrategy}
+        >
+          {dept.children.map((child) =>
+            renderDepartment(child, childSiblingIds),
+          )}
+        </SortableContext>
         <SortableContext
           items={filteredUsers.map((u) => u.id)}
           strategy={verticalListSortingStrategy}
@@ -324,20 +531,28 @@ export const SidebarOrgTree = ({
   };
 
   const filteredUnassigned = filterUsers(displayUnassigned);
+  const rootDepartmentIds = getDepartmentIds(
+    displayDepartments as TempDepartment[],
+  );
 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={customCollisionDetection}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <div className="flex-1 overflow-y-auto">
         <div className="p-2 space-y-0.5">
-          {displayDepartments.map((dept) =>
-            renderDepartment(dept as TempDepartment),
-          )}
+          <SortableContext
+            items={rootDepartmentIds}
+            strategy={verticalListSortingStrategy}
+          >
+            {(displayDepartments as TempDepartment[]).map((dept) =>
+              renderDepartment(dept, rootDepartmentIds),
+            )}
+          </SortableContext>
 
           <UnassignedDropZone
             users={filteredUnassigned}
@@ -357,6 +572,9 @@ export const SidebarOrgTree = ({
 
       <DragOverlay>
         {activeUser && <DragPreview user={activeUser} />}
+        {activeDepartment && (
+          <DepartmentDragPreview department={activeDepartment} />
+        )}
       </DragOverlay>
     </DndContext>
   );

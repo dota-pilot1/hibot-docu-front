@@ -126,3 +126,20 @@ export const useReorderUsers = () => {
     },
   });
 };
+
+export const useReorderDepartments = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      departmentIds,
+      parentId,
+    }: {
+      departmentIds: number[];
+      parentId: number | null;
+    }) => organizationApi.reorderDepartments(departmentIds, parentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["organization"] });
+    },
+  });
+};

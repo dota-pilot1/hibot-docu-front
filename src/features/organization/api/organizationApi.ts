@@ -90,4 +90,11 @@ export const organizationApi = {
   ): Promise<void> => {
     await api.patch("/users/reorder", { userIds, departmentId });
   },
+
+  reorderDepartments: async (
+    departmentIds: number[],
+    parentId: number | null,
+  ): Promise<void> => {
+    await api.patch("/departments/reorder", { departmentIds, parentId });
+  },
 };
