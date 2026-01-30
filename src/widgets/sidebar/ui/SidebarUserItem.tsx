@@ -3,12 +3,13 @@
 import { cn } from "@/shared/lib/utils";
 import { User, MessageCircle, GripVertical } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { useDraggable } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { OrganizationUser } from "@/features/organization/api/organizationApi";
 
 interface SidebarUserItemProps {
   user: OrganizationUser;
+  departmentId?: number | null;
   collapsed?: boolean;
   indent?: boolean;
   isDragDisabled?: boolean;
@@ -16,28 +17,34 @@ interface SidebarUserItemProps {
 
 export const SidebarUserItem = ({
   user,
+  departmentId,
   collapsed,
   indent,
   isDragDisabled,
 }: SidebarUserItemProps) => {
   const displayName = user.name || user.email.split("@")[0];
 
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
-    useDraggable({
-      id: `user-${user.id}`,
-      data: {
-        type: "user",
-        user,
-      },
-      disabled: isDragDisabled || collapsed,
-    });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: user.id,
+    data: {
+      type: "user",
+      user,
+      departmentId,
+    },
+    disabled: isDragDisabled || collapsed,
+  });
 
-  const style = transform
-    ? {
-        transform: CSS.Translate.toString(transform),
-        zIndex: 50,
-      }
-    : undefined;
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
   const handleClick = () => {
     // TODO: 채팅 또는 프로필
@@ -76,22 +83,24 @@ export const SidebarUserItem = ({
         "hover:bg-zinc-100 dark:hover:bg-zinc-800",
         "transition-colors group",
         indent && "ml-4",
-        isDragging && "opacity-50 shadow-lg bg-white dark:bg-zinc-800",
+        isDragging && "opacity-50 shadow-lg bg-white dark:bg-zinc-800 z-50",
       )}
       onClick={handleClick}
     >
       {/* 드래그 핸들 */}
-      <div
-        {...attributes}
-        {...listeners}
-        className={cn(
-          "cursor-grab active:cursor-grabbing p-0.5 -ml-1 rounded",
-          "opacity-0 group-hover:opacity-100 transition-opacity",
-          "hover:bg-zinc-200 dark:hover:bg-zinc-700",
-        )}
-      >
-        <GripVertical className="h-4 w-4 text-zinc-400" />
-      </div>
+      {!isDragDisabled && (
+        <div
+          {...attributes}
+          {...listeners}
+          className={cn(
+            "cursor-grab active:cursor-grabbing p-0.5 -ml-1 rounded",
+            "opacity-0 group-hover:opacity-100 transition-opacity",
+            "hover:bg-zinc-200 dark:hover:bg-zinc-700",
+          )}
+        >
+          <GripVertical className="h-4 w-4 text-zinc-400" />
+        </div>
+      )}
 
       <div className="relative shrink-0">
         {user.profileImage ? (

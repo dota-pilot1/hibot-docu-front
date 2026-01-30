@@ -109,3 +109,20 @@ export const useUpdateUserRole = () => {
     },
   });
 };
+
+export const useReorderUsers = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      userIds,
+      departmentId,
+    }: {
+      userIds: number[];
+      departmentId: number | null;
+    }) => organizationApi.reorderUsers(userIds, departmentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["organization"] });
+    },
+  });
+};

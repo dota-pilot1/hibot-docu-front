@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   type ColumnDef,
@@ -24,9 +24,15 @@ export function PostList() {
   const [deleteTarget, setDeleteTarget] = useState<Post | null>(null);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   const user = useUserStore((state) => state.user);
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = isClient && user?.role === "ADMIN";
+
+  // Hydration 불일치 방지: 클라이언트에서만 isAdmin 적용
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const { mutate: deletePost, isPending: isDeleting } = useDeletePost();
 

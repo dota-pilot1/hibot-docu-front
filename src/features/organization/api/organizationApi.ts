@@ -83,4 +83,11 @@ export const organizationApi = {
     const response = await api.patch(`/users/${userId}/role`, { role });
     return response.data;
   },
+
+  reorderUsers: async (
+    userIds: number[],
+    departmentId: number | null,
+  ): Promise<void> => {
+    await api.patch("/users/reorder", { userIds, departmentId });
+  },
 };

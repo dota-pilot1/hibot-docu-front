@@ -34,12 +34,14 @@ import { noteApi } from "../api/noteApi";
 import dynamic from "next/dynamic";
 import {
   DndContext,
-  closestCenter,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   DragEndEvent,
+  DragStartEvent,
+  DragOverEvent,
+  closestCenter,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -103,9 +105,17 @@ export const NoteDetailView = () => {
 
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
+  // 드래그 중 임시 상태 (실시간 자리바꾸기용)
+  const [tempTree, setTempTree] = useState<NoteCategory[] | null>(null);
+  const [tempContents, setTempContents] = useState<NoteContent[] | null>(null);
+
+  // 드래그 중일 때는 임시 상태 사용, 아니면 원본 사용
+  const displayTree = tempTree ?? tree;
+  const displayContents = tempContents ?? contents;
+
   // Filter tree based on category parameter
-  const getFilteredTree = (): NoteCategory[] => {
-    if (categoryParam && tree.length > 0) {
+  const getFilteredTree = (sourceTree: NoteCategory[]): NoteCategory[] => {
+    if (categoryParam && sourceTree.length > 0) {
       const findCategory = (
         categories: NoteCategory[],
       ): NoteCategory | null => {
@@ -120,15 +130,15 @@ export const NoteDetailView = () => {
         }
         return null;
       };
-      const targetCategory = findCategory(tree);
+      const targetCategory = findCategory(sourceTree);
       if (targetCategory) {
         return [targetCategory];
       }
     }
-    return tree;
+    return sourceTree;
   };
 
-  const filteredTree = getFilteredTree();
+  const filteredTree = getFilteredTree(displayTree);
   const parentCategory = filteredTree[0] || null;
 
   // Modal states
@@ -258,30 +268,106 @@ export const NoteDetailView = () => {
     }),
   );
 
+  // 트리에서 형제 노드 찾기 (재귀)
+  const findSiblings = (
+    nodes: NoteCategory[],
+    targetId: number,
+  ): NoteCategory[] | null => {
+    for (const node of nodes) {
+      if (node.id === targetId) return nodes;
+      if (node.children) {
+        const found = findSiblings(node.children, targetId);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  // 트리에서 형제 노드 교체 (재귀, 불변성 유지)
+  const replaceSiblings = (
+    nodes: NoteCategory[],
+    targetId: number,
+    newSiblings: NoteCategory[],
+  ): NoteCategory[] => {
+    // 현재 레벨에서 찾으면 교체
+    if (nodes.some((n) => n.id === targetId)) {
+      return newSiblings;
+    }
+
+    // 자식에서 찾기
+    return nodes.map((node) => {
+      if (node.children) {
+        const found = node.children.some((c) => c.id === targetId);
+        if (found) {
+          return { ...node, children: newSiblings };
+        }
+        return {
+          ...node,
+          children: replaceSiblings(node.children, targetId, newSiblings),
+        };
+      }
+      return node;
+    });
+  };
+
+  // === Category 드래그 핸들러 ===
+  const handleCategoryDragStart = (event: DragStartEvent) => {
+    // 드래그 시작 시 현재 트리를 임시 상태로 복사
+    setTempTree(JSON.parse(JSON.stringify(tree)));
+  };
+
+  const handleCategoryDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over || !tempTree || active.id === over.id) return;
+
+    const activeId = active.id as number;
+    const overId = over.id as number;
+
+    // 드래그 중인 아이템의 형제 노드 찾기
+    const activeSiblings = findSiblings(tempTree, activeId);
+    if (!activeSiblings) return;
+
+    // over 아이템이 드래그 중인 아이템과 같은 형제 그룹인지 확인
+    const overSiblings = findSiblings(tempTree, overId);
+    if (!overSiblings) return;
+
+    // 형제 그룹이 다르면 무시 (다른 레벨로 이동 불가)
+    if (activeSiblings !== overSiblings) return;
+
+    const oldIndex = activeSiblings.findIndex((s) => s.id === activeId);
+    const newIndex = activeSiblings.findIndex((s) => s.id === overId);
+
+    if (newIndex === -1 || oldIndex === newIndex) return;
+
+    // 실시간으로 순서 변경
+    const newSiblings = arrayMove(activeSiblings, oldIndex, newIndex);
+    const newTree = replaceSiblings(tempTree, activeId, newSiblings);
+    setTempTree(newTree);
+  };
+
   const handleCategoryDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
 
-    const findSiblings = (nodes: NoteCategory[]): NoteCategory[] | null => {
-      for (const node of nodes) {
-        if (node.id === active.id) return nodes;
-        if (node.children) {
-          const found = findSiblings(node.children);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
+    // 드래그 취소 또는 같은 위치에 드롭
+    if (!over || active.id === over.id) {
+      setTempTree(null);
+      return;
+    }
 
-    const siblings = findSiblings(tree);
-    if (!siblings) return;
+    // 현재 tempTree 기준으로 API 호출
+    if (!tempTree) {
+      setTempTree(null);
+      return;
+    }
 
-    const oldIndex = siblings.findIndex((s) => s.id === active.id);
-    const newIndex = siblings.findIndex((s) => s.id === over.id);
+    const activeId = active.id as number;
+    const siblings = findSiblings(tempTree, activeId);
+    if (!siblings) {
+      setTempTree(null);
+      return;
+    }
 
-    const newOrder = arrayMove(siblings, oldIndex, newIndex);
-    const categoryIds = newOrder.map((c) => c.id);
-
+    const categoryIds = siblings.map((c) => c.id);
     const parentId = siblings[0].parentId;
 
     try {
@@ -289,153 +375,182 @@ export const NoteDetailView = () => {
       refetchTree();
     } catch (error) {
       console.error("Failed to reorder categories:", error);
+    } finally {
+      setTempTree(null);
     }
+  };
+
+  // === Content 드래그 핸들러 ===
+  const handleContentDragStart = (event: DragStartEvent) => {
+    // 드래그 시작 시 현재 콘텐츠를 임시 상태로 복사
+    setTempContents([...contents]);
+  };
+
+  const handleContentDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over || !tempContents || active.id === over.id) return;
+
+    const oldIndex = tempContents.findIndex((c) => c.id === active.id);
+    const newIndex = tempContents.findIndex((c) => c.id === over.id);
+
+    if (newIndex === -1 || oldIndex === newIndex) return;
+
+    // 실시간으로 순서 변경
+    const newContents = arrayMove(tempContents, oldIndex, newIndex);
+    setTempContents(newContents);
   };
 
   const handleContentDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
 
-    if (!selectedCategory) return;
+    // 드래그 취소 또는 같은 위치에 드롭
+    if (!over || active.id === over.id) {
+      setTempContents(null);
+      return;
+    }
 
-    const oldIndex = contents.findIndex((c) => c.id === active.id);
-    const newIndex = contents.findIndex((c) => c.id === over.id);
+    if (!selectedCategory || !tempContents) {
+      setTempContents(null);
+      return;
+    }
 
-    const newOrder = arrayMove(contents, oldIndex, newIndex);
-    const contentIds = newOrder.map((c) => c.id);
+    const contentIds = tempContents.map((c) => c.id);
 
     try {
       await noteApi.reorderContents(selectedCategory, contentIds);
       refetchContents();
     } catch (error) {
       console.error("Failed to reorder contents:", error);
+    } finally {
+      setTempContents(null);
     }
   };
 
-  const renderTree = (categories: NoteCategory[]) => {
-    return (
-      <SortableContext
-        items={categories.map((c) => c.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        {categories.map((cat) => (
-          <div key={cat.id} className="my-1">
-            <SortableTreeItem id={cat.id} isAdminMode={isAdminMode}>
-              {({ attributes, listeners }) => (
-                <div
-                  style={{ marginLeft: `${cat.depth * 20}px` }}
-                  className={`group flex items-center gap-1 rounded-md transition-colors ${selectedCategory === cat.id ? "bg-blue-100" : "hover:bg-gray-100"}`}
-                >
-                  {cat.children && cat.children.length > 0 ? (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => toggleExpand(cat.id)}
-                      className="h-8 w-6 p-0 hover:bg-transparent shrink-0"
-                    >
-                      {expandedIds.has(cat.id) ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </Button>
-                  ) : (
-                    <div className="w-6 shrink-0" />
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className={`flex-1 justify-start h-8 px-2 hover:bg-transparent ${selectedCategory === cat.id ? "text-blue-900" : ""}`}
-                  >
-                    {cat.children && cat.children.length > 0 ? (
-                      expandedIds.has(cat.id) ? (
-                        <FolderOpen className="h-4 w-4 mr-2 text-blue-500" />
-                      ) : (
-                        <Folder className="h-4 w-4 mr-2 text-blue-500" />
-                      )
-                    ) : (
-                      <div className="mr-2">
-                        <ContentTypeIcon
-                          type={cat.noteType}
-                          className="h-4 w-4 text-gray-400"
-                        />
-                      </div>
-                    )}
-                    <span className="truncate">{cat.name}</span>
-                  </Button>
-
-                  {isAdminMode && (
-                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity pr-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCategoryModalMode("create");
-                          setCategoryForm({
-                            name: "",
-                            parentId: cat.id,
-                            noteType: "NOTE",
-                          });
-                          setIsCategoryModalOpen(true);
-                        }}
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCategoryModalMode("edit");
-                          setEditingCategory(cat);
-                          setCategoryForm({
-                            name: cat.name,
-                            parentId: cat.parentId,
-                            noteType: cat.noteType,
-                          });
-                          setIsCategoryModalOpen(true);
-                        }}
-                      >
-                        <Pencil className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCategoryToDelete(cat.id);
-                          setConfirmDeleteCategoryOpen(true);
-                        }}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                      <div
-                        {...attributes}
-                        {...listeners}
-                        className="h-7 w-7 flex items-center justify-center hover:bg-gray-200/50 rounded cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 transition-colors"
-                        title="Reorder"
-                      >
-                        <GripVertical className="h-4 w-4" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </SortableTreeItem>
-            {cat.children &&
-              cat.children.length > 0 &&
-              expandedIds.has(cat.id) &&
-              renderTree(cat.children)}
-          </div>
-        ))}
-      </SortableContext>
-    );
+  // 트리를 플랫 배열로 변환 (expanded 상태 고려)
+  const flattenTree = (
+    categories: NoteCategory[],
+    result: NoteCategory[] = [],
+  ): NoteCategory[] => {
+    for (const cat of categories) {
+      result.push(cat);
+      if (cat.children && cat.children.length > 0 && expandedIds.has(cat.id)) {
+        flattenTree(cat.children, result);
+      }
+    }
+    return result;
   };
+
+  const flatCategories = flattenTree(filteredTree);
+
+  const renderTreeItem = (cat: NoteCategory) => (
+    <SortableTreeItem key={cat.id} id={cat.id} isAdminMode={isAdminMode}>
+      {({ attributes, listeners }) => (
+        <div
+          style={{ marginLeft: `${cat.depth * 20}px` }}
+          className={`group flex items-center gap-1 rounded-md transition-colors ${selectedCategory === cat.id ? "bg-blue-100" : "hover:bg-gray-100"}`}
+        >
+          {cat.children && cat.children.length > 0 ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => toggleExpand(cat.id)}
+              className="h-8 w-6 p-0 hover:bg-transparent shrink-0"
+            >
+              {expandedIds.has(cat.id) ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </Button>
+          ) : (
+            <div className="w-6 shrink-0" />
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedCategory(cat.id)}
+            className={`flex-1 justify-start h-8 px-2 hover:bg-transparent ${selectedCategory === cat.id ? "text-blue-900" : ""}`}
+          >
+            {cat.children && cat.children.length > 0 ? (
+              expandedIds.has(cat.id) ? (
+                <FolderOpen className="h-4 w-4 mr-2 text-blue-500" />
+              ) : (
+                <Folder className="h-4 w-4 mr-2 text-blue-500" />
+              )
+            ) : (
+              <div className="mr-2">
+                <ContentTypeIcon
+                  type={cat.noteType}
+                  className="h-4 w-4 text-gray-400"
+                />
+              </div>
+            )}
+            <span className="truncate">{cat.name}</span>
+          </Button>
+
+          {isAdminMode && (
+            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity pr-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCategoryModalMode("create");
+                  setCategoryForm({
+                    name: "",
+                    parentId: cat.id,
+                    noteType: "NOTE",
+                  });
+                  setIsCategoryModalOpen(true);
+                }}
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCategoryModalMode("edit");
+                  setEditingCategory(cat);
+                  setCategoryForm({
+                    name: cat.name,
+                    parentId: cat.parentId,
+                    noteType: cat.noteType,
+                  });
+                  setIsCategoryModalOpen(true);
+                }}
+              >
+                <Pencil className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-destructive hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCategoryToDelete(cat.id);
+                  setConfirmDeleteCategoryOpen(true);
+                }}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+              <div
+                {...attributes}
+                {...listeners}
+                className="h-7 w-7 flex items-center justify-center hover:bg-gray-200/50 rounded cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 transition-colors"
+                title="Reorder"
+              >
+                <GripVertical className="h-4 w-4" />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </SortableTreeItem>
+  );
 
   return (
     <div className="space-y-4">
@@ -536,9 +651,16 @@ export const NoteDetailView = () => {
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
+                  onDragStart={handleCategoryDragStart}
+                  onDragOver={handleCategoryDragOver}
                   onDragEnd={handleCategoryDragEnd}
                 >
-                  {renderTree(filteredTree)}
+                  <SortableContext
+                    items={flatCategories.map((c) => c.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {flatCategories.map((cat) => renderTreeItem(cat))}
+                  </SortableContext>
                 </DndContext>
               </div>
             )}
@@ -604,13 +726,15 @@ export const NoteDetailView = () => {
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
+                  onDragStart={handleContentDragStart}
+                  onDragOver={handleContentDragOver}
                   onDragEnd={handleContentDragEnd}
                 >
                   <SortableContext
-                    items={contents.map((c) => c.id)}
+                    items={displayContents.map((c) => c.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    {contents.map((content) => (
+                    {displayContents.map((content) => (
                       <SortableContentItem
                         key={content.id}
                         id={content.id}
