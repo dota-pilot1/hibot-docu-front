@@ -14,8 +14,14 @@ import {
 } from "@/shared/ui/table";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, Shield, User as UserIcon } from "lucide-react";
 import { AlertDialog } from "@/shared/ui/dialogs/AlertDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu";
 
 interface User {
   id: number;
@@ -67,6 +73,19 @@ export const UserList = () => {
     }
   };
 
+  const handleRoleChange = async (userId: number, newRole: string) => {
+    try {
+      await api.patch(`/users/${userId}/role`, { role: newRole });
+      setUsers(
+        users.map((user) =>
+          user.id === userId ? { ...user, role: newRole } : user,
+        ),
+      );
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to update user role");
+    }
+  };
+
   if (isLoading) return <p className="text-center p-8">Loading users...</p>;
   if (error) return <p className="text-center p-8 text-destructive">{error}</p>;
 
@@ -99,15 +118,57 @@ export const UserList = () => {
                   <TableCell className="font-medium">{user.id}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.role === "ADMIN"
-                          ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
-                          : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
-                      }`}
-                    >
-                      {user.role || "USER"}
-                    </span>
+                    {isAdmin ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${
+                              user.role === "ADMIN"
+                                ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                                : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                            }`}
+                          >
+                            {user.role === "ADMIN" ? (
+                              <Shield className="w-3 h-3" />
+                            ) : (
+                              <UserIcon className="w-3 h-3" />
+                            )}
+                            {user.role || "USER"}
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem
+                            onClick={() => handleRoleChange(user.id, "USER")}
+                            disabled={user.id === currentUser?.userId}
+                          >
+                            <UserIcon className="w-4 h-4 mr-2" />
+                            USER
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleRoleChange(user.id, "ADMIN")}
+                            disabled={user.id === currentUser?.userId}
+                          >
+                            <Shield className="w-4 h-4 mr-2" />
+                            ADMIN
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : (
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          user.role === "ADMIN"
+                            ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                            : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                        }`}
+                      >
+                        {user.role === "ADMIN" ? (
+                          <Shield className="w-3 h-3" />
+                        ) : (
+                          <UserIcon className="w-3 h-3" />
+                        )}
+                        {user.role || "USER"}
+                      </span>
+                    )}
                   </TableCell>
                   {isAdmin && (
                     <TableCell className="text-right">
