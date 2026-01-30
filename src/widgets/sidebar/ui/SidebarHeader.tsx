@@ -18,7 +18,8 @@ export const SidebarHeader = ({
   onSearchChange,
   onAddDepartment,
 }: SidebarHeaderProps) => {
-  const { isOpen, toggle } = useSidebarStore();
+  const isOpen = useSidebarStore((state) => state.isOpen);
+  const toggle = useSidebarStore((state) => state.toggle);
   const user = useUserStore((state) => state.user);
   const isAdmin = user?.role === "ADMIN";
 
