@@ -78,7 +78,10 @@ export const SidebarDepartment = ({
           "flex items-center gap-1 py-1.5 px-2 cursor-pointer rounded-md",
           "hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors",
         )}
-        style={{ paddingLeft: `${8 + department.depth * 12}px` }}
+        style={{
+          paddingLeft:
+            department.depth > 0 ? `${8 + department.depth * 12}px` : undefined,
+        }}
       >
         <div
           className="flex items-center gap-1 flex-1 min-w-0"
