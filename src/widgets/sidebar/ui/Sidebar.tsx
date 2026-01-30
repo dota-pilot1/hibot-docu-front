@@ -9,9 +9,11 @@ import { cn } from "@/shared/lib/utils";
 import { useUserStore } from "@/entities/user/model/store";
 import type { Department } from "@/features/organization/api/organizationApi";
 
-export const Sidebar = () => {
-  const isOpen = useSidebarStore((state) => state.isOpen);
-  const close = useSidebarStore((state) => state.close);
+interface SidebarProps {
+  className?: string;
+}
+
+export const Sidebar = ({ className }: SidebarProps) => {
   const user = useUserStore((state) => state.user);
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
@@ -34,27 +36,11 @@ export const Sidebar = () => {
 
   return (
     <>
-      {/* 모바일 오버레이 */}
       <div
         className={cn(
-          "fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity",
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none",
-        )}
-        onClick={close}
-      />
-
-      {/* 사이드바 */}
-      <aside
-        className={cn(
-          "fixed top-12 left-0 h-[calc(100vh-48px)] bg-white dark:bg-zinc-900",
-          "border-r border-zinc-200 dark:border-zinc-800",
-          "transition-all duration-300 ease-in-out z-40",
-          "flex flex-col overflow-hidden",
-          // 데스크톱: 항상 표시
-          "lg:relative lg:top-0 lg:h-full lg:z-0",
-          isOpen ? "w-64" : "w-0 lg:w-16",
-          // 모바일: 숨김
-          !isOpen && "max-lg:-translate-x-full",
+          "flex flex-col h-full w-full bg-white dark:bg-zinc-900",
+          "overflow-hidden",
+          className,
         )}
       >
         <SidebarHeader
@@ -66,7 +52,7 @@ export const Sidebar = () => {
           searchQuery={searchQuery}
           onAddSubDepartment={handleAddDepartment}
         />
-      </aside>
+      </div>
 
       {/* 부서 추가 다이얼로그 */}
       <AddDepartmentDialog
@@ -74,6 +60,47 @@ export const Sidebar = () => {
         onOpenChange={setAddDialogOpen}
         parentDepartment={parentDepartment}
       />
+    </>
+  );
+};
+
+/** 모바일 사이드바 (오버레이 포함) */
+export const MobileSidebar = () => {
+  const isOpen = useSidebarStore((state) => state.isOpen);
+  const close = useSidebarStore((state) => state.close);
+  const user = useUserStore((state) => state.user);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || !user) return null;
+
+  return (
+    <>
+      {/* 모바일 오버레이 */}
+      <div
+        className={cn(
+          "fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity",
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none",
+        )}
+        onClick={close}
+      />
+
+      {/* 모바일 사이드바 */}
+      <aside
+        className={cn(
+          "fixed top-12 left-0 h-[calc(100vh-48px)] bg-white dark:bg-zinc-900",
+          "border-r border-zinc-200 dark:border-zinc-800",
+          "transition-all duration-300 ease-in-out z-40",
+          "flex flex-col overflow-hidden",
+          "lg:hidden",
+          isOpen ? "w-64" : "w-0 -translate-x-full",
+        )}
+      >
+        <Sidebar />
+      </aside>
     </>
   );
 };

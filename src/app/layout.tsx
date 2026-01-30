@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/widgets/header/ui/Header";
-import { Sidebar } from "@/widgets/sidebar";
+import { ResizableLayout } from "@/widgets/sidebar";
 import { AuthInitializer } from "./AuthInitializer";
 import { QueryProvider } from "./QueryProvider";
 import { Toaster } from "sonner";
@@ -35,11 +35,8 @@ export default function RootLayout({
         <QueryProvider>
           <AuthInitializer>
             <Header />
-            <div className="flex pt-12 min-h-screen">
-              <Sidebar />
-              <main className="flex-1 bg-[#F8F9FA] dark:bg-zinc-950">
-                {children}
-              </main>
+            <div className="flex pt-12 h-screen">
+              <ResizableLayout>{children}</ResizableLayout>
             </div>
           </AuthInitializer>
         </QueryProvider>

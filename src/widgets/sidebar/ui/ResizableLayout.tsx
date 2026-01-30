@@ -1,0 +1,125 @@
+"use client";
+
+import { useCallback, useRef, useState, useEffect } from "react";
+import { useSidebarStore } from "../model/useSidebarStore";
+import { Sidebar, MobileSidebar } from "./Sidebar";
+import { useUserStore } from "@/entities/user/model/store";
+import { cn } from "@/shared/lib/utils";
+
+interface ResizableLayoutProps {
+  children: React.ReactNode;
+}
+
+const DEFAULT_SIDEBAR_WIDTH = 256; // 16rem = 256px
+const MIN_SIDEBAR_WIDTH = 200;
+const MAX_SIDEBAR_WIDTH = 400;
+
+export const ResizableLayout = ({ children }: ResizableLayoutProps) => {
+  const isOpen = useSidebarStore((state) => state.isOpen);
+  const sidebarSize = useSidebarStore((state) => state.sidebarSize);
+  const setSidebarSize = useSidebarStore((state) => state.setSidebarSize);
+  const user = useUserStore((state) => state.user);
+  const [mounted, setMounted] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // sidebarSize를 픽셀로 사용 (기존 %에서 px로 변환)
+  const sidebarWidth =
+    sidebarSize >= MIN_SIDEBAR_WIDTH && sidebarSize <= MAX_SIDEBAR_WIDTH
+      ? sidebarSize
+      : DEFAULT_SIDEBAR_WIDTH;
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  }, []);
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isResizing) return;
+
+      const newWidth = e.clientX;
+      if (newWidth >= MIN_SIDEBAR_WIDTH && newWidth <= MAX_SIDEBAR_WIDTH) {
+        setSidebarSize(newWidth);
+      }
+    },
+    [isResizing, setSidebarSize],
+  );
+
+  const handleMouseUp = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isResizing, handleMouseMove, handleMouseUp]);
+
+  // 로그인하지 않은 경우 사이드바 없이 렌더링
+  if (!mounted || !user) {
+    return (
+      <main className="flex-1 bg-[#F8F9FA] dark:bg-zinc-950">{children}</main>
+    );
+  }
+
+  return (
+    <>
+      {/* 모바일 사이드바 (오버레이) */}
+      <MobileSidebar />
+
+      {/* 데스크톱 레이아웃 */}
+      <div className="hidden lg:flex flex-1 overflow-hidden">
+        {/* 사이드바 */}
+        <div
+          ref={sidebarRef}
+          className={cn(
+            "h-full border-r border-zinc-200 dark:border-zinc-800 shrink-0",
+            "transition-all duration-300 ease-in-out",
+          )}
+          style={{ width: isOpen ? sidebarWidth : 64 }}
+        >
+          <Sidebar />
+        </div>
+
+        {/* 리사이즈 핸들 (열려있을 때만) */}
+        {isOpen && (
+          <div
+            className={cn(
+              "w-1 h-full cursor-col-resize shrink-0",
+              "bg-zinc-200 dark:bg-zinc-700",
+              "hover:bg-blue-400 dark:hover:bg-blue-500",
+              "transition-colors",
+              isResizing && "bg-blue-400 dark:bg-blue-500",
+            )}
+            onMouseDown={handleMouseDown}
+          />
+        )}
+
+        {/* 메인 콘텐츠 */}
+        <main className="flex-1 bg-[#F8F9FA] dark:bg-zinc-950 overflow-auto">
+          {children}
+        </main>
+      </div>
+
+      {/* 모바일: 메인 콘텐츠만 */}
+      <main className="flex-1 lg:hidden bg-[#F8F9FA] dark:bg-zinc-950 overflow-auto">
+        {children}
+      </main>
+    </>
+  );
+};

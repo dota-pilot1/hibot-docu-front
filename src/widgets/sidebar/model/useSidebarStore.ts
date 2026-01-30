@@ -2,24 +2,32 @@ import { Store, useStore } from "@tanstack/react-store";
 
 export interface SidebarState {
   isOpen: boolean;
+  sidebarSize: number;
   toggle: () => void;
   open: () => void;
   close: () => void;
+  setSidebarSize: (size: number) => void;
 }
 
 // Load persisted state from localStorage
-const loadPersistedState = (): { isOpen: boolean } => {
-  if (typeof window === "undefined") return { isOpen: true };
+const loadPersistedState = (): { isOpen: boolean; sidebarSize: number } => {
+  if (typeof window === "undefined") return { isOpen: true, sidebarSize: 256 };
   try {
     const stored = localStorage.getItem("sidebar-storage");
     if (stored) {
       const parsed = JSON.parse(stored);
-      return { isOpen: parsed.state?.isOpen ?? true };
+      // 기존 % 값(20)이 저장되어 있으면 기본 px 값으로 변환
+      const storedSize = parsed.state?.sidebarSize ?? 256;
+      const sidebarSize = storedSize < 100 ? 256 : storedSize;
+      return {
+        isOpen: parsed.state?.isOpen ?? true,
+        sidebarSize,
+      };
     }
   } catch (e) {
     console.error("Failed to load sidebar state", e);
   }
-  return { isOpen: true };
+  return { isOpen: true, sidebarSize: 256 };
 };
 
 // Create the sidebar store
@@ -34,6 +42,9 @@ export const sidebarStore = new Store<SidebarState>({
   close: () => {
     sidebarStore.setState((state) => ({ ...state, isOpen: false }));
   },
+  setSidebarSize: (size: number) => {
+    sidebarStore.setState((state) => ({ ...state, sidebarSize: size }));
+  },
 });
 
 // Subscribe to changes to persist state
@@ -45,6 +56,7 @@ if (typeof window !== "undefined") {
       JSON.stringify({
         state: {
           isOpen: state.isOpen,
+          sidebarSize: state.sidebarSize,
         },
       }),
     );
