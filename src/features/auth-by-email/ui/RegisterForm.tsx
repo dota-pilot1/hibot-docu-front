@@ -15,10 +15,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/ui/card";
-import { api } from "@/shared/api";
 import { userStore } from "@/entities/user/model/store";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useRegister } from "../model/useAuth";
 
 const registerSchema = z
   .object({
@@ -42,8 +42,8 @@ interface PasswordRequirement {
 
 export const RegisterForm = () => {
   const router = useRouter();
+  const registerMutation = useRegister();
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordValue, setPasswordValue] = useState("");
@@ -84,24 +84,22 @@ export const RegisterForm = () => {
   ];
 
   const onSubmit = async (data: RegisterFormValues) => {
-    setIsLoading(true);
     setError(null);
-    try {
-      await api.post("/auth/register", {
-        email: data.email,
-        password: data.password,
-      });
-
-      // After registration, redirect to home and trigger login focus
-      userStore.state.triggerLoginFocus();
-      router.push("/");
-    } catch (err: any) {
-      setError(
-        err.response?.data?.message || "Registration failed. Please try again.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    registerMutation.mutate(
+      { email: data.email, password: data.password },
+      {
+        onSuccess: () => {
+          userStore.state.triggerLoginFocus();
+          router.push("/");
+        },
+        onError: (err: any) => {
+          setError(
+            err.response?.data?.message ||
+              "Registration failed. Please try again.",
+          );
+        },
+      },
+    );
   };
 
   return (
@@ -234,8 +232,12 @@ export const RegisterForm = () => {
         </CardContent>
 
         <CardFooter className="flex flex-col gap-2.5 pt-1 pb-5">
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "계정 생성 중..." : "시작하기"}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={registerMutation.isPending}
+          >
+            {registerMutation.isPending ? "계정 생성 중..." : "시작하기"}
           </Button>
 
           <div className="text-center text-xs text-muted-foreground">

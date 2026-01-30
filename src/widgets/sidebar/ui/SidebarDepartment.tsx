@@ -38,6 +38,7 @@ export const SidebarDepartment = ({
   onAddSubDepartment,
 }: SidebarDepartmentProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const user = useUserStore((state) => state.user);
   const isAdmin = user?.role === "ADMIN";
   const deleteDepartment = useDeleteDepartment();
@@ -122,12 +123,17 @@ export const SidebarDepartment = ({
         )}
 
         {isAdmin && (
-          <DropdownMenu>
+          <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6 opacity-0 group-hover/dept:opacity-100 transition-opacity shrink-0"
+                className={cn(
+                  "h-6 w-6 transition-opacity shrink-0",
+                  isMenuOpen
+                    ? "opacity-100"
+                    : "opacity-0 group-hover/dept:opacity-100",
+                )}
                 onClick={(e) => e.stopPropagation()}
               >
                 <MoreHorizontal className="h-4 w-4" />
