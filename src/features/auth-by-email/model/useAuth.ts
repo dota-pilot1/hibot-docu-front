@@ -23,8 +23,13 @@ export const useLogin = () => {
       // 토큰 저장
       localStorage.setItem("token", response.access_token);
 
-      // 유저 스토어 업데이트
-      userStore.state.setUser(response.user);
+      // 유저 스토어 업데이트 (API 응답의 id를 userId로 변환)
+      userStore.state.setUser({
+        userId: response.user.id,
+        email: response.user.email,
+        role: response.user.role,
+        profileImage: response.user.profileImage,
+      });
 
       // 관련 캐시 갱신
       queryClient.invalidateQueries({ queryKey: ["organization"] });
