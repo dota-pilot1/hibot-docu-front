@@ -5,6 +5,7 @@ import { Header } from "@/widgets/header/ui/Header";
 import { Sidebar } from "@/widgets/sidebar";
 import { AuthInitializer } from "./AuthInitializer";
 import { QueryProvider } from "./QueryProvider";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,6 +43,7 @@ export default function RootLayout({
             </div>
           </AuthInitializer>
         </QueryProvider>
+        <Toaster position="bottom-right" richColors />
       </body>
     </html>
   );

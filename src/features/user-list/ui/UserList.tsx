@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/shared/api";
 import { useUserStore } from "@/entities/user/model/store";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -35,6 +36,7 @@ export const UserList = () => {
   const [error, setError] = useState<string | null>(null);
   const [deleteUserId, setDeleteUserId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [updatingRoleId, setUpdatingRoleId] = useState<number | null>(null);
 
   const currentUser = useUserStore((state) => state.user);
   const isAdmin = currentUser?.role === "ADMIN";
@@ -66,14 +68,16 @@ export const UserList = () => {
       await api.delete(`/users/${deleteUserId}`);
       setUsers(users.filter((user) => user.id !== deleteUserId));
       setDeleteUserId(null);
+      toast.success("사용자가 삭제되었습니다");
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to delete user");
+      toast.error(err.response?.data?.message || "사용자 삭제에 실패했습니다");
     } finally {
       setIsDeleting(false);
     }
   };
 
   const handleRoleChange = async (userId: number, newRole: string) => {
+    setUpdatingRoleId(userId);
     try {
       await api.patch(`/users/${userId}/role`, { role: newRole });
       setUsers(
@@ -81,8 +85,11 @@ export const UserList = () => {
           user.id === userId ? { ...user, role: newRole } : user,
         ),
       );
+      toast.success(`권한이 ${newRole}으로 변경되었습니다`);
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to update user role");
+      toast.error(err.response?.data?.message || "권한 변경에 실패했습니다");
+    } finally {
+      setUpdatingRoleId(null);
     }
   };
 
@@ -122,7 +129,12 @@ export const UserList = () => {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
-                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${
+                            disabled={updatingRoleId === user.id}
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-all duration-200 ${
+                              updatingRoleId === user.id
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                            } ${
                               user.role === "ADMIN"
                                 ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
                                 : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
