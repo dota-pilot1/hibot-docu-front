@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/shared/api";
 import { useUserStore } from "@/entities/user/model/store";
 import { toast } from "sonner";
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -23,6 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { useOrganizationUsers } from "@/features/organization/model/useOrganization";
 
 interface User {
   id: number;
@@ -31,34 +33,14 @@ interface User {
 }
 
 export const UserList = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: users, isLoading, error } = useOrganizationUsers();
   const [deleteUserId, setDeleteUserId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [updatingRoleId, setUpdatingRoleId] = useState<number | null>(null);
+  const queryClient = useQueryClient();
 
   const currentUser = useUserStore((state) => state.user);
   const isAdmin = currentUser?.role === "ADMIN";
-
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = () => {
-    setIsLoading(true);
-    api
-      .get("/users")
-      .then((res) => {
-        setUsers(res.data);
-      })
-      .catch((err) => {
-        setError(err.response?.data?.message || "Failed to load users");
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  };
 
   const handleDeleteUser = async () => {
     if (!deleteUserId) return;
@@ -66,7 +48,12 @@ export const UserList = () => {
     setIsDeleting(true);
     try {
       await api.delete(`/users/${deleteUserId}`);
-      setUsers(users.filter((user) => user.id !== deleteUserId));
+
+      // TanStack Query 캐시 무효화 - 사이드바도 자동 업데이트
+      queryClient.invalidateQueries({
+        queryKey: ["organization", "users"],
+      });
+
       setDeleteUserId(null);
       toast.success("사용자가 삭제되었습니다");
     } catch (err: any) {
@@ -80,11 +67,12 @@ export const UserList = () => {
     setUpdatingRoleId(userId);
     try {
       await api.patch(`/users/${userId}/role`, { role: newRole });
-      setUsers(
-        users.map((user) =>
-          user.id === userId ? { ...user, role: newRole } : user,
-        ),
-      );
+
+      // TanStack Query 캐시 무효화 - 사이드바도 자동 업데이트
+      queryClient.invalidateQueries({
+        queryKey: ["organization", "users"],
+      });
+
       toast.success(`권한이 ${newRole}으로 변경되었습니다`);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "권한 변경에 실패했습니다");
@@ -94,7 +82,10 @@ export const UserList = () => {
   };
 
   if (isLoading) return <p className="text-center p-8">Loading users...</p>;
-  if (error) return <p className="text-center p-8 text-destructive">{error}</p>;
+  if (error)
+    return (
+      <p className="text-center p-8 text-destructive">Failed to load users</p>
+    );
 
   return (
     <>
@@ -120,7 +111,7 @@ export const UserList = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
+              {users?.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.id}</TableCell>
                   <TableCell>{user.email}</TableCell>
