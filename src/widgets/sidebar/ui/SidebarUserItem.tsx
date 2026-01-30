@@ -8,9 +8,14 @@ import type { OrganizationUser } from "@/features/organization/api/organizationA
 interface SidebarUserItemProps {
   user: OrganizationUser;
   collapsed?: boolean;
+  indent?: boolean;
 }
 
-export const SidebarUserItem = ({ user, collapsed }: SidebarUserItemProps) => {
+export const SidebarUserItem = ({
+  user,
+  collapsed,
+  indent,
+}: SidebarUserItemProps) => {
   const displayName = user.name || user.email.split("@")[0];
 
   const handleClick = () => {
@@ -46,7 +51,8 @@ export const SidebarUserItem = ({ user, collapsed }: SidebarUserItemProps) => {
       className={cn(
         "flex items-center gap-3 p-2 rounded-lg cursor-pointer",
         "hover:bg-zinc-100 dark:hover:bg-zinc-800",
-        "transition-colors group"
+        "transition-colors group",
+        indent && "ml-4",
       )}
       onClick={handleClick}
     >
@@ -73,7 +79,9 @@ export const SidebarUserItem = ({ user, collapsed }: SidebarUserItemProps) => {
             </span>
           )}
         </div>
-        <span className="text-xs text-zinc-500 truncate block">{user.email}</span>
+        <span className="text-xs text-zinc-500 truncate block">
+          {user.email}
+        </span>
       </div>
 
       <Button

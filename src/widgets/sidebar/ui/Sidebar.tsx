@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSidebarStore } from "../model/useSidebarStore";
 import { SidebarHeader } from "./SidebarHeader";
-import { SidebarUserList } from "./SidebarUserList";
+import { SidebarOrgTree } from "./SidebarOrgTree";
 import { cn } from "@/shared/lib/utils";
 import { useUserStore } from "@/entities/user/model/store";
 
@@ -27,7 +27,7 @@ export const Sidebar = () => {
       <div
         className={cn(
           "fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity",
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none",
         )}
         onClick={close}
       />
@@ -43,11 +43,14 @@ export const Sidebar = () => {
           "lg:relative lg:top-0 lg:h-full lg:z-0",
           isOpen ? "w-64" : "w-0 lg:w-16",
           // 모바일: 숨김
-          !isOpen && "max-lg:-translate-x-full"
+          !isOpen && "max-lg:-translate-x-full",
         )}
       >
-        <SidebarHeader searchQuery={searchQuery} onSearchChange={setSearchQuery} />
-        <SidebarUserList searchQuery={searchQuery} />
+        <SidebarHeader
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
+        <SidebarOrgTree searchQuery={searchQuery} />
       </aside>
     </>
   );
