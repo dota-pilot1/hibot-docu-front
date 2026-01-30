@@ -109,11 +109,10 @@ export default function Home() {
       {/* Hero Section */}
       <div className="text-center mb-8 md:mb-10">
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mb-4">
-          Features
+          HiBot Docu
         </h1>
         <p className="text-center text-muted-foreground  max-w-2xl mx-auto">
-          HiBot Docu는 NestJS와 Next.js로 구축된 풀스택 프로젝트 관리
-          시스템입니다.
+          하이봇 팀의 키오스크 개발 프로젝트 협업 공간
         </p>
       </div>
 

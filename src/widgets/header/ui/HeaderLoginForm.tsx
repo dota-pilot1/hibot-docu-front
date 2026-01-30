@@ -42,19 +42,21 @@ export const HeaderLoginForm = () => {
             // @ts-ignore - combining refs
             emailRef.current = e;
           }}
-          placeholder="Email"
+          placeholder="이메일"
           type="email"
           className="h-8 w-40 text-xs"
           disabled={isLoading}
+          autoComplete="new-email"
         />
       </div>
       <div className="flex flex-col relative">
         <Input
           {...form.register("password")}
-          placeholder="Password"
+          placeholder="비밀번호"
           type={showPassword ? "text" : "password"}
           className="h-8 w-32 text-xs pr-7"
           disabled={isLoading}
+          autoComplete="new-password"
         />
         <button
           type="button"
@@ -70,7 +72,7 @@ export const HeaderLoginForm = () => {
         className="h-8 px-3 text-xs"
         disabled={isLoading}
       >
-        {isLoading ? "..." : "Login"}
+        {isLoading ? "..." : "로그인"}
       </Button>
       <Link href="/register">
         <Button

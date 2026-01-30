@@ -24,8 +24,8 @@ export const useHeaderAuth = () => {
   const form = useForm<HeaderLoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "admin@daum.net",
-      password: "admin123",
+      email: "",
+      password: "",
     },
   });
 
