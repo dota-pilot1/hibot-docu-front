@@ -5,37 +5,55 @@ import { BaseDialog } from "./BaseDialog";
 import { Button } from "@/shared/ui/button";
 
 interface AlertDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    title: string;
-    description?: string;
-    confirmLabel?: string;
-    variant?: "default" | "destructive";
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description?: string;
+  confirmText?: string;
+  cancelText?: string;
+  onConfirm?: () => void;
+  variant?: "default" | "destructive";
+  disabled?: boolean;
 }
 
 export function AlertDialog({
-    open,
-    onOpenChange,
-    title,
-    description,
-    confirmLabel = "확인",
-    variant = "default",
+  open,
+  onOpenChange,
+  title,
+  description,
+  confirmText = "확인",
+  cancelText = "취소",
+  onConfirm,
+  variant = "default",
+  disabled = false,
 }: AlertDialogProps) {
-    return (
-        <BaseDialog
-            open={open}
-            onOpenChange={onOpenChange}
-            title={title}
-            description={description}
+  const handleConfirm = () => {
+    if (onConfirm) {
+      onConfirm();
+    } else {
+      onOpenChange(false);
+    }
+  };
+
+  return (
+    <BaseDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      description={description}
+    >
+      <div className="flex justify-end gap-2 mt-4">
+        <Button
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+          disabled={disabled}
         >
-            <div className="flex justify-end gap-2 mt-4">
-                <Button
-                    variant={variant}
-                    onClick={() => onOpenChange(false)}
-                >
-                    {confirmLabel}
-                </Button>
-            </div>
-        </BaseDialog>
-    );
+          {cancelText}
+        </Button>
+        <Button variant={variant} onClick={handleConfirm} disabled={disabled}>
+          {confirmText}
+        </Button>
+      </div>
+    </BaseDialog>
+  );
 }
