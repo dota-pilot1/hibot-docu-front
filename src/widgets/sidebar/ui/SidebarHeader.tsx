@@ -2,20 +2,25 @@
 
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { PanelLeftClose, PanelLeft, Search, Users } from "lucide-react";
+import { PanelLeftClose, PanelLeft, Search, Users, Plus } from "lucide-react";
 import { useSidebarStore } from "../model/useSidebarStore";
+import { useUserStore } from "@/entities/user/model/store";
 import { cn } from "@/shared/lib/utils";
 
 interface SidebarHeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  onAddDepartment?: () => void;
 }
 
 export const SidebarHeader = ({
   searchQuery,
   onSearchChange,
+  onAddDepartment,
 }: SidebarHeaderProps) => {
   const { isOpen, toggle } = useSidebarStore();
+  const user = useUserStore((state) => state.user);
+  const isAdmin = user?.role === "ADMIN";
 
   return (
     <div className="px-3 py-3 border-b border-zinc-200 dark:border-zinc-800">
@@ -23,21 +28,34 @@ export const SidebarHeader = ({
         {isOpen && (
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-zinc-500" />
-            <span className="font-semibold text-sm">조직도</span>
+            <span className="font-semibold text-sm">HiBot Team</span>
           </div>
         )}
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={toggle}
-          className={cn("h-8 w-8", !isOpen && "mx-auto")}
-        >
-          {isOpen ? (
-            <PanelLeftClose className="h-6 w-6" />
-          ) : (
-            <PanelLeft className="h-6 w-6" />
+        <div className={cn("flex items-center gap-1", !isOpen && "mx-auto")}>
+          {isOpen && isAdmin && onAddDepartment && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onAddDepartment}
+              className="h-7 w-7"
+              title="부서 추가"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           )}
-        </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggle}
+            className="h-7 w-7"
+          >
+            {isOpen ? (
+              <PanelLeftClose className="h-4 w-4" />
+            ) : (
+              <PanelLeft className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
       </div>
 
       {isOpen && (

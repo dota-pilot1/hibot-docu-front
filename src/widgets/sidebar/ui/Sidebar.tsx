@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 import { useSidebarStore } from "../model/useSidebarStore";
 import { SidebarHeader } from "./SidebarHeader";
 import { SidebarOrgTree } from "./SidebarOrgTree";
+import { AddDepartmentDialog } from "./AddDepartmentDialog";
 import { cn } from "@/shared/lib/utils";
 import { useUserStore } from "@/entities/user/model/store";
+import type { Department } from "@/features/organization/api/organizationApi";
 
 export const Sidebar = () => {
   const isOpen = useSidebarStore((state) => state.isOpen);
@@ -13,10 +15,19 @@ export const Sidebar = () => {
   const user = useUserStore((state) => state.user);
   const [searchQuery, setSearchQuery] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [parentDepartment, setParentDepartment] = useState<Department | null>(
+    null,
+  );
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleAddDepartment = (parent?: Department | null) => {
+    setParentDepartment(parent || null);
+    setAddDialogOpen(true);
+  };
 
   // 로그인하지 않은 경우 사이드바 숨김
   if (!mounted || !user) return null;
@@ -49,9 +60,20 @@ export const Sidebar = () => {
         <SidebarHeader
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onAddDepartment={() => handleAddDepartment(null)}
         />
-        <SidebarOrgTree searchQuery={searchQuery} />
+        <SidebarOrgTree
+          searchQuery={searchQuery}
+          onAddSubDepartment={handleAddDepartment}
+        />
       </aside>
+
+      {/* 부서 추가 다이얼로그 */}
+      <AddDepartmentDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        parentDepartment={parentDepartment}
+      />
     </>
   );
 };

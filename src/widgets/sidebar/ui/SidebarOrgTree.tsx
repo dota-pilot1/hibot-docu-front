@@ -12,9 +12,13 @@ import type {
 
 interface SidebarOrgTreeProps {
   searchQuery: string;
+  onAddSubDepartment?: (parent: Department) => void;
 }
 
-export const SidebarOrgTree = ({ searchQuery }: SidebarOrgTreeProps) => {
+export const SidebarOrgTree = ({
+  searchQuery,
+  onAddSubDepartment,
+}: SidebarOrgTreeProps) => {
   const isOpen = useSidebarStore((state) => state.isOpen);
   const { data, isLoading, error } = useDepartmentTree();
 
@@ -57,7 +61,12 @@ export const SidebarOrgTree = ({ searchQuery }: SidebarOrgTreeProps) => {
     }
 
     return (
-      <SidebarDepartment key={dept.id} department={dept} collapsed={!isOpen}>
+      <SidebarDepartment
+        key={dept.id}
+        department={dept}
+        collapsed={!isOpen}
+        onAddSubDepartment={onAddSubDepartment}
+      >
         {dept.children.map((child) => renderDepartment(child))}
         {filteredUsers.map((user) => (
           <SidebarUserItem
