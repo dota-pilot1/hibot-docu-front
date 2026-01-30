@@ -9,7 +9,6 @@ import {
   FolderOpen,
   MoreHorizontal,
   FolderPlus,
-  Pencil,
   Trash2,
 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
@@ -20,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { useDroppable } from "@dnd-kit/core";
 import { useUserStore } from "@/entities/user/model/store";
 import { useDeleteDepartment } from "@/features/organization/model/useOrganization";
 import type { Department } from "@/features/organization/api/organizationApi";
@@ -41,6 +41,14 @@ export const SidebarDepartment = ({
   const user = useUserStore((state) => state.user);
   const isAdmin = user?.role === "ADMIN";
   const deleteDepartment = useDeleteDepartment();
+
+  const { setNodeRef, isOver } = useDroppable({
+    id: `department-${department.id}`,
+    data: {
+      type: "department",
+      department,
+    },
+  });
 
   const hasChildren =
     department.children.length > 0 || department.users.length > 0;
@@ -72,11 +80,12 @@ export const SidebarDepartment = ({
   }
 
   return (
-    <div className="w-full group/dept">
+    <div ref={setNodeRef} className="w-full group/dept">
       <div
         className={cn(
           "flex items-center gap-1 py-1.5 px-2 cursor-pointer rounded-md",
           "hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors",
+          isOver && "bg-blue-100 dark:bg-blue-900/30 ring-2 ring-blue-500",
         )}
         style={{
           paddingLeft:

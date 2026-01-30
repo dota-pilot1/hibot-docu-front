@@ -1,10 +1,27 @@
 "use client";
 
-import { useDepartmentTree } from "@/features/organization/model/useOrganization";
+import { useState } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  DragStartEvent,
+  DragEndEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  useDepartmentTree,
+  useUpdateUserDepartment,
+} from "@/features/organization/model/useOrganization";
 import { useSidebarStore } from "../model/useSidebarStore";
+import { useUserStore } from "@/entities/user/model/store";
 import { SidebarDepartment } from "./SidebarDepartment";
 import { SidebarUserItem } from "./SidebarUserItem";
+import { DragPreview } from "./DragPreview";
 import { Loader2, Users } from "lucide-react";
+import { useDroppable } from "@dnd-kit/core";
+import { cn } from "@/shared/lib/utils";
 import type {
   Department,
   OrganizationUser,
@@ -20,7 +37,51 @@ export const SidebarOrgTree = ({
   onAddSubDepartment,
 }: SidebarOrgTreeProps) => {
   const isOpen = useSidebarStore((state) => state.isOpen);
+  const currentUser = useUserStore((state) => state.user);
+  const isAdmin = currentUser?.role === "ADMIN";
   const { data, isLoading, error } = useDepartmentTree();
+  const updateUserDepartment = useUpdateUserDepartment();
+  const [activeUser, setActiveUser] = useState<OrganizationUser | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    if (active.data.current?.type === "user") {
+      setActiveUser(active.data.current.user);
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveUser(null);
+
+    if (!over || !isAdmin) return;
+
+    const activeData = active.data.current;
+    const overData = over.data.current;
+
+    if (activeData?.type === "user") {
+      const userId = activeData.user.id;
+
+      // 부서로 이동
+      if (overData?.type === "department") {
+        const departmentId = overData.department.id;
+        updateUserDepartment.mutate({ userId, departmentId });
+      }
+
+      // 미배정으로 이동
+      if (over.id === "unassigned") {
+        updateUserDepartment.mutate({ userId, departmentId: null });
+      }
+    }
+  };
 
   if (isLoading) {
     return (
@@ -74,6 +135,7 @@ export const SidebarOrgTree = ({
             user={user}
             collapsed={!isOpen}
             indent
+            isDragDisabled={!isAdmin || !!searchQuery}
           />
         ))}
       </SidebarDepartment>
@@ -83,33 +145,91 @@ export const SidebarOrgTree = ({
   const filteredUnassigned = filterUsers(data?.unassignedUsers || []);
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="p-2 space-y-0.5">
-        {data?.departments.map((dept) => renderDepartment(dept))}
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-2 space-y-0.5">
+          {data?.departments.map((dept) => renderDepartment(dept))}
 
-        {filteredUnassigned.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
-            {isOpen && (
-              <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-500">
-                <Users className="h-4 w-4" />
-                <span>미배정</span>
-                <span className="text-xs bg-zinc-100 dark:bg-zinc-800 px-1.5 rounded">
-                  {filteredUnassigned.length}
-                </span>
+          <UnassignedDropZone
+            users={filteredUnassigned}
+            isOpen={isOpen}
+            isAdmin={isAdmin}
+            searchQuery={searchQuery}
+          />
+
+          {data?.departments.length === 0 &&
+            filteredUnassigned.length === 0 && (
+              <div className="p-4 text-sm text-zinc-500 text-center">
+                조직도가 비어있습니다.
               </div>
             )}
-            {filteredUnassigned.map((user) => (
-              <SidebarUserItem key={user.id} user={user} collapsed={!isOpen} />
-            ))}
-          </div>
-        )}
-
-        {data?.departments.length === 0 && filteredUnassigned.length === 0 && (
-          <div className="p-4 text-sm text-zinc-500 text-center">
-            조직도가 비어있습니다.
-          </div>
-        )}
+        </div>
       </div>
+
+      <DragOverlay>
+        {activeUser && <DragPreview user={activeUser} />}
+      </DragOverlay>
+    </DndContext>
+  );
+};
+
+// 미배정 영역 드롭존
+interface UnassignedDropZoneProps {
+  users: OrganizationUser[];
+  isOpen: boolean;
+  isAdmin: boolean;
+  searchQuery: string;
+}
+
+const UnassignedDropZone = ({
+  users,
+  isOpen,
+  isAdmin,
+  searchQuery,
+}: UnassignedDropZoneProps) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: "unassigned",
+    data: {
+      type: "unassigned",
+    },
+  });
+
+  if (users.length === 0 && !isOver) return null;
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-800",
+        isOver && "bg-amber-50 dark:bg-amber-900/20 rounded-lg",
+      )}
+    >
+      {isOpen && (
+        <div
+          className={cn(
+            "flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-500 rounded-md",
+            isOver && "bg-amber-100 dark:bg-amber-900/30",
+          )}
+        >
+          <Users className="h-4 w-4" />
+          <span>미배정</span>
+          <span className="text-xs bg-zinc-100 dark:bg-zinc-800 px-1.5 rounded">
+            {users.length}
+          </span>
+        </div>
+      )}
+      {users.map((user) => (
+        <SidebarUserItem
+          key={user.id}
+          user={user}
+          collapsed={!isOpen}
+          isDragDisabled={!isAdmin || !!searchQuery}
+        />
+      ))}
     </div>
   );
 };
