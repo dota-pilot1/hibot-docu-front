@@ -7,6 +7,7 @@ import { Sidebar, MobileSidebar } from "./Sidebar";
 import { useUserStore } from "@/entities/user/model/store";
 import { cn } from "@/shared/lib/utils";
 import { MainContent } from "./MainContent";
+import { DocumentLayout } from "@/widgets/document-layout";
 
 interface ResizableLayoutProps {
   children: React.ReactNode;
@@ -28,6 +29,9 @@ export const ResizableLayout = ({ children }: ResizableLayoutProps) => {
 
   // /tasks 경로에서만 MainContent(탭/패널 UI) 사용
   const isTasksPage = pathname === "/tasks" || pathname === "/tasks/";
+  // /documents 경로에서는 DocumentLayout 사용
+  const isDocumentsPage =
+    pathname === "/documents" || pathname?.startsWith("/documents/");
 
   useEffect(() => {
     setMounted(true);
@@ -98,6 +102,15 @@ export const ResizableLayout = ({ children }: ResizableLayoutProps) => {
   if (!mounted || !user) {
     return (
       <main className="flex-1 bg-[#F8F9FA] dark:bg-zinc-950">{children}</main>
+    );
+  }
+
+  // /documents 경로에서는 전용 레이아웃 사용 (기존 사이드바 제외)
+  if (isDocumentsPage) {
+    return (
+      <main className="flex-1 bg-[#F8F9FA] dark:bg-zinc-950 overflow-hidden">
+        <DocumentLayout />
+      </main>
     );
   }
 

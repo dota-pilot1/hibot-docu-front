@@ -43,6 +43,7 @@ export const Header = () => {
             <HeaderMenu
               items={[
                 { label: "업무 관리", href: "/tasks" },
+                { label: "문서 관리", href: "/documents" },
                 { label: "프로젝트 관리", href: "/projects" },
                 { label: "노트", href: "/notes" },
                 { label: "게시판", href: "/posts" },

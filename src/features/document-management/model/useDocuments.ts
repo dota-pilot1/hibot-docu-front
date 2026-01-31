@@ -1,0 +1,125 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  documentApi,
+  FoldersWithDocumentsResponse,
+  Document,
+} from "../api/documentApi";
+
+// 폴더 + 문서 목록 조회
+export const useFoldersWithDocuments = () => {
+  return useQuery<FoldersWithDocumentsResponse>({
+    queryKey: ["documents", "folders"],
+    queryFn: documentApi.getFoldersWithDocuments,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+// 문서 상세 조회
+export const useDocument = (id: number | null) => {
+  return useQuery<Document>({
+    queryKey: ["documents", "detail", id],
+    queryFn: () => documentApi.getDocument(id!),
+    enabled: id !== null,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+// 폴더 생성
+export const useCreateFolder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: documentApi.createFolder,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents", "folders"] });
+    },
+  });
+};
+
+// 폴더 수정
+export const useUpdateFolder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: { name?: string };
+    }) => documentApi.updateFolder(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents", "folders"] });
+    },
+  });
+};
+
+// 폴더 삭제
+export const useDeleteFolder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: documentApi.deleteFolder,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents", "folders"] });
+    },
+  });
+};
+
+// 문서 생성
+export const useCreateDocument = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: documentApi.createDocument,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents", "folders"] });
+    },
+  });
+};
+
+// 문서 수정
+export const useUpdateDocument = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: { title?: string; content?: string };
+    }) => documentApi.updateDocument(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["documents", "folders"] });
+      queryClient.invalidateQueries({
+        queryKey: ["documents", "detail", variables.id],
+      });
+    },
+  });
+};
+
+// 문서 삭제
+export const useDeleteDocument = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: documentApi.deleteDocument,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents", "folders"] });
+    },
+  });
+};
+
+// 문서 폴더 이동
+export const useMoveDocument = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, folderId }: { id: number; folderId: number | null }) =>
+      documentApi.moveDocument(id, folderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents", "folders"] });
+    },
+  });
+};
