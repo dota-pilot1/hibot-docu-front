@@ -447,6 +447,10 @@ const ChatRoomContent = ({ roomId }: ChatRoomContentProps) => {
           >
             {isConnected ? "실시간" : "오프라인"}
           </span>
+          {/* 내 아이디 표시 */}
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            {user?.email}
+          </span>
           {/* 메시지 삭제 버튼 */}
           <button
             onClick={() => {
