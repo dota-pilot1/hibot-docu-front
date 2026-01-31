@@ -1,14 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { useSidebarStore } from "../model/useSidebarStore";
+import { Panel, UserTab } from "../model/useSidebarStore";
 import { User } from "lucide-react";
 
-export const TabContent = () => {
-  const tabs = useSidebarStore((state) => state.tabs);
-  const activeTabId = useSidebarStore((state) => state.activeTabId);
+interface TabContentProps {
+  panel: Panel;
+}
 
-  if (tabs.length === 0 || activeTabId === null) {
+export const TabContent = ({ panel }: TabContentProps) => {
+  if (panel.tabs.length === 0 || panel.activeTabId === null) {
     return (
       <div className="flex-1 flex items-center justify-center text-zinc-400">
         <div className="text-center">
@@ -19,31 +20,24 @@ export const TabContent = () => {
     );
   }
 
-  const activeTab = tabs.find((t) => t.id === activeTabId);
+  const activeTab = panel.tabs.find((t) => t.id === panel.activeTabId);
 
   if (!activeTab) {
     return null;
   }
 
   return (
-    <div className="flex-1 p-6">
-      <UserTabContent userId={activeTab.id} />
+    <div className="flex-1 p-6 overflow-auto">
+      <UserTabContent tab={activeTab} />
     </div>
   );
 };
 
 interface UserTabContentProps {
-  userId: number;
+  tab: UserTab;
 }
 
-const UserTabContent = ({ userId }: UserTabContentProps) => {
-  const tabs = useSidebarStore((state) => state.tabs);
-  const tab = tabs.find((t) => t.id === userId);
-
-  if (!tab) {
-    return null;
-  }
-
+const UserTabContent = ({ tab }: UserTabContentProps) => {
   const displayName = tab.name || tab.email.split("@")[0];
 
   return (

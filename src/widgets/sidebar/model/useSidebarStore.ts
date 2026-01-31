@@ -7,20 +7,48 @@ export interface UserTab {
   profileImage?: string | null;
 }
 
+export interface Panel {
+  id: string;
+  tabs: UserTab[];
+  activeTabId: number | null;
+  width: number; // flex 비율 (기본 1)
+}
+
+const DEFAULT_PANEL_ID = "panel-1";
+
+const createDefaultPanel = (): Panel => ({
+  id: DEFAULT_PANEL_ID,
+  tabs: [],
+  activeTabId: null,
+  width: 1,
+});
+
 export interface SidebarState {
   isOpen: boolean;
   sidebarSize: number;
   selectedUserId: number | null;
-  tabs: UserTab[];
-  activeTabId: number | null;
+  panels: Panel[];
+  activePanelId: string;
   toggle: () => void;
   open: () => void;
   close: () => void;
   setSidebarSize: (size: number) => void;
   selectUser: (userId: number | null) => void;
+  // 패널 관련
+  addPanel: () => void;
+  removePanel: (panelId: string) => void;
+  setActivePanel: (panelId: string) => void;
+  // 탭 관련 (활성 패널 기준)
   openTab: (user: UserTab) => void;
   closeTab: (userId: number) => void;
-  setActiveTab: (userId: number | null) => void;
+  setActiveTab: (userId: number) => void;
+  // 패널 리사이즈
+  setPanelWidths: (
+    leftPanelId: string,
+    rightPanelId: string,
+    leftWidth: number,
+    rightWidth: number,
+  ) => void;
 }
 
 // Load persisted state from localStorage
@@ -30,7 +58,6 @@ const loadPersistedState = (): { isOpen: boolean; sidebarSize: number } => {
     const stored = localStorage.getItem("sidebar-storage");
     if (stored) {
       const parsed = JSON.parse(stored);
-      // 기존 % 값(20)이 저장되어 있으면 기본 px 값으로 변환
       const storedSize = parsed.state?.sidebarSize ?? 256;
       const sidebarSize = storedSize < 100 ? 256 : storedSize;
       return {
@@ -44,12 +71,17 @@ const loadPersistedState = (): { isOpen: boolean; sidebarSize: number } => {
   return { isOpen: true, sidebarSize: 256 };
 };
 
+// 고유 패널 ID 생성
+let panelIdCounter = 1;
+const generatePanelId = () => `panel-${++panelIdCounter}`;
+
 // Create the sidebar store
 export const sidebarStore = new Store<SidebarState>({
   ...loadPersistedState(),
   selectedUserId: null,
-  tabs: [],
-  activeTabId: null,
+  panels: [createDefaultPanel()],
+  activePanelId: DEFAULT_PANEL_ID,
+
   toggle: () => {
     sidebarStore.setState((state) => ({ ...state, isOpen: !state.isOpen }));
   },
@@ -65,28 +97,121 @@ export const sidebarStore = new Store<SidebarState>({
   selectUser: (userId: number | null) => {
     sidebarStore.setState((state) => ({ ...state, selectedUserId: userId }));
   },
-  openTab: (user: UserTab) => {
+
+  // 패널 추가 (활성 패널 오른쪽에)
+  addPanel: () => {
     sidebarStore.setState((state) => {
-      const existingTab = state.tabs.find((t) => t.id === user.id);
-      if (existingTab) {
-        return { ...state, activeTabId: user.id, selectedUserId: user.id };
-      }
+      const newPanelId = generatePanelId();
+      const activePanelIndex = state.panels.findIndex(
+        (p) => p.id === state.activePanelId,
+      );
+      const insertIndex = activePanelIndex + 1;
+
+      const newPanel: Panel = {
+        id: newPanelId,
+        tabs: [],
+        activeTabId: null,
+        width: 1,
+      };
+
+      const newPanels = [
+        ...state.panels.slice(0, insertIndex),
+        newPanel,
+        ...state.panels.slice(insertIndex),
+      ];
+
       return {
         ...state,
-        tabs: [...state.tabs, user],
+        panels: newPanels,
+        activePanelId: newPanelId,
+      };
+    });
+  },
+
+  // 패널 제거 (최소 1개 유지)
+  removePanel: (panelId: string) => {
+    sidebarStore.setState((state) => {
+      if (state.panels.length <= 1) return state;
+
+      const panelIndex = state.panels.findIndex((p) => p.id === panelId);
+      const newPanels = state.panels.filter((p) => p.id !== panelId);
+
+      let newActivePanelId = state.activePanelId;
+      if (state.activePanelId === panelId) {
+        const newIndex = Math.min(panelIndex, newPanels.length - 1);
+        newActivePanelId = newPanels[newIndex].id;
+      }
+
+      return {
+        ...state,
+        panels: newPanels,
+        activePanelId: newActivePanelId,
+      };
+    });
+  },
+
+  // 활성 패널 변경
+  setActivePanel: (panelId: string) => {
+    sidebarStore.setState((state) => ({
+      ...state,
+      activePanelId: panelId,
+    }));
+  },
+
+  // 탭 열기 (활성 패널에)
+  openTab: (user: UserTab) => {
+    sidebarStore.setState((state) => {
+      const panelIndex = state.panels.findIndex(
+        (p) => p.id === state.activePanelId,
+      );
+      if (panelIndex === -1) return state;
+
+      const panel = state.panels[panelIndex];
+      const existingTab = panel.tabs.find((t) => t.id === user.id);
+
+      if (existingTab) {
+        // 이미 있는 탭이면 활성화만
+        const newPanels = [...state.panels];
+        newPanels[panelIndex] = { ...panel, activeTabId: user.id };
+        return {
+          ...state,
+          panels: newPanels,
+          selectedUserId: user.id,
+        };
+      }
+
+      // 새 탭 추가
+      const newPanels = [...state.panels];
+      newPanels[panelIndex] = {
+        ...panel,
+        tabs: [...panel.tabs, user],
         activeTabId: user.id,
+      };
+
+      return {
+        ...state,
+        panels: newPanels,
         selectedUserId: user.id,
       };
     });
   },
+
+  // 탭 닫기 (활성 패널에서)
   closeTab: (userId: number) => {
     sidebarStore.setState((state) => {
-      const newTabs = state.tabs.filter((t) => t.id !== userId);
-      let newActiveTabId = state.activeTabId;
+      const panelIndex = state.panels.findIndex(
+        (p) => p.id === state.activePanelId,
+      );
+      if (panelIndex === -1) return state;
+
+      const panel = state.panels[panelIndex];
+      const newTabs = panel.tabs.filter((t) => t.id !== userId);
+
+      let newActiveTabId = panel.activeTabId;
       let newSelectedUserId = state.selectedUserId;
 
-      if (state.activeTabId === userId) {
-        const closedIndex = state.tabs.findIndex((t) => t.id === userId);
+      if (panel.activeTabId === userId) {
+        const closedIndex = panel.tabs.findIndex((t) => t.id === userId);
         if (newTabs.length > 0) {
           const newIndex = Math.min(closedIndex, newTabs.length - 1);
           newActiveTabId = newTabs[newIndex].id;
@@ -97,20 +222,60 @@ export const sidebarStore = new Store<SidebarState>({
         }
       }
 
-      return {
-        ...state,
+      const newPanels = [...state.panels];
+      newPanels[panelIndex] = {
+        ...panel,
         tabs: newTabs,
         activeTabId: newActiveTabId,
+      };
+
+      return {
+        ...state,
+        panels: newPanels,
         selectedUserId: newSelectedUserId,
       };
     });
   },
-  setActiveTab: (userId: number | null) => {
-    sidebarStore.setState((state) => ({
-      ...state,
-      activeTabId: userId,
-      selectedUserId: userId,
-    }));
+
+  // 탭 활성화 (활성 패널에서)
+  setActiveTab: (userId: number) => {
+    sidebarStore.setState((state) => {
+      const panelIndex = state.panels.findIndex(
+        (p) => p.id === state.activePanelId,
+      );
+      if (panelIndex === -1) return state;
+
+      const panel = state.panels[panelIndex];
+      const newPanels = [...state.panels];
+      newPanels[panelIndex] = { ...panel, activeTabId: userId };
+
+      return {
+        ...state,
+        panels: newPanels,
+        selectedUserId: userId,
+      };
+    });
+  },
+
+  // 패널 너비 조정
+  setPanelWidths: (
+    leftPanelId: string,
+    rightPanelId: string,
+    leftWidth: number,
+    rightWidth: number,
+  ) => {
+    sidebarStore.setState((state) => {
+      const newPanels = state.panels.map((panel) => {
+        if (panel.id === leftPanelId) {
+          return { ...panel, width: leftWidth };
+        }
+        if (panel.id === rightPanelId) {
+          return { ...panel, width: rightWidth };
+        }
+        return panel;
+      });
+      return { ...state, panels: newPanels };
+    });
   },
 });
 
