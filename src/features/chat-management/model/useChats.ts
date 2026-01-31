@@ -221,7 +221,7 @@ export const useMessages = (roomId: number | null, limit = 50) => {
     queryKey: ["chats", "messages", roomId, limit],
     queryFn: () => chatApi.getMessages(roomId!, limit),
     enabled: roomId !== null,
-    staleTime: 1000 * 30, // 30초
+    staleTime: 0, // 항상 최신 데이터 가져오기
   });
 };
 

@@ -1,22 +1,31 @@
 import { io, Socket } from "socket.io-client";
 import { ChatMessage } from "@/features/chat-management";
-
-type MessageHandler = (message: ChatMessage) => void;
+import {
+  addMessage,
+  triggerParticipantsUpdate,
+  clearMessages,
+} from "./chatStore";
 
 class ChatSocketManager {
   private socket: Socket | null = null;
-  private messageHandlers: Map<number, Set<MessageHandler>> = new Map();
-  private currentRoomId: number | null = null;
+  private joinedRooms: Set<number> = new Set();
   private userId: number | null = null;
 
   connect(userId: number) {
-    if (this.socket?.connected && this.userId === userId) {
+    // 이미 같은 userId로 연결되어 있으면 무시
+    if (this.socket && this.userId === userId) {
       return;
+    }
+
+    // 기존 소켓이 있으면 정리
+    if (this.socket) {
+      this.socket.removeAllListeners();
+      this.socket.disconnect();
     }
 
     this.userId = userId;
 
-    // WebSocket URL: NEXT_PUBLIC_WS_URL 또는 API URL 그대로 사용
+    // WebSocket URL
     const wsUrl =
       process.env.NEXT_PUBLIC_WS_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
@@ -30,14 +39,18 @@ class ChatSocketManager {
     });
 
     this.socket.on("connect", () => {
-      console.log("Chat socket connected");
-      // 사용자 등록
+      console.log("Chat socket connected, socket id:", this.socket?.id);
       this.socket?.emit("register", { userId });
 
-      // 연결 후 현재 방이 있으면 다시 join
-      if (this.currentRoomId) {
-        console.log("Re-joining room after reconnect:", this.currentRoomId);
-        this.socket?.emit("joinRoom", { roomId: this.currentRoomId, userId });
+      // 연결 후 참여 중인 방들 다시 join
+      if (this.joinedRooms.size > 0) {
+        console.log(
+          "Re-joining rooms after reconnect:",
+          Array.from(this.joinedRooms),
+        );
+        for (const roomId of this.joinedRooms) {
+          this.socket?.emit("joinRoom", { roomId, userId });
+        }
       }
     });
 
@@ -45,19 +58,22 @@ class ChatSocketManager {
       console.log("Chat socket disconnected");
     });
 
+    // 메시지 수신 → store에 직접 추가
     this.socket.on("newMessage", (message: ChatMessage) => {
       console.log("Received newMessage:", message);
-      // 해당 채팅방의 핸들러들에게 메시지 전달
-      const handlers = this.messageHandlers.get(message.roomId);
-      console.log(
-        "Handlers for room",
-        message.roomId,
-        ":",
-        handlers?.size || 0,
-      );
-      if (handlers) {
-        handlers.forEach((handler) => handler(message));
-      }
+      addMessage(message.roomId, message);
+    });
+
+    // 참여자 변경 → store 트리거
+    this.socket.on("participantsChanged", (data: { roomId: number }) => {
+      console.log("Participants changed:", data.roomId);
+      triggerParticipantsUpdate(data.roomId);
+    });
+
+    // 메시지 전체 삭제 → store 비우기
+    this.socket.on("messagesCleared", (data: { roomId: number }) => {
+      console.log("Messages cleared:", data.roomId);
+      clearMessages(data.roomId);
     });
 
     this.socket.on("connect_error", (error) => {
@@ -70,7 +86,7 @@ class ChatSocketManager {
       this.socket.disconnect();
       this.socket = null;
       this.userId = null;
-      this.currentRoomId = null;
+      this.joinedRooms.clear();
     }
   }
 
@@ -80,29 +96,41 @@ class ChatSocketManager {
       roomId,
       "connected:",
       this.socket?.connected,
+      "userId:",
+      this.userId,
+      "joinedRooms:",
+      Array.from(this.joinedRooms),
     );
 
-    // 현재 방 ID 저장 (연결 전이라도)
-    this.currentRoomId = roomId;
+    // joinedRooms에 추가 (중복 허용 - Set이라 자동 처리됨)
+    this.joinedRooms.add(roomId);
 
-    if (!this.socket?.connected || !this.userId) {
-      console.warn("Socket not connected yet, will join after connect");
+    if (!this.socket || !this.userId) {
+      console.warn("Socket or userId not available, will join after connect");
       return;
     }
 
-    console.log("Emitting joinRoom:", roomId);
-    this.socket.emit("joinRoom", { roomId, userId: this.userId });
+    // 소켓이 연결되어 있으면 바로 join, 아니면 연결 후 자동으로 join됨 (connect 핸들러에서)
+    if (this.socket.connected) {
+      console.log("Emitting joinRoom:", roomId);
+      this.socket.emit("joinRoom", { roomId, userId: this.userId });
+    } else {
+      console.log(
+        "Socket not connected, waiting for connect event to join room",
+      );
+    }
   }
 
   leaveRoom(roomId: number) {
+    console.log("leaveRoom called:", roomId);
+
+    this.joinedRooms.delete(roomId);
+
     if (!this.socket?.connected || !this.userId) {
       return;
     }
 
     this.socket.emit("leaveRoom", { roomId, userId: this.userId });
-    if (this.currentRoomId === roomId) {
-      this.currentRoomId = null;
-    }
   }
 
   sendMessage(
@@ -122,27 +150,17 @@ class ChatSocketManager {
       messageType,
     });
 
-    // 서버에서 newMessage 이벤트로 브로드캐스트하므로 여기서는 true만 반환
     return true;
   }
 
-  // 메시지 핸들러 등록
-  onMessage(roomId: number, handler: MessageHandler) {
-    if (!this.messageHandlers.has(roomId)) {
-      this.messageHandlers.set(roomId, new Set());
+  clearMessages(roomId: number): boolean {
+    if (!this.socket?.connected) {
+      console.warn("Socket not connected");
+      return false;
     }
-    this.messageHandlers.get(roomId)!.add(handler);
 
-    // cleanup 함수 반환
-    return () => {
-      const handlers = this.messageHandlers.get(roomId);
-      if (handlers) {
-        handlers.delete(handler);
-        if (handlers.size === 0) {
-          this.messageHandlers.delete(roomId);
-        }
-      }
-    };
+    this.socket.emit("clearMessages", { roomId });
+    return true;
   }
 
   isConnected() {

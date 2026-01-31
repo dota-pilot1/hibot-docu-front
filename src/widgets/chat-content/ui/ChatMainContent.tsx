@@ -24,10 +24,8 @@ import { ChatTabBar } from "./ChatTabBar";
 import { cn } from "@/shared/lib/utils";
 import {
   useRoom,
-  useMessages,
   useSendMessage,
   useParticipants,
-  useClearMessages,
   ChatMessage,
 } from "@/features/chat-management";
 import { useUserStore } from "@/entities/user/model/store";
@@ -356,16 +354,25 @@ interface ChatRoomContentProps {
 const ChatRoomContent = ({ roomId }: ChatRoomContentProps) => {
   const user = useUserStore((s) => s.user);
   const { data: room } = useRoom(roomId);
-  const { data: messages, isLoading } = useMessages(roomId);
-  const { data: participants } = useParticipants(roomId);
+  const { data: participants, refetch: refetchParticipants } =
+    useParticipants(roomId);
   const sendMessageMutation = useSendMessage();
-  const clearMessagesMutation = useClearMessages();
 
-  // WebSocket 연결
-  const { isConnected, sendMessage: sendSocketMessage } = useChatSocket(
-    roomId,
-    user?.userId || null,
-  );
+  // WebSocket 연결 + 스토어 기반 메시지 구독
+  const {
+    isConnected,
+    messages,
+    participantsVersion,
+    sendMessage: sendSocketMessage,
+    clearAllMessages,
+  } = useChatSocket(roomId, user?.userId || null);
+
+  // 참여자 변경 시 목록 다시 불러오기
+  useEffect(() => {
+    if (participantsVersion > 0) {
+      refetchParticipants();
+    }
+  }, [participantsVersion, refetchParticipants]);
 
   const [inputValue, setInputValue] = useState("");
   const [showParticipants, setShowParticipants] = useState(false);
@@ -455,10 +462,9 @@ const ChatRoomContent = ({ roomId }: ChatRoomContentProps) => {
           <button
             onClick={() => {
               if (confirm("모든 메시지를 삭제하시겠습니까?")) {
-                clearMessagesMutation.mutate(roomId);
+                clearAllMessages();
               }
             }}
-            disabled={clearMessagesMutation.isPending}
             className={cn(
               "ml-auto p-1.5 rounded-md text-zinc-500",
               "hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:text-red-500",
@@ -533,11 +539,7 @@ const ChatRoomContent = ({ roomId }: ChatRoomContentProps) => {
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-3"
       >
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full text-zinc-400">
-            로딩 중...
-          </div>
-        ) : sortedMessages.length === 0 ? (
+        {sortedMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-zinc-400">
             <MessageSquare className="h-12 w-12 mb-2" />
             <p>아직 메시지가 없습니다</p>
