@@ -6,7 +6,6 @@ import { cn } from "@/shared/lib/utils";
 import { X, User, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useSidebarStore, UserTab, Panel } from "../model/useSidebarStore";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
 
 interface TabHeaderProps {
   panel: Panel;
@@ -24,8 +23,12 @@ export const TabHeader = ({
   const setActiveTab = useSidebarStore((state) => state.setActiveTab);
   const closeTab = useSidebarStore((state) => state.closeTab);
   const addPanel = useSidebarStore((state) => state.addPanel);
+  const removePanel = useSidebarStore((state) => state.removePanel);
+  const panels = useSidebarStore((state) => state.panels);
 
   const isActivePanel = panel.id === activePanelId;
+  const panelIndex = panels.findIndex((p) => p.id === panel.id);
+  const isFirstPanel = panelIndex === 0;
 
   // 패널 드롭 영역 (빈 패널에 탭 드롭 지원)
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
@@ -160,17 +163,31 @@ export const TabHeader = ({
         )}
       </div>
 
-      {/* + 버튼 (패널 분할) */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          handleAddPanel();
-        }}
-        className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0 mr-1"
-        title="패널 분할"
-      >
-        <Plus className="h-4 w-4" />
-      </button>
+      {/* 오른쪽에 + - 버튼 */}
+      <div className="flex items-center shrink-0 mr-1">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleAddPanel();
+          }}
+          className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          title="패널 분할"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+        {!isFirstPanel && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              removePanel(panel.id);
+            }}
+            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            title="패널 닫기"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
     </div>
   );
 };
@@ -199,16 +216,11 @@ const DraggableTabItem = ({
     attributes,
     listeners,
     setNodeRef: setDraggableRef,
-    transform,
     isDragging,
   } = useDraggable({
     id: tab.id,
     data: { type: "TAB", tab },
   });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-  };
 
   const displayName = tab.name || tab.email.split("@")[0];
 
@@ -216,13 +228,12 @@ const DraggableTabItem = ({
     <div ref={setDroppableRef} className="shrink-0">
       <div
         ref={setDraggableRef}
-        style={style}
+        style={{ opacity: isDragging ? 0.4 : 1 }}
         className={cn(
-          "flex items-center gap-2 px-3 py-1.5 rounded-md border cursor-grab transition-all",
+          "flex items-center gap-2 px-3 py-1.5 rounded-md border cursor-grab",
           isActive
             ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
             : "border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800",
-          isDragging && "opacity-0",
           isOver && !isDragging && "ring-2 ring-blue-400",
         )}
         onClick={(e) => {

@@ -136,24 +136,59 @@ export const sidebarStore = new Store<SidebarState>({
     });
   },
 
-  // 패널 제거 (최소 1개 유지)
+  // 패널 제거 (최소 1개 유지, 탭들은 왼쪽 패널로 이동)
   removePanel: (panelId: string) => {
     sidebarStore.setState((state) => {
       if (state.panels.length <= 1) return state;
 
       const panelIndex = state.panels.findIndex((p) => p.id === panelId);
-      const newPanels = state.panels.filter((p) => p.id !== panelId);
+      if (panelIndex === -1) return state;
+
+      const closingPanel = state.panels[panelIndex];
+      const leftPanelIndex = panelIndex - 1;
+
+      // 왼쪽 패널이 있으면 거기로 탭 이동, 없으면 오른쪽 패널로
+      const targetPanelIndex =
+        leftPanelIndex >= 0 ? leftPanelIndex : panelIndex + 1;
+      const targetPanel = state.panels[targetPanelIndex];
+
+      if (!targetPanel) return state;
+
+      // 닫히는 패널의 탭들을 타겟 패널에 추가
+      const newTargetTabs = [...targetPanel.tabs, ...closingPanel.tabs];
+
+      // 새 패널 배열 생성 (닫히는 패널 제외)
+      const newPanels = state.panels
+        .filter((p) => p.id !== panelId)
+        .map((p) =>
+          p.id === targetPanel.id ? { ...p, tabs: newTargetTabs } : p,
+        );
 
       let newActivePanelId = state.activePanelId;
+      let newSelectedUserId = state.selectedUserId;
+
+      // 닫힌 패널이 활성 패널이었다면
       if (state.activePanelId === panelId) {
-        const newIndex = Math.min(panelIndex, newPanels.length - 1);
-        newActivePanelId = newPanels[newIndex].id;
+        newActivePanelId = targetPanel.id;
+        // 닫힌 패널의 activeTab을 유지
+        if (closingPanel.activeTabId) {
+          newSelectedUserId = closingPanel.activeTabId;
+        }
       }
+
+      // 타겟 패널의 activeTabId 업데이트
+      const updatedPanels = newPanels.map((p) => {
+        if (p.id === targetPanel.id && closingPanel.activeTabId) {
+          return { ...p, activeTabId: closingPanel.activeTabId };
+        }
+        return p;
+      });
 
       return {
         ...state,
-        panels: newPanels,
+        panels: updatedPanels,
         activePanelId: newActivePanelId,
+        selectedUserId: newSelectedUserId,
       };
     });
   },
