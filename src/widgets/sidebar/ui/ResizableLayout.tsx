@@ -42,17 +42,35 @@ export const ResizableLayout = ({ children }: ResizableLayoutProps) => {
     (e: MouseEvent) => {
       if (!isResizing) return;
 
-      const newWidth = e.clientX;
-      if (newWidth >= MIN_SIDEBAR_WIDTH && newWidth <= MAX_SIDEBAR_WIDTH) {
-        setSidebarSize(newWidth);
-      }
+      // requestAnimationFrame으로 렉 최소화
+      requestAnimationFrame(() => {
+        const newWidth = e.clientX;
+        if (newWidth >= MIN_SIDEBAR_WIDTH && newWidth <= MAX_SIDEBAR_WIDTH) {
+          if (sidebarRef.current) {
+            sidebarRef.current.style.width = `${newWidth}px`;
+          }
+        }
+      });
     },
-    [isResizing, setSidebarSize],
+    [isResizing],
   );
 
-  const handleMouseUp = useCallback(() => {
-    setIsResizing(false);
-  }, []);
+  // 드래그 끝날 때 store에 저장
+  const handleMouseUp = useCallback(
+    (e: MouseEvent) => {
+      if (sidebarRef.current) {
+        const finalWidth = parseInt(sidebarRef.current.style.width, 10);
+        if (
+          finalWidth >= MIN_SIDEBAR_WIDTH &&
+          finalWidth <= MAX_SIDEBAR_WIDTH
+        ) {
+          setSidebarSize(finalWidth);
+        }
+      }
+      setIsResizing(false);
+    },
+    [setSidebarSize],
+  );
 
   useEffect(() => {
     if (isResizing) {
@@ -89,7 +107,7 @@ export const ResizableLayout = ({ children }: ResizableLayoutProps) => {
           ref={sidebarRef}
           className={cn(
             "h-full border-r border-zinc-200 dark:border-zinc-800 shrink-0",
-            "transition-all duration-300 ease-in-out",
+            !isResizing && "transition-all duration-300 ease-in-out",
           )}
           style={{ width: isOpen ? sidebarWidth : 64 }}
         >
