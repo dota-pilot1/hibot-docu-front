@@ -14,7 +14,12 @@ import {
   pointerWithin,
   useDroppable,
 } from "@dnd-kit/core";
-import { useChatStore, chatStore, ChatTab, ChatPanel } from "@/widgets/chat-sidebar";
+import {
+  useChatStore,
+  chatStore,
+  ChatTab,
+  ChatPanel,
+} from "@/widgets/chat-sidebar";
 import { ChatTabBar } from "./ChatTabBar";
 import { cn } from "@/shared/lib/utils";
 
@@ -61,7 +66,11 @@ export const ChatMainContent = () => {
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
       const { active } = event;
-      const tabId = active.id as number;
+      // active.id가 'chat-tab-{panelId}-{tabId}' 형식이므로 tabId 추출
+      const activeIdStr = String(active.id);
+      const tabId = activeIdStr.startsWith("chat-tab-")
+        ? parseInt(activeIdStr.split("-").pop() || "0", 10)
+        : (active.id as number);
       const panel = findPanelByTabId(tabId);
       if (panel) {
         const tab = panel.tabs.find((t) => t.id === tabId);
@@ -80,7 +89,11 @@ export const ChatMainContent = () => {
 
       if (!over) return;
 
-      const activeTabId = active.id as number;
+      // active.id가 'chat-tab-{panelId}-{tabId}' 형식이므로 tabId 추출
+      const activeIdStr = String(active.id);
+      const activeTabId = activeIdStr.startsWith("chat-tab-")
+        ? parseInt(activeIdStr.split("-").pop() || "0", 10)
+        : (active.id as number);
       const fromPanel = findPanelByTabId(activeTabId);
       if (!fromPanel) return;
 
