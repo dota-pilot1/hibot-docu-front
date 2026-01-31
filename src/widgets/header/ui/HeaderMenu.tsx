@@ -17,7 +17,7 @@ const defaultMenuItems: MenuItem[] = [
   { label: "프로젝트 관리", href: "/projects" },
   { label: "노트", href: "/notes" },
   { label: "게시판", href: "/posts" },
-  { label: "사용자", href: "/users" },
+  { label: "사용자 관리", href: "/users" },
 ];
 
 export const HeaderMenu = ({ items = defaultMenuItems }: HeaderMenuProps) => {

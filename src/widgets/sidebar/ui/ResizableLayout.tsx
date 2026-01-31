@@ -8,6 +8,7 @@ import { useUserStore } from "@/entities/user/model/store";
 import { cn } from "@/shared/lib/utils";
 import { MainContent } from "./MainContent";
 import { DocumentLayout } from "@/widgets/document-layout";
+import { ChatLayout } from "@/widgets/chat-layout";
 
 interface ResizableLayoutProps {
   children: React.ReactNode;
@@ -32,6 +33,8 @@ export const ResizableLayout = ({ children }: ResizableLayoutProps) => {
   // /documents 경로에서는 DocumentLayout 사용
   const isDocumentsPage =
     pathname === "/documents" || pathname?.startsWith("/documents/");
+  // /chats 경로에서는 ChatLayout 사용
+  const isChatsPage = pathname === "/chats" || pathname?.startsWith("/chats/");
 
   useEffect(() => {
     setMounted(true);
@@ -110,6 +113,15 @@ export const ResizableLayout = ({ children }: ResizableLayoutProps) => {
     return (
       <main className="flex-1 bg-[#F8F9FA] dark:bg-zinc-950 overflow-hidden">
         <DocumentLayout />
+      </main>
+    );
+  }
+
+  // /chats 경로에서는 전용 레이아웃 사용 (기존 사이드바 제외)
+  if (isChatsPage) {
+    return (
+      <main className="flex-1 bg-[#F8F9FA] dark:bg-zinc-950 overflow-hidden">
+        <ChatLayout />
       </main>
     );
   }
