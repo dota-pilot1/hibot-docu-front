@@ -49,6 +49,14 @@ export interface SidebarState {
     leftWidth: number,
     rightWidth: number,
   ) => void;
+  // 탭 드래그
+  reorderTabs: (panelId: string, fromIndex: number, toIndex: number) => void;
+  moveTabToPanel: (
+    fromPanelId: string,
+    toPanelId: string,
+    tabId: number,
+    toIndex?: number,
+  ) => void;
 }
 
 // Load persisted state from localStorage
@@ -275,6 +283,87 @@ export const sidebarStore = new Store<SidebarState>({
         return panel;
       });
       return { ...state, panels: newPanels };
+    });
+  },
+
+  // 같은 패널 내 탭 순서 변경
+  reorderTabs: (panelId: string, fromIndex: number, toIndex: number) => {
+    sidebarStore.setState((state) => {
+      const panelIndex = state.panels.findIndex((p) => p.id === panelId);
+      if (panelIndex === -1) return state;
+
+      const panel = state.panels[panelIndex];
+      const newTabs = [...panel.tabs];
+      const [movedTab] = newTabs.splice(fromIndex, 1);
+      newTabs.splice(toIndex, 0, movedTab);
+
+      const newPanels = [...state.panels];
+      newPanels[panelIndex] = { ...panel, tabs: newTabs };
+
+      return { ...state, panels: newPanels };
+    });
+  },
+
+  // 다른 패널로 탭 이동
+  moveTabToPanel: (
+    fromPanelId: string,
+    toPanelId: string,
+    tabId: number,
+    toIndex?: number,
+  ) => {
+    sidebarStore.setState((state) => {
+      const fromPanelIndex = state.panels.findIndex(
+        (p) => p.id === fromPanelId,
+      );
+      const toPanelIndex = state.panels.findIndex((p) => p.id === toPanelId);
+      if (fromPanelIndex === -1 || toPanelIndex === -1) return state;
+
+      const fromPanel = state.panels[fromPanelIndex];
+      const toPanel = state.panels[toPanelIndex];
+
+      const tabIndex = fromPanel.tabs.findIndex((t) => t.id === tabId);
+      if (tabIndex === -1) return state;
+
+      const [movedTab] = fromPanel.tabs.splice(tabIndex, 1);
+      const newFromTabs = fromPanel.tabs.filter((t) => t.id !== tabId);
+
+      // toPanel에 탭 추가
+      const newToTabs = [...toPanel.tabs];
+      if (toIndex !== undefined) {
+        newToTabs.splice(toIndex, 0, movedTab);
+      } else {
+        newToTabs.push(movedTab);
+      }
+
+      // fromPanel의 activeTabId 처리
+      let newFromActiveTabId = fromPanel.activeTabId;
+      if (fromPanel.activeTabId === tabId) {
+        if (newFromTabs.length > 0) {
+          const newIndex = Math.min(tabIndex, newFromTabs.length - 1);
+          newFromActiveTabId = newFromTabs[newIndex].id;
+        } else {
+          newFromActiveTabId = null;
+        }
+      }
+
+      const newPanels = [...state.panels];
+      newPanels[fromPanelIndex] = {
+        ...fromPanel,
+        tabs: newFromTabs,
+        activeTabId: newFromActiveTabId,
+      };
+      newPanels[toPanelIndex] = {
+        ...toPanel,
+        tabs: newToTabs,
+        activeTabId: tabId, // 이동된 탭 활성화
+      };
+
+      return {
+        ...state,
+        panels: newPanels,
+        activePanelId: toPanelId, // 이동된 패널 활성화
+        selectedUserId: tabId,
+      };
     });
   },
 });
