@@ -66,23 +66,53 @@ export interface SidebarState {
 }
 
 // Load persisted state from localStorage
-const loadPersistedState = (): { isOpen: boolean; sidebarSize: number } => {
-  if (typeof window === "undefined") return { isOpen: true, sidebarSize: 256 };
+const loadPersistedState = (): {
+  isOpen: boolean;
+  sidebarSize: number;
+  panels: Panel[];
+  activePanelId: string;
+} => {
+  const defaultState = {
+    isOpen: true,
+    sidebarSize: 256,
+    panels: [createDefaultPanel()],
+    activePanelId: DEFAULT_PANEL_ID,
+  };
+
+  if (typeof window === "undefined") return defaultState;
+
   try {
     const stored = localStorage.getItem("sidebar-storage");
     if (stored) {
       const parsed = JSON.parse(stored);
       const storedSize = parsed.state?.sidebarSize ?? 256;
       const sidebarSize = storedSize < 100 ? 256 : storedSize;
+
+      // 패널 데이터 복원
+      const storedPanels = parsed.state?.panels;
+      const panels =
+        Array.isArray(storedPanels) && storedPanels.length > 0
+          ? storedPanels
+          : [createDefaultPanel()];
+
+      // panelIdCounter 복원 (중복 ID 방지)
+      const maxPanelNum = panels.reduce((max: number, p: Panel) => {
+        const match = p.id.match(/panel-(\d+)/);
+        return match ? Math.max(max, parseInt(match[1], 10)) : max;
+      }, 1);
+      panelIdCounter = maxPanelNum;
+
       return {
         isOpen: parsed.state?.isOpen ?? true,
         sidebarSize,
+        panels,
+        activePanelId: parsed.state?.activePanelId ?? panels[0].id,
       };
     }
   } catch (e) {
     console.error("Failed to load sidebar state", e);
   }
-  return { isOpen: true, sidebarSize: 256 };
+  return defaultState;
 };
 
 // 고유 패널 ID 생성
@@ -90,11 +120,13 @@ let panelIdCounter = 1;
 const generatePanelId = () => `panel-${++panelIdCounter}`;
 
 // Create the sidebar store
+const persistedState = loadPersistedState();
 export const sidebarStore = new Store<SidebarState>({
-  ...loadPersistedState(),
+  isOpen: persistedState.isOpen,
+  sidebarSize: persistedState.sidebarSize,
   selectedUserId: null,
-  panels: [createDefaultPanel()],
-  activePanelId: DEFAULT_PANEL_ID,
+  panels: persistedState.panels,
+  activePanelId: persistedState.activePanelId,
 
   toggle: () => {
     sidebarStore.setState((state) => ({ ...state, isOpen: !state.isOpen }));
@@ -483,6 +515,8 @@ if (typeof window !== "undefined") {
         state: {
           isOpen: state.isOpen,
           sidebarSize: state.sidebarSize,
+          panels: state.panels,
+          activePanelId: state.activePanelId,
         },
       }),
     );
