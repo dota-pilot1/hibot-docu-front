@@ -10,8 +10,12 @@ import {
   useCreateTeam,
   useUpdateTeam,
   useDeleteTeam,
+  useCreateRoom,
+  useUpdateRoom,
+  useDeleteRoom,
   ChatProject,
   ChatTeam,
+  ChatRoom,
 } from "@/features/chat-management";
 import { useChatStore } from "../model/useChatStore";
 import { ChatProjectItem } from "./ChatProjectItem";
@@ -32,6 +36,9 @@ export const ChatSidebar = () => {
   const createTeam = useCreateTeam();
   const updateTeam = useUpdateTeam();
   const deleteTeam = useDeleteTeam();
+  const createRoom = useCreateRoom();
+  const updateRoom = useUpdateRoom();
+  const deleteRoom = useDeleteRoom();
 
   // 다이얼로그 상태
   const [projectDialog, setProjectDialog] = useState<{
@@ -48,6 +55,14 @@ export const ChatSidebar = () => {
     team?: ChatTeam;
   }>({ open: false, mode: "create" });
   const [teamName, setTeamName] = useState("");
+
+  const [roomDialog, setRoomDialog] = useState<{
+    open: boolean;
+    mode: "create" | "rename";
+    teamId?: number;
+    room?: ChatRoom;
+  }>({ open: false, mode: "create" });
+  const [roomName, setRoomName] = useState("");
 
   // 프로젝트 다이얼로그 핸들러
   const handleOpenCreateProject = () => {
@@ -119,6 +134,41 @@ export const ChatSidebar = () => {
     }
   };
 
+  // 채팅방 다이얼로그 핸들러
+  const handleOpenCreateRoom = (teamId: number) => {
+    setRoomName("");
+    setRoomDialog({ open: true, mode: "create", teamId });
+  };
+
+  const handleOpenRenameRoom = (room: ChatRoom) => {
+    setRoomName(room.name);
+    setRoomDialog({ open: true, mode: "rename", room, teamId: room.teamId });
+  };
+
+  const handleRoomSubmit = async () => {
+    if (!roomName.trim()) return;
+
+    if (roomDialog.mode === "create" && roomDialog.teamId) {
+      const newRoom = await createRoom.mutateAsync({
+        teamId: roomDialog.teamId,
+        name: roomName.trim(),
+      });
+      openTab({ id: newRoom.id, title: newRoom.name });
+    } else if (roomDialog.room) {
+      await updateRoom.mutateAsync({
+        id: roomDialog.room.id,
+        data: { name: roomName.trim() },
+      });
+    }
+    setRoomDialog({ open: false, mode: "create" });
+  };
+
+  const handleDeleteRoom = async (roomId: number) => {
+    if (confirm("채팅방을 삭제하시겠습니까?")) {
+      await deleteRoom.mutateAsync(roomId);
+    }
+  };
+
   // 축소 상태
   if (!isOpen) {
     return (
@@ -176,6 +226,9 @@ export const ChatSidebar = () => {
                 onDeleteProject={handleDeleteProject}
                 onRenameTeam={handleOpenRenameTeam}
                 onDeleteTeam={handleDeleteTeam}
+                onCreateRoom={handleOpenCreateRoom}
+                onRenameRoom={handleOpenRenameRoom}
+                onDeleteRoom={handleDeleteRoom}
               />
             ))}
 
@@ -191,6 +244,9 @@ export const ChatSidebar = () => {
                     team={team}
                     onRename={handleOpenRenameTeam}
                     onDelete={handleDeleteTeam}
+                    onCreateRoom={handleOpenCreateRoom}
+                    onRenameRoom={handleOpenRenameRoom}
+                    onDeleteRoom={handleDeleteRoom}
                   />
                 ))}
               </div>
@@ -248,6 +304,24 @@ export const ChatSidebar = () => {
           value={teamName}
           onChange={(e) => setTeamName(e.target.value)}
           placeholder="팀 이름"
+          autoFocus
+        />
+      </FormDialog>
+
+      {/* 채팅방 다이얼로그 */}
+      <FormDialog
+        open={roomDialog.open}
+        onOpenChange={(open) => setRoomDialog({ ...roomDialog, open })}
+        title={roomDialog.mode === "create" ? "새 채팅방" : "채팅방 이름 변경"}
+        submitLabel={roomDialog.mode === "create" ? "생성" : "저장"}
+        onSubmit={handleRoomSubmit}
+        isLoading={createRoom.isPending || updateRoom.isPending}
+        maxWidth="sm:max-w-sm"
+      >
+        <Input
+          value={roomName}
+          onChange={(e) => setRoomName(e.target.value)}
+          placeholder="채팅방 이름"
           autoFocus
         />
       </FormDialog>

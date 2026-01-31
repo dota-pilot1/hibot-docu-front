@@ -11,7 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import { ChatProject, ChatTeam } from "@/features/chat-management";
+import { ChatProject, ChatTeam, ChatRoom } from "@/features/chat-management";
 import { useChatStore } from "../model/useChatStore";
 import { ChatTeamItem } from "./ChatTeamItem";
 import {
@@ -28,6 +28,9 @@ interface ChatProjectItemProps {
   onDeleteProject: (projectId: number) => void;
   onRenameTeam: (team: ChatTeam) => void;
   onDeleteTeam: (teamId: number) => void;
+  onCreateRoom: (teamId: number) => void;
+  onRenameRoom: (room: ChatRoom) => void;
+  onDeleteRoom: (roomId: number) => void;
 }
 
 export const ChatProjectItem = ({
@@ -37,6 +40,9 @@ export const ChatProjectItem = ({
   onDeleteProject,
   onRenameTeam,
   onDeleteTeam,
+  onCreateRoom,
+  onRenameRoom,
+  onDeleteRoom,
 }: ChatProjectItemProps) => {
   const expandedProjects = useChatStore((s) => s.expandedProjects);
   const toggleProject = useChatStore((s) => s.toggleProject);
@@ -87,8 +93,7 @@ export const ChatProjectItem = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => onCreateTeam(project.id)}>
-              <Plus className="h-4 w-4 mr-2" />
-              새 팀
+              <Plus className="h-4 w-4 mr-2" />새 팀
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onRenameProject(project)}>
               <Pencil className="h-4 w-4 mr-2" />
@@ -114,6 +119,9 @@ export const ChatProjectItem = ({
               team={team}
               onRename={onRenameTeam}
               onDelete={onDeleteTeam}
+              onCreateRoom={onCreateRoom}
+              onRenameRoom={onRenameRoom}
+              onDeleteRoom={onDeleteRoom}
             />
           ))}
           {project.teams.length === 0 && (
