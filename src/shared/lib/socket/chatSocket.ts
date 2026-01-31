@@ -16,9 +16,13 @@ class ChatSocketManager {
 
     this.userId = userId;
 
+    // WebSocket URL: NEXT_PUBLIC_WS_URL 또는 API URL에서 /api 제거
     const wsUrl =
+      process.env.NEXT_PUBLIC_WS_URL ||
       process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") ||
       "http://localhost:4001";
+
+    console.log("Connecting to WebSocket:", `${wsUrl}/chat`);
 
     this.socket = io(`${wsUrl}/chat`, {
       transports: ["websocket", "polling"],
