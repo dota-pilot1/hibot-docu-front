@@ -12,6 +12,7 @@ interface HeaderMenuProps {
 }
 
 const defaultMenuItems: MenuItem[] = [
+  { label: "업무 관리", href: "/tasks" },
   { label: "프로젝트 관리", href: "/projects" },
   { label: "게시판", href: "/posts" },
   { label: "사용자", href: "/users" },
@@ -19,7 +20,11 @@ const defaultMenuItems: MenuItem[] = [
 
 export const HeaderMenu = ({ items = defaultMenuItems }: HeaderMenuProps) => {
   return (
-    <nav className="flex items-center gap-8" role="navigation" aria-label="메인 메뉴">
+    <nav
+      className="flex items-center gap-8"
+      role="navigation"
+      aria-label="메인 메뉴"
+    >
       {items.map((item) => (
         <HeaderMenuItem key={item.href} label={item.label} href={item.href} />
       ))}

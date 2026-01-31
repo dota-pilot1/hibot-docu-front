@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useSidebarStore } from "../model/useSidebarStore";
 import { Sidebar, MobileSidebar } from "./Sidebar";
 import { useUserStore } from "@/entities/user/model/store";
@@ -16,6 +17,7 @@ const MIN_SIDEBAR_WIDTH = 200;
 const MAX_SIDEBAR_WIDTH = 400;
 
 export const ResizableLayout = ({ children }: ResizableLayoutProps) => {
+  const pathname = usePathname();
   const isOpen = useSidebarStore((state) => state.isOpen);
   const sidebarSize = useSidebarStore((state) => state.sidebarSize);
   const setSidebarSize = useSidebarStore((state) => state.setSidebarSize);
@@ -23,6 +25,9 @@ export const ResizableLayout = ({ children }: ResizableLayoutProps) => {
   const [mounted, setMounted] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // /tasks 경로에서만 MainContent(탭/패널 UI) 사용
+  const isTasksPage = pathname === "/tasks" || pathname === "/tasks/";
 
   useEffect(() => {
     setMounted(true);
@@ -131,13 +136,13 @@ export const ResizableLayout = ({ children }: ResizableLayoutProps) => {
 
         {/* 메인 콘텐츠 */}
         <main className="flex-1 bg-[#F8F9FA] dark:bg-zinc-950 overflow-auto">
-          <MainContent>{children}</MainContent>
+          {isTasksPage ? <MainContent /> : children}
         </main>
       </div>
 
       {/* 모바일: 메인 콘텐츠만 */}
       <main className="flex-1 lg:hidden bg-[#F8F9FA] dark:bg-zinc-950 overflow-auto">
-        <MainContent>{children}</MainContent>
+        {isTasksPage ? <MainContent /> : children}
       </main>
     </>
   );
