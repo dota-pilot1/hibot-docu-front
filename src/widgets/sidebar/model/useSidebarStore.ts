@@ -239,29 +239,33 @@ export const sidebarStore = new Store<SidebarState>({
     }));
   },
 
-  // 탭 열기 (활성 패널에)
+  // 탭 열기 (모든 패널에서 이미 열린 탭 찾아서 활성화, 없으면 활성 패널에 추가)
   openTab: (user: UserTab) => {
     sidebarStore.setState((state) => {
+      // 모든 패널에서 이미 열린 탭 찾기
+      for (let i = 0; i < state.panels.length; i++) {
+        const panel = state.panels[i];
+        const existingTab = panel.tabs.find((t) => t.id === user.id);
+        if (existingTab) {
+          // 해당 패널과 탭을 활성화
+          const newPanels = [...state.panels];
+          newPanels[i] = { ...panel, activeTabId: user.id };
+          return {
+            ...state,
+            panels: newPanels,
+            activePanelId: panel.id,
+            selectedUserId: user.id,
+          };
+        }
+      }
+
+      // 열린 탭이 없으면 현재 활성 패널에 새 탭 추가
       const panelIndex = state.panels.findIndex(
         (p) => p.id === state.activePanelId,
       );
       if (panelIndex === -1) return state;
 
       const panel = state.panels[panelIndex];
-      const existingTab = panel.tabs.find((t) => t.id === user.id);
-
-      if (existingTab) {
-        // 이미 있는 탭이면 활성화만
-        const newPanels = [...state.panels];
-        newPanels[panelIndex] = { ...panel, activeTabId: user.id };
-        return {
-          ...state,
-          panels: newPanels,
-          selectedUserId: user.id,
-        };
-      }
-
-      // 새 탭 추가
       const newPanels = [...state.panels];
       newPanels[panelIndex] = {
         ...panel,

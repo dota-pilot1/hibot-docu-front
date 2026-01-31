@@ -248,20 +248,25 @@ export const chatStore = new Store<ChatStoreState>({
 
   openTab: (team: { id: number; title: string }) => {
     chatStore.setState((state) => {
+      // 모든 패널에서 이미 열린 탭 찾기
+      for (let i = 0; i < state.panels.length; i++) {
+        const panel = state.panels[i];
+        const existingTab = panel.tabs.find((t) => t.id === team.id);
+        if (existingTab) {
+          // 해당 패널과 탭을 활성화
+          const newPanels = [...state.panels];
+          newPanels[i] = { ...panel, activeTabId: team.id };
+          return { ...state, panels: newPanels, activePanelId: panel.id };
+        }
+      }
+
+      // 열린 탭이 없으면 현재 활성 패널에 새 탭 추가
       const panelIndex = state.panels.findIndex(
         (p) => p.id === state.activePanelId,
       );
       if (panelIndex === -1) return state;
 
       const panel = state.panels[panelIndex];
-      const existingTab = panel.tabs.find((t) => t.id === team.id);
-
-      if (existingTab) {
-        const newPanels = [...state.panels];
-        newPanels[panelIndex] = { ...panel, activeTabId: team.id };
-        return { ...state, panels: newPanels };
-      }
-
       const newPanels = [...state.panels];
       newPanels[panelIndex] = {
         ...panel,

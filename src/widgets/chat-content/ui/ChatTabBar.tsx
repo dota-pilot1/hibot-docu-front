@@ -150,7 +150,7 @@ export const ChatTabBar = ({
         ) : (
           panel.tabs.map((tab) => (
             <DraggableChatTab
-              key={tab.id}
+              key={`${panel.id}-${tab.id}`}
               tab={tab}
               panelId={panel.id}
               isActive={tab.id === panel.activeTabId}
@@ -205,8 +205,8 @@ const DraggableChatTab = ({
   const activePanelId = useChatStore((s) => s.activePanelId);
 
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
-    id: `chat-tab-drop-${tab.id}`,
-    data: { type: "TAB", tabId: tab.id },
+    id: `chat-tab-drop-${panelId}-${tab.id}`,
+    data: { type: "TAB", tabId: tab.id, panelId },
   });
 
   const {
@@ -215,7 +215,7 @@ const DraggableChatTab = ({
     setNodeRef: setDraggableRef,
     isDragging,
   } = useDraggable({
-    id: tab.id,
+    id: `chat-tab-${panelId}-${tab.id}`,
     data: { type: "TAB", tab, panelId },
   });
 

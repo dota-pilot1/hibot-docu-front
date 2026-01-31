@@ -249,23 +249,28 @@ export const documentStore = new Store<DocumentStoreState>({
     });
   },
 
-  // 탭 열기 (활성 패널에)
+  // 탭 열기 (모든 패널에서 이미 열린 탭 찾아서 활성화, 없으면 활성 패널에 추가)
   openTab: (doc: { id: number; title: string }) => {
     documentStore.setState((state) => {
+      // 모든 패널에서 이미 열린 탭 찾기
+      for (let i = 0; i < state.panels.length; i++) {
+        const panel = state.panels[i];
+        const existingTab = panel.tabs.find((t) => t.id === doc.id);
+        if (existingTab) {
+          // 해당 패널과 탭을 활성화
+          const newPanels = [...state.panels];
+          newPanels[i] = { ...panel, activeTabId: doc.id };
+          return { ...state, panels: newPanels, activePanelId: panel.id };
+        }
+      }
+
+      // 열린 탭이 없으면 현재 활성 패널에 새 탭 추가
       const panelIndex = state.panels.findIndex(
         (p) => p.id === state.activePanelId,
       );
       if (panelIndex === -1) return state;
 
       const panel = state.panels[panelIndex];
-      const existingTab = panel.tabs.find((t) => t.id === doc.id);
-
-      if (existingTab) {
-        const newPanels = [...state.panels];
-        newPanels[panelIndex] = { ...panel, activeTabId: doc.id };
-        return { ...state, panels: newPanels };
-      }
-
       const newPanels = [...state.panels];
       newPanels[panelIndex] = {
         ...panel,
