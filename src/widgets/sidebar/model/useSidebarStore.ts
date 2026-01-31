@@ -57,6 +57,12 @@ export interface SidebarState {
     tabId: number,
     toIndex?: number,
   ) => void;
+  // 탭을 새 패널로 분할
+  addPanelWithTab: (
+    fromPanelId: string,
+    tabId: number,
+    targetPanelId: string,
+  ) => void;
 }
 
 // Load persisted state from localStorage
@@ -397,6 +403,70 @@ export const sidebarStore = new Store<SidebarState>({
         ...state,
         panels: newPanels,
         activePanelId: toPanelId, // 이동된 패널 활성화
+        selectedUserId: tabId,
+      };
+    });
+  },
+
+  // 탭을 새 패널로 분할 (본문 영역에 드롭 시)
+  addPanelWithTab: (
+    fromPanelId: string,
+    tabId: number,
+    targetPanelId: string,
+  ) => {
+    sidebarStore.setState((state) => {
+      const fromPanelIndex = state.panels.findIndex(
+        (p) => p.id === fromPanelId,
+      );
+      const targetPanelIndex = state.panels.findIndex(
+        (p) => p.id === targetPanelId,
+      );
+      if (fromPanelIndex === -1 || targetPanelIndex === -1) return state;
+
+      const fromPanel = state.panels[fromPanelIndex];
+      const tabIndex = fromPanel.tabs.findIndex((t) => t.id === tabId);
+      if (tabIndex === -1) return state;
+
+      // 탭 추출
+      const movedTab = fromPanel.tabs[tabIndex];
+      const newFromTabs = fromPanel.tabs.filter((t) => t.id !== tabId);
+
+      // fromPanel의 activeTabId 처리
+      let newFromActiveTabId = fromPanel.activeTabId;
+      if (fromPanel.activeTabId === tabId) {
+        if (newFromTabs.length > 0) {
+          const newIndex = Math.min(tabIndex, newFromTabs.length - 1);
+          newFromActiveTabId = newFromTabs[newIndex].id;
+        } else {
+          newFromActiveTabId = null;
+        }
+      }
+
+      // 새 패널 생성 (타겟 패널 오른쪽에)
+      const newPanelId = generatePanelId();
+      const newPanel: Panel = {
+        id: newPanelId,
+        tabs: [movedTab],
+        activeTabId: tabId,
+        width: 1,
+      };
+
+      // 패널 배열 업데이트
+      const newPanels = [...state.panels];
+      newPanels[fromPanelIndex] = {
+        ...fromPanel,
+        tabs: newFromTabs,
+        activeTabId: newFromActiveTabId,
+      };
+
+      // 새 패널을 타겟 패널 오른쪽에 삽입
+      const insertIndex = targetPanelIndex + 1;
+      newPanels.splice(insertIndex, 0, newPanel);
+
+      return {
+        ...state,
+        panels: newPanels,
+        activePanelId: newPanelId,
         selectedUserId: tabId,
       };
     });

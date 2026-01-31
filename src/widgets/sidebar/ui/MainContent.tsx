@@ -30,6 +30,7 @@ export const MainContent = ({ children }: MainContentProps) => {
   const setPanelWidths = useSidebarStore((state) => state.setPanelWidths);
   const reorderTabs = useSidebarStore((state) => state.reorderTabs);
   const moveTabToPanel = useSidebarStore((state) => state.moveTabToPanel);
+  const addPanelWithTab = useSidebarStore((state) => state.addPanelWithTab);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [resizing, setResizing] = useState<{
@@ -115,9 +116,17 @@ export const MainContent = ({ children }: MainContentProps) => {
         if (fromPanel.id !== toPanelId) {
           moveTabToPanel(fromPanel.id, toPanelId, activeTabId);
         }
+        return;
+      }
+
+      // over가 CONTENT인 경우 (본문 영역에 드롭 - 새 패널 생성)
+      if (over.data.current?.type === "CONTENT") {
+        const targetPanelId = over.data.current.panelId as string;
+        // 새 패널 생성 후 탭 이동
+        addPanelWithTab(fromPanel.id, activeTabId, targetPanelId);
       }
     },
-    [findPanelByTabId, reorderTabs, moveTabToPanel],
+    [findPanelByTabId, reorderTabs, moveTabToPanel, addPanelWithTab],
   );
 
   // 커스텀 collision detection - 탭과 패널 모두 감지
@@ -140,6 +149,14 @@ export const MainContent = ({ children }: MainContentProps) => {
       );
       if (panelCollision) {
         return [panelCollision];
+      }
+
+      // CONTENT 타입이 있으면 반환 (본문 영역 드롭)
+      const contentCollision = pointerCollisions.find(
+        (c) => c.data?.droppableContainer?.data?.current?.type === "CONTENT",
+      );
+      if (contentCollision) {
+        return [contentCollision];
       }
 
       // 없으면 rectIntersection으로 fallback
@@ -249,7 +266,7 @@ export const MainContent = ({ children }: MainContentProps) => {
                 onPanelClick={() => setActivePanel(panel.id)}
                 isDragging={activeTab !== null}
               />
-              <TabContent panel={panel} />
+              <TabContent panel={panel} isDragging={activeTab !== null} />
             </div>
 
             {/* 패널 간 리사이즈 핸들 (마지막 패널 제외) */}
