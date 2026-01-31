@@ -20,6 +20,10 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: (data: LoginRequest) => authApi.login(data),
     onSuccess: (response) => {
+      // 기존 인증 데이터 클리어 후 새로 저장
+      localStorage.removeItem("auth-storage");
+      localStorage.removeItem("token");
+
       // 토큰 저장
       localStorage.setItem("token", response.access_token);
 
