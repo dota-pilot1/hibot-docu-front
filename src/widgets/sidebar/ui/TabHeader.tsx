@@ -16,7 +16,7 @@ export const TabHeader = () => {
   }
 
   return (
-    <div className="flex items-center gap-1 p-2 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+    <div className="flex items-center gap-1 py-2 pl-1 pr-2 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
       {tabs.map((tab) => (
         <TabItem
           key={tab.id}
