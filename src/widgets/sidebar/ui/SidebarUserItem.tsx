@@ -6,6 +6,7 @@ import { Button } from "@/shared/ui/button";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { OrganizationUser } from "@/features/organization/api/organizationApi";
+import { useSidebarStore } from "../model/useSidebarStore";
 
 interface SidebarUserItemProps {
   user: OrganizationUser;
@@ -23,6 +24,10 @@ export const SidebarUserItem = ({
   isDragDisabled,
 }: SidebarUserItemProps) => {
   const displayName = user.name || user.email.split("@")[0];
+  const selectedUserId = useSidebarStore((state) => state.selectedUserId);
+  const selectUser = useSidebarStore((state) => state.selectUser);
+  const openTab = useSidebarStore((state) => state.openTab);
+  const isSelected = selectedUserId === user.id;
 
   const {
     attributes,
@@ -47,7 +52,16 @@ export const SidebarUserItem = ({
   };
 
   const handleClick = () => {
-    // TODO: 채팅 또는 프로필
+    selectUser(user.id);
+  };
+
+  const handleDoubleClick = () => {
+    openTab({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      profileImage: user.profileImage,
+    });
   };
 
   if (collapsed) {
@@ -55,8 +69,13 @@ export const SidebarUserItem = ({
       <Button
         variant="ghost"
         size="icon"
-        className="w-full h-10 relative"
+        className={cn(
+          "w-full h-10 relative",
+          isSelected &&
+            "bg-blue-100/70 dark:bg-blue-900/30 hover:bg-blue-100/80 dark:hover:bg-blue-900/40",
+        )}
         onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
         title={displayName}
       >
         {user.profileImage ? (
@@ -79,13 +98,16 @@ export const SidebarUserItem = ({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-center gap-2 p-2 rounded-lg",
+        "flex items-center gap-2 p-2 rounded-lg cursor-pointer",
         "hover:bg-zinc-100 dark:hover:bg-zinc-800",
         "transition-colors group",
         indent && "ml-4",
         isDragging && "opacity-50 shadow-lg bg-white dark:bg-zinc-800 z-50",
+        isSelected &&
+          "bg-blue-100/70 dark:bg-blue-900/30 hover:bg-blue-100/80 dark:hover:bg-blue-900/40",
       )}
       onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
     >
       {/* 드래그 핸들 */}
       {!isDragDisabled && (

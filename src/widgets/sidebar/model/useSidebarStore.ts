@@ -1,12 +1,26 @@
 import { Store, useStore } from "@tanstack/react-store";
 
+export interface UserTab {
+  id: number;
+  email: string;
+  name?: string;
+  profileImage?: string | null;
+}
+
 export interface SidebarState {
   isOpen: boolean;
   sidebarSize: number;
+  selectedUserId: number | null;
+  tabs: UserTab[];
+  activeTabId: number | null;
   toggle: () => void;
   open: () => void;
   close: () => void;
   setSidebarSize: (size: number) => void;
+  selectUser: (userId: number | null) => void;
+  openTab: (user: UserTab) => void;
+  closeTab: (userId: number) => void;
+  setActiveTab: (userId: number | null) => void;
 }
 
 // Load persisted state from localStorage
@@ -33,6 +47,9 @@ const loadPersistedState = (): { isOpen: boolean; sidebarSize: number } => {
 // Create the sidebar store
 export const sidebarStore = new Store<SidebarState>({
   ...loadPersistedState(),
+  selectedUserId: null,
+  tabs: [],
+  activeTabId: null,
   toggle: () => {
     sidebarStore.setState((state) => ({ ...state, isOpen: !state.isOpen }));
   },
@@ -44,6 +61,56 @@ export const sidebarStore = new Store<SidebarState>({
   },
   setSidebarSize: (size: number) => {
     sidebarStore.setState((state) => ({ ...state, sidebarSize: size }));
+  },
+  selectUser: (userId: number | null) => {
+    sidebarStore.setState((state) => ({ ...state, selectedUserId: userId }));
+  },
+  openTab: (user: UserTab) => {
+    sidebarStore.setState((state) => {
+      const existingTab = state.tabs.find((t) => t.id === user.id);
+      if (existingTab) {
+        return { ...state, activeTabId: user.id, selectedUserId: user.id };
+      }
+      return {
+        ...state,
+        tabs: [...state.tabs, user],
+        activeTabId: user.id,
+        selectedUserId: user.id,
+      };
+    });
+  },
+  closeTab: (userId: number) => {
+    sidebarStore.setState((state) => {
+      const newTabs = state.tabs.filter((t) => t.id !== userId);
+      let newActiveTabId = state.activeTabId;
+      let newSelectedUserId = state.selectedUserId;
+
+      if (state.activeTabId === userId) {
+        const closedIndex = state.tabs.findIndex((t) => t.id === userId);
+        if (newTabs.length > 0) {
+          const newIndex = Math.min(closedIndex, newTabs.length - 1);
+          newActiveTabId = newTabs[newIndex].id;
+          newSelectedUserId = newActiveTabId;
+        } else {
+          newActiveTabId = null;
+          newSelectedUserId = null;
+        }
+      }
+
+      return {
+        ...state,
+        tabs: newTabs,
+        activeTabId: newActiveTabId,
+        selectedUserId: newSelectedUserId,
+      };
+    });
+  },
+  setActiveTab: (userId: number | null) => {
+    sidebarStore.setState((state) => ({
+      ...state,
+      activeTabId: userId,
+      selectedUserId: userId,
+    }));
   },
 });
 

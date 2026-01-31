@@ -5,6 +5,7 @@ import { useSidebarStore } from "../model/useSidebarStore";
 import { Sidebar, MobileSidebar } from "./Sidebar";
 import { useUserStore } from "@/entities/user/model/store";
 import { cn } from "@/shared/lib/utils";
+import { MainContent } from "./MainContent";
 
 interface ResizableLayoutProps {
   children: React.ReactNode;
@@ -130,13 +131,13 @@ export const ResizableLayout = ({ children }: ResizableLayoutProps) => {
 
         {/* 메인 콘텐츠 */}
         <main className="flex-1 bg-[#F8F9FA] dark:bg-zinc-950 overflow-auto">
-          {children}
+          <MainContent>{children}</MainContent>
         </main>
       </div>
 
       {/* 모바일: 메인 콘텐츠만 */}
       <main className="flex-1 lg:hidden bg-[#F8F9FA] dark:bg-zinc-950 overflow-auto">
-        {children}
+        <MainContent>{children}</MainContent>
       </main>
     </>
   );
