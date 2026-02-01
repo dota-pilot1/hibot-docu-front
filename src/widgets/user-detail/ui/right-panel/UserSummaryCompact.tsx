@@ -1,5 +1,8 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { taskApi } from "@/entities/task";
+
 interface UserSummaryCompactProps {
   userId: number;
   userName: string;
@@ -9,11 +12,10 @@ export const UserSummaryCompact = ({
   userId,
   userName,
 }: UserSummaryCompactProps) => {
-  // 더미 데이터
-  const stats = {
-    todayTotal: 5,
-    todayCompleted: 3,
-  };
+  const { data: stats } = useQuery({
+    queryKey: ["tasks", "stats", userId],
+    queryFn: () => taskApi.getUserStats(userId),
+  });
 
   return (
     <div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
@@ -37,8 +39,8 @@ export const UserSummaryCompact = ({
         <div className="text-right">
           <p className="text-xs text-zinc-500">오늘</p>
           <p className="text-sm font-medium">
-            <span className="text-green-600">{stats.todayCompleted}</span>
-            <span className="text-zinc-400"> / {stats.todayTotal}</span>
+            <span className="text-green-600">{stats?.todayCompleted ?? 0}</span>
+            <span className="text-zinc-400"> / {stats?.todayTotal ?? 0}</span>
           </p>
         </div>
       </div>

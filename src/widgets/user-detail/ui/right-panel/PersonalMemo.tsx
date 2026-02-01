@@ -1,24 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Check, X } from "lucide-react";
+import { taskApi } from "@/entities/task";
 
 interface PersonalMemoProps {
   userId: number;
 }
 
 export const PersonalMemo = ({ userId }: PersonalMemoProps) => {
+  const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
-  const [memo, setMemo] = useState("이번 주 금요일 휴가 예정");
-  const [tempMemo, setTempMemo] = useState(memo);
+  const [tempMemo, setTempMemo] = useState("");
+
+  const { data: memoData } = useQuery({
+    queryKey: ["memo", userId],
+    queryFn: () => taskApi.getUserMemo(userId),
+  });
+
+  const updateMemoMutation = useMutation({
+    mutationFn: (memo: string) => taskApi.updateUserMemo(userId, memo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["memo", userId] });
+      setIsEditing(false);
+    },
+  });
+
+  useEffect(() => {
+    if (memoData?.memo) {
+      setTempMemo(memoData.memo);
+    }
+  }, [memoData]);
+
+  const handleEdit = () => {
+    setTempMemo(memoData?.memo || "");
+    setIsEditing(true);
+  };
 
   const handleSave = () => {
-    setMemo(tempMemo);
-    setIsEditing(false);
+    updateMemoMutation.mutate(tempMemo);
   };
 
   const handleCancel = () => {
-    setTempMemo(memo);
+    setTempMemo(memoData?.memo || "");
     setIsEditing(false);
   };
 
@@ -28,7 +53,7 @@ export const PersonalMemo = ({ userId }: PersonalMemoProps) => {
         <h3 className="font-semibold text-sm">개인 메모</h3>
         {!isEditing && (
           <button
-            onClick={() => setIsEditing(true)}
+            onClick={handleEdit}
             className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
           >
             <Pencil size={14} />
@@ -49,12 +74,14 @@ export const PersonalMemo = ({ userId }: PersonalMemoProps) => {
             <button
               onClick={handleCancel}
               className="p-1 text-zinc-400 hover:text-zinc-600"
+              disabled={updateMemoMutation.isPending}
             >
               <X size={16} />
             </button>
             <button
               onClick={handleSave}
               className="p-1 text-green-500 hover:text-green-600"
+              disabled={updateMemoMutation.isPending}
             >
               <Check size={16} />
             </button>
@@ -62,7 +89,7 @@ export const PersonalMemo = ({ userId }: PersonalMemoProps) => {
         </div>
       ) : (
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          {memo || "메모가 없습니다"}
+          {memoData?.memo || "메모가 없습니다"}
         </p>
       )}
     </div>

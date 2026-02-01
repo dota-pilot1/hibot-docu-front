@@ -1,5 +1,6 @@
 "use client";
 
+import { Task } from "@/entities/task";
 import { UserSummaryCompact } from "./UserSummaryCompact";
 import { CurrentTaskCard } from "./CurrentTaskCard";
 import { RecentActivityList } from "./RecentActivityList";
@@ -8,16 +9,21 @@ import { PersonalMemo } from "./PersonalMemo";
 interface RightPanelProps {
   userId: number;
   userName: string;
+  selectedTask: Task | null;
 }
 
-export const RightPanel = ({ userId, userName }: RightPanelProps) => {
+export const RightPanel = ({
+  userId,
+  userName,
+  selectedTask,
+}: RightPanelProps) => {
   return (
     <div className="flex flex-col gap-4 p-4 h-full overflow-auto">
       {/* 유저 요약 */}
       <UserSummaryCompact userId={userId} userName={userName} />
 
       {/* 현재 작업 */}
-      <CurrentTaskCard />
+      <CurrentTaskCard task={selectedTask} userId={userId} />
 
       {/* 최근 활동 */}
       <RecentActivityList userId={userId} />

@@ -3,88 +3,28 @@
 import { useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ColDef, ModuleRegistry, AllCommunityModule } from "ag-grid-community";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // AG Grid 모듈 등록
 ModuleRegistry.registerModules([AllCommunityModule]);
+
 import {
   Task,
   TaskStatus,
   TaskPriority,
   taskStatusConfig,
   taskPriorityConfig,
+  taskApi,
 } from "@/entities/task";
 
 interface TaskGridProps {
   userId: number;
+  onTaskSelect?: (task: Task | null) => void;
 }
-
-// 더미 데이터
-const dummyTasks: Task[] = [
-  {
-    id: 1,
-    title: "API 엔드포인트 개발",
-    status: "in_progress",
-    priority: "high",
-    assigneeId: 1,
-    dueDate: "2025-01-20",
-    createdAt: "2025-01-15T09:00:00Z",
-    updatedAt: "2025-01-15T09:00:00Z",
-  },
-  {
-    id: 2,
-    title: "프론트엔드 UI 수정",
-    status: "pending",
-    priority: "medium",
-    assigneeId: 1,
-    dueDate: "2025-01-22",
-    createdAt: "2025-01-14T10:00:00Z",
-    updatedAt: "2025-01-14T10:00:00Z",
-  },
-  {
-    id: 3,
-    title: "DB 스키마 설계",
-    status: "completed",
-    priority: "high",
-    assigneeId: 1,
-    dueDate: "2025-01-18",
-    createdAt: "2025-01-10T08:00:00Z",
-    updatedAt: "2025-01-18T17:00:00Z",
-    completedAt: "2025-01-18T17:00:00Z",
-  },
-  {
-    id: 4,
-    title: "코드 리뷰",
-    status: "review",
-    priority: "medium",
-    assigneeId: 1,
-    dueDate: "2025-01-21",
-    createdAt: "2025-01-16T11:00:00Z",
-    updatedAt: "2025-01-16T11:00:00Z",
-  },
-  {
-    id: 5,
-    title: "버그 수정 - 로그인 오류",
-    status: "blocked",
-    priority: "high",
-    assigneeId: 1,
-    dueDate: "2025-01-19",
-    createdAt: "2025-01-17T14:00:00Z",
-    updatedAt: "2025-01-17T14:00:00Z",
-  },
-  {
-    id: 6,
-    title: "문서 작성",
-    status: "pending",
-    priority: "low",
-    assigneeId: 1,
-    dueDate: "2025-01-25",
-    createdAt: "2025-01-15T15:00:00Z",
-    updatedAt: "2025-01-15T15:00:00Z",
-  },
-];
 
 // 상태 셀 렌더러
 const StatusCellRenderer = (props: { value: TaskStatus }) => {
+  if (!props.value) return null;
   const config = taskStatusConfig[props.value];
   return (
     <span
@@ -97,6 +37,7 @@ const StatusCellRenderer = (props: { value: TaskStatus }) => {
 
 // 우선순위 셀 렌더러
 const PriorityCellRenderer = (props: { value: TaskPriority }) => {
+  if (!props.value) return null;
   const config = taskPriorityConfig[props.value];
   return (
     <span className={`text-sm ${config.color}`}>
@@ -105,7 +46,24 @@ const PriorityCellRenderer = (props: { value: TaskPriority }) => {
   );
 };
 
-export const TaskGrid = ({ userId }: TaskGridProps) => {
+export const TaskGrid = ({ userId, onTaskSelect }: TaskGridProps) => {
+  const queryClient = useQueryClient();
+
+  // Task 목록 조회
+  const { data: tasks = [], isLoading } = useQuery({
+    queryKey: ["tasks", "user", userId],
+    queryFn: () => taskApi.getByUser(userId),
+  });
+
+  // Task 수정 mutation
+  const updateTaskMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<Task> }) =>
+      taskApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", "user", userId] });
+    },
+  });
+
   const columnDefs = useMemo<ColDef<Task>[]>(
     () => [
       {
@@ -113,6 +71,7 @@ export const TaskGrid = ({ userId }: TaskGridProps) => {
         headerName: "제목",
         flex: 2,
         minWidth: 200,
+        editable: true,
       },
       {
         field: "status",
@@ -147,16 +106,32 @@ export const TaskGrid = ({ userId }: TaskGridProps) => {
     [],
   );
 
+  if (isLoading) {
+    return (
+      <div className="h-full w-full flex items-center justify-center text-zinc-500">
+        로딩 중...
+      </div>
+    );
+  }
+
   return (
     <div className="ag-theme-alpine h-full w-full">
       <AgGridReact<Task>
-        rowData={dummyTasks}
+        rowData={tasks}
         columnDefs={columnDefs}
         defaultColDef={defaultColDef}
         animateRows={true}
         rowSelection="single"
         onRowClicked={(event) => {
-          console.log("Row clicked:", event.data);
+          onTaskSelect?.(event.data || null);
+        }}
+        onCellValueChanged={(event) => {
+          if (event.data && event.colDef.field) {
+            updateTaskMutation.mutate({
+              id: event.data.id,
+              data: { [event.colDef.field]: event.newValue },
+            });
+          }
         }}
       />
     </div>
