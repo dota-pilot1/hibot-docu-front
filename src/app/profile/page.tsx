@@ -19,6 +19,7 @@ import { Button } from "@/shared/ui/button";
 import { ConfirmDialog } from "@/shared/ui/dialogs/ConfirmDialog";
 import { useUserStore } from "@/entities/user/model/store";
 import { api } from "@/shared/api";
+import { getImageUrl } from "@/shared/lib/utils";
 
 interface Profile {
   id: number;
@@ -43,6 +44,7 @@ export default function ProfilePage() {
   const user = useUserStore((state) => state.user);
   const accessToken = useUserStore((state) => state.accessToken);
   const logout = useUserStore((state) => state.logout);
+  const setUser = useUserStore((state) => state.setUser);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [myPosts, setMyPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -115,6 +117,14 @@ export default function ProfilePage() {
       });
 
       setProfile(response.data);
+
+      // user store도 업데이트
+      if (user) {
+        setUser({
+          ...user,
+          profileImage: response.data.profileImage,
+        });
+      }
     } catch (error) {
       console.error("Failed to upload image:", error);
       alert("이미지 업로드에 실패했습니다.");
@@ -152,9 +162,9 @@ export default function ProfilePage() {
             <div className="flex items-center gap-4">
               <div className="relative">
                 <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
-                  {profile.profileImage ? (
+                  {getImageUrl(profile.profileImage) ? (
                     <img
-                      src={profile.profileImage}
+                      src={getImageUrl(profile.profileImage)!}
                       alt="프로필 이미지"
                       className="w-full h-full object-cover"
                     />

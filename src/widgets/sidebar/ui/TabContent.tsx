@@ -1,10 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { Panel, UserTab } from "../model/useSidebarStore";
 import { User } from "lucide-react";
 import { useDroppable } from "@dnd-kit/core";
-import { cn } from "@/shared/lib/utils";
+import { cn, getImageUrl } from "@/shared/lib/utils";
 
 interface TabContentProps {
   panel: Panel;
@@ -64,18 +63,17 @@ interface UserTabContentProps {
 
 const UserTabContent = ({ tab }: UserTabContentProps) => {
   const displayName = tab.name || tab.email.split("@")[0];
+  const profileImageUrl = getImageUrl(tab.profileImage);
 
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
         <div className="flex items-center gap-4 mb-6">
-          {tab.profileImage ? (
-            <Image
-              src={tab.profileImage}
+          {profileImageUrl ? (
+            <img
+              src={profileImageUrl}
               alt={displayName}
-              width={64}
-              height={64}
-              className="rounded-full object-cover"
+              className="h-16 w-16 rounded-full object-cover"
             />
           ) : (
             <div className="h-16 w-16 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">

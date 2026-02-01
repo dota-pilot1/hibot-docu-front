@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useUserStore } from "@/entities/user/model/store";
 import { Button } from "@/shared/ui/button";
 import { User, Shield } from "lucide-react";
+import { getImageUrl } from "@/shared/lib/utils";
 
 export const UserMenu = () => {
   const { user, logout } = useUserStore((state) => ({
@@ -14,6 +15,7 @@ export const UserMenu = () => {
   if (!user) return null;
 
   const isAdmin = user.role === "ADMIN";
+  const profileImageUrl = getImageUrl(user.profileImage);
 
   return (
     <div className="flex items-center gap-3">
@@ -22,9 +24,9 @@ export const UserMenu = () => {
         className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-blue-600 transition-colors"
       >
         <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center overflow-hidden">
-          {user.profileImage ? (
+          {profileImageUrl ? (
             <img
-              src={user.profileImage}
+              src={profileImageUrl}
               alt="프로필"
               className="w-full h-full object-cover"
             />
