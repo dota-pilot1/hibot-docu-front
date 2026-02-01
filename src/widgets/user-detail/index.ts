@@ -1,0 +1,1 @@
+export { UserDetailLayout } from "./ui";

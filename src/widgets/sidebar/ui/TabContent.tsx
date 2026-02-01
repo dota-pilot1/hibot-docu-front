@@ -3,7 +3,8 @@
 import { Panel, UserTab } from "../model/useSidebarStore";
 import { User } from "lucide-react";
 import { useDroppable } from "@dnd-kit/core";
-import { cn, getImageUrl } from "@/shared/lib/utils";
+import { cn } from "@/shared/lib/utils";
+import { UserDetailLayout } from "@/widgets/user-detail";
 
 interface TabContentProps {
   panel: Panel;
@@ -42,78 +43,19 @@ export const TabContent = ({ panel, isDragging }: TabContentProps) => {
     return null;
   }
 
+  const displayName = activeTab.name || activeTab.email.split("@")[0];
+
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        "flex-1 p-6 overflow-auto",
+        "flex-1 overflow-hidden",
         isOver &&
           isDragging &&
           "bg-blue-50 dark:bg-blue-900/20 ring-2 ring-blue-400 ring-inset",
       )}
     >
-      <UserTabContent tab={activeTab} />
-    </div>
-  );
-};
-
-interface UserTabContentProps {
-  tab: UserTab;
-}
-
-const UserTabContent = ({ tab }: UserTabContentProps) => {
-  const displayName = tab.name || tab.email.split("@")[0];
-  const profileImageUrl = getImageUrl(tab.profileImage);
-
-  return (
-    <div className="max-w-2xl mx-auto">
-      <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
-        <div className="flex items-center gap-4 mb-6">
-          {profileImageUrl ? (
-            <img
-              src={profileImageUrl}
-              alt={displayName}
-              className="h-16 w-16 rounded-full object-cover"
-            />
-          ) : (
-            <div className="h-16 w-16 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
-              <User className="h-8 w-8 text-zinc-500" />
-            </div>
-          )}
-          <div>
-            <h2 className="text-xl font-semibold">{displayName}</h2>
-            <p className="text-zinc-500">{tab.email}</p>
-          </div>
-        </div>
-
-        <div className="border-t border-zinc-200 dark:border-zinc-800 pt-4">
-          <h3 className="text-sm font-medium text-zinc-500 mb-2">
-            사용자 정보
-          </h3>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                ID
-              </span>
-              <span className="text-sm font-medium">{tab.id}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                이메일
-              </span>
-              <span className="text-sm font-medium">{tab.email}</span>
-            </div>
-            {tab.name && (
-              <div className="flex justify-between">
-                <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                  이름
-                </span>
-                <span className="text-sm font-medium">{tab.name}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <UserDetailLayout userId={activeTab.id} userName={displayName} />
     </div>
   );
 };

@@ -19,7 +19,7 @@ export const Header = () => {
   }, []);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 h-12">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 h-10">
       <div className="w-full mx-auto px-4 h-full flex items-center justify-between">
         <div className="flex items-center gap-2">
           {mounted && user && (

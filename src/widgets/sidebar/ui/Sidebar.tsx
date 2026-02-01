@@ -91,7 +91,7 @@ export const MobileSidebar = () => {
       {/* 모바일 사이드바 */}
       <aside
         className={cn(
-          "fixed top-12 left-0 h-[calc(100vh-48px)] bg-white dark:bg-zinc-900",
+          "fixed top-10 left-0 h-[calc(100vh-40px)] bg-white dark:bg-zinc-900",
           "border-r border-zinc-200 dark:border-zinc-800",
           "transition-all duration-300 ease-in-out z-40",
           "flex flex-col overflow-hidden",

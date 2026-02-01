@@ -35,7 +35,7 @@ export default function RootLayout({
         <QueryProvider>
           <AuthInitializer>
             <Header />
-            <div className="flex pt-12 h-screen">
+            <div className="flex pt-10 h-screen">
               <ResizableLayout>{children}</ResizableLayout>
             </div>
           </AuthInitializer>

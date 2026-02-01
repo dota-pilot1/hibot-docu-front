@@ -101,12 +101,12 @@ export const HeaderLoginForm = () => {
           {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
         </button>
       </div>
-      <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer select-none whitespace-nowrap">
+      <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none whitespace-nowrap">
         <input
           type="checkbox"
           checked={rememberCredentials}
           onChange={(e) => handleRememberChange(e.target.checked)}
-          className="h-3 w-3 rounded border-gray-300 cursor-pointer"
+          className="h-4 w-4 rounded border-gray-300 cursor-pointer accent-primary"
         />
         저장
       </label>

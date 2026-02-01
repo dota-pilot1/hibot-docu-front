@@ -126,49 +126,59 @@ export const ResizableLayout = ({ children }: ResizableLayoutProps) => {
     );
   }
 
-  return (
-    <>
-      {/* 모바일 사이드바 (오버레이) */}
-      <MobileSidebar />
+  // /tasks 경로에서만 사이드바 + MainContent 표시
+  if (isTasksPage) {
+    return (
+      <>
+        {/* 모바일 사이드바 (오버레이) */}
+        <MobileSidebar />
 
-      {/* 데스크톱 레이아웃 */}
-      <div className="hidden lg:flex flex-1 overflow-hidden">
-        {/* 사이드바 */}
-        <div
-          ref={sidebarRef}
-          className={cn(
-            "h-full border-r border-zinc-200 dark:border-zinc-800 shrink-0",
-            !isResizing && "transition-all duration-300 ease-in-out",
+        {/* 데스크톱 레이아웃 */}
+        <div className="hidden lg:flex flex-1 overflow-hidden">
+          {/* 사이드바 */}
+          <div
+            ref={sidebarRef}
+            className={cn(
+              "h-full border-r border-zinc-200 dark:border-zinc-800 shrink-0",
+              !isResizing && "transition-all duration-300 ease-in-out",
+            )}
+            style={{ width: isOpen ? sidebarWidth : 64 }}
+          >
+            <Sidebar />
+          </div>
+
+          {/* 리사이즈 핸들 (열려있을 때만) */}
+          {isOpen && (
+            <div
+              className={cn(
+                "w-1 h-full cursor-col-resize shrink-0",
+                "bg-zinc-200 dark:bg-zinc-700",
+                "hover:bg-blue-400 dark:hover:bg-blue-500",
+                "transition-colors",
+                isResizing && "bg-blue-400 dark:bg-blue-500",
+              )}
+              onMouseDown={handleMouseDown}
+            />
           )}
-          style={{ width: isOpen ? sidebarWidth : 64 }}
-        >
-          <Sidebar />
+
+          {/* 메인 콘텐츠 */}
+          <main className="flex-1 bg-[#F8F9FA] dark:bg-zinc-950 overflow-auto">
+            <MainContent />
+          </main>
         </div>
 
-        {/* 리사이즈 핸들 (열려있을 때만) */}
-        {isOpen && (
-          <div
-            className={cn(
-              "w-1 h-full cursor-col-resize shrink-0",
-              "bg-zinc-200 dark:bg-zinc-700",
-              "hover:bg-blue-400 dark:hover:bg-blue-500",
-              "transition-colors",
-              isResizing && "bg-blue-400 dark:bg-blue-500",
-            )}
-            onMouseDown={handleMouseDown}
-          />
-        )}
-
-        {/* 메인 콘텐츠 */}
-        <main className="flex-1 bg-[#F8F9FA] dark:bg-zinc-950 overflow-auto">
-          {isTasksPage ? <MainContent /> : children}
+        {/* 모바일: 메인 콘텐츠만 */}
+        <main className="flex-1 lg:hidden bg-[#F8F9FA] dark:bg-zinc-950 overflow-auto">
+          <MainContent />
         </main>
-      </div>
+      </>
+    );
+  }
 
-      {/* 모바일: 메인 콘텐츠만 */}
-      <main className="flex-1 lg:hidden bg-[#F8F9FA] dark:bg-zinc-950 overflow-auto">
-        {isTasksPage ? <MainContent /> : children}
-      </main>
-    </>
+  // 그 외 페이지는 사이드바 없이 children만 표시
+  return (
+    <main className="flex-1 bg-[#F8F9FA] dark:bg-zinc-950 overflow-auto">
+      {children}
+    </main>
   );
 };
