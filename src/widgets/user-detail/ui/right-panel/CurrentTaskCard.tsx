@@ -16,6 +16,7 @@ export const CurrentTaskCard = ({ task, userId }: CurrentTaskCardProps) => {
       taskApi.updateStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks", "user", userId] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", "current", userId] });
       queryClient.invalidateQueries({ queryKey: ["activities", userId] });
       queryClient.invalidateQueries({ queryKey: ["tasks", "stats", userId] });
     },
