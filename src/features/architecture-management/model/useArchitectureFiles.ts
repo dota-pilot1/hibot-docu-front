@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { projectApi } from "../api/projectApi";
-import type { CategoryFile } from "@/entities/project/model/types";
+import { architectureApi } from "../api/architectureApi";
+import type { CategoryFile } from "@/entities/architecture/model/types";
 
-export const useProjectFiles = (categoryId: number | null) => {
+export const useArchitectureFiles = (categoryId: number | null) => {
   const [files, setFiles] = useState<CategoryFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +18,7 @@ export const useProjectFiles = (categoryId: number | null) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await projectApi.getFiles(categoryId);
+      const data = await architectureApi.getFiles(categoryId);
       setFiles(data);
     } catch (err: any) {
       setError(err.message || "Failed to fetch files");
@@ -35,7 +35,7 @@ export const useProjectFiles = (categoryId: number | null) => {
   return { files, isLoading, error, refetch: fetchFiles };
 };
 
-export const useProjectFileMutations = () => {
+export const useArchitectureFileMutations = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,7 +43,7 @@ export const useProjectFileMutations = () => {
     setIsUploading(true);
     setError(null);
     try {
-      const result = await projectApi.uploadFile(categoryId, file);
+      const result = await architectureApi.uploadFile(categoryId, file);
       return result;
     } catch (err: any) {
       setError(err.message || "Failed to upload file");
@@ -56,7 +56,7 @@ export const useProjectFileMutations = () => {
   const deleteFile = async (fileId: number) => {
     setError(null);
     try {
-      await projectApi.deleteFile(fileId);
+      await architectureApi.deleteFile(fileId);
     } catch (err: any) {
       setError(err.message || "Failed to delete file");
       throw err;
@@ -66,7 +66,7 @@ export const useProjectFileMutations = () => {
   const renameFile = async (fileId: number, newName: string) => {
     setError(null);
     try {
-      const result = await projectApi.renameFile(fileId, newName);
+      const result = await architectureApi.renameFile(fileId, newName);
       return result;
     } catch (err: any) {
       setError(err.message || "Failed to rename file");
@@ -76,7 +76,7 @@ export const useProjectFileMutations = () => {
 
   const downloadFile = async (file: CategoryFile) => {
     try {
-      await projectApi.downloadFile({
+      await architectureApi.downloadFile({
         s3Url: file.s3Url,
         originalName: file.originalName,
       });

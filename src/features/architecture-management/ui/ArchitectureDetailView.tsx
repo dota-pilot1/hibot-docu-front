@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useProjectTree } from "../model/useProjectTree";
-import { useProjectContents } from "../model/useProjectContents";
+import { useArchitectureTree } from "../model/useArchitectureTree";
+import { useArchitectureContents } from "../model/useArchitectureContents";
 import {
-  useProjectFiles,
-  useProjectFileMutations,
-} from "../model/useProjectFiles";
+  useArchitectureFiles,
+  useArchitectureFileMutations,
+} from "../model/useArchitectureFiles";
 import CommonFileUploader from "@/shared/ui/CommonFileUploader";
 import CommonFileGrid from "@/shared/ui/CommonFileGrid";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
@@ -35,7 +35,7 @@ import { Textarea } from "@/shared/ui/textarea";
 import { Label } from "@/shared/ui/label";
 import { FormDialog } from "@/shared/ui/dialogs/FormDialog";
 import { ConfirmDialog } from "@/shared/ui/dialogs/ConfirmDialog";
-import { projectApi } from "../api/projectApi";
+import { architectureApi } from "../api/architectureApi";
 import dynamic from "next/dynamic";
 import {
   DndContext,
@@ -81,13 +81,13 @@ import { QARenderer } from "@/shared/ui/QARenderer";
 import { QAEditor } from "@/shared/ui/QAEditor";
 
 import type {
-  ProjectCategory,
-  ProjectContent,
+  ArchitectureCategory,
+  ArchitectureContent,
   ContentType,
-  ProjectType,
-} from "@/entities/project/model/types";
+  ArchitectureType,
+} from "@/entities/architecture/model/types";
 
-export const ProjectDetailView = () => {
+export const ArchitectureDetailView = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tech = searchParams.get("tech");
@@ -98,27 +98,27 @@ export const ProjectDetailView = () => {
     tree,
     isLoading: treeLoading,
     refetch: refetchTree,
-  } = useProjectTree();
+  } = useArchitectureTree();
   const {
     contents,
     isLoading: contentsLoading,
     refetch: refetchContents,
-  } = useProjectContents(selectedCategory);
+  } = useArchitectureContents(selectedCategory);
 
   // File hooks
   const {
     files,
     isLoading: filesLoading,
     refetch: refetchFiles,
-  } = useProjectFiles(selectedCategory);
+  } = useArchitectureFiles(selectedCategory);
   const { isUploading, uploadFile, deleteFile, renameFile, downloadFile } =
-    useProjectFileMutations();
+    useArchitectureFileMutations();
 
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
   // 드래그 중 임시 상태 (실시간 자리바꾸기용)
-  const [tempTree, setTempTree] = useState<ProjectCategory[] | null>(null);
-  const [tempContents, setTempContents] = useState<ProjectContent[] | null>(
+  const [tempTree, setTempTree] = useState<ArchitectureCategory[] | null>(null);
+  const [tempContents, setTempContents] = useState<ArchitectureContent[] | null>(
     null,
   );
 
@@ -132,18 +132,18 @@ export const ProjectDetailView = () => {
     "create",
   );
   const [editingCategory, setEditingCategory] =
-    useState<ProjectCategory | null>(null);
+    useState<ArchitectureCategory | null>(null);
   const [categoryForm, setCategoryForm] = useState({
     name: "",
     parentId: null as number | null,
-    projectType: "NOTE" as ProjectType,
+    architectureType: "NOTE" as ArchitectureType,
   });
 
   const [isContentModalOpen, setIsContentModalOpen] = useState(false);
   const [contentModalMode, setContentModalMode] = useState<"create" | "edit">(
     "create",
   );
-  const [editingContent, setEditingContent] = useState<ProjectContent | null>(
+  const [editingContent, setEditingContent] = useState<ArchitectureContent | null>(
     null,
   );
   const [contentForm, setContentForm] = useState<{
@@ -176,13 +176,13 @@ export const ProjectDetailView = () => {
 
   // Filter tree: find the selected tech and show it as root (including its children)
   const getFilteredTree = (
-    sourceTree: ProjectCategory[],
-  ): ProjectCategory[] => {
+    sourceTree: ArchitectureCategory[],
+  ): ArchitectureCategory[] => {
     if (tech && sourceTree.length > 0) {
       // Find the tech category in the tree
       const findTech = (
-        categories: ProjectCategory[],
-      ): ProjectCategory | null => {
+        categories: ArchitectureCategory[],
+      ): ArchitectureCategory | null => {
         for (const cat of categories) {
           if (cat.techType === tech || cat.id.toString() === tech) {
             return cat;
@@ -203,9 +203,9 @@ export const ProjectDetailView = () => {
     } else {
       // Show all depth >= 1 categories
       const getAllChildren = (
-        categories: ProjectCategory[],
-      ): ProjectCategory[] => {
-        let result: ProjectCategory[] = [];
+        categories: ArchitectureCategory[],
+      ): ArchitectureCategory[] => {
+        let result: ArchitectureCategory[] = [];
         for (const cat of categories) {
           if (cat.children && cat.children.length > 0) {
             result = [...result, ...cat.children];
@@ -222,7 +222,7 @@ export const ProjectDetailView = () => {
   // Initialize expandedIds with depth 1 items when filteredTree changes
   useEffect(() => {
     if (filteredTree.length > 0) {
-      const collectDepth1 = (categories: ProjectCategory[]): number[] => {
+      const collectDepth1 = (categories: ArchitectureCategory[]): number[] => {
         const ids: number[] = [];
         for (const cat of categories) {
           if (cat.depth === 1) {
@@ -252,9 +252,9 @@ export const ProjectDetailView = () => {
 
   // Helper to find selected category and its type
   const findCategoryById = (
-    nodes: ProjectCategory[],
+    nodes: ArchitectureCategory[],
     id: number,
-  ): ProjectCategory | undefined => {
+  ): ArchitectureCategory | undefined => {
     for (const node of nodes) {
       if (node.id === id) return node;
       if (node.children) {
@@ -268,7 +268,7 @@ export const ProjectDetailView = () => {
   const selectedCategoryData = selectedCategory
     ? findCategoryById(tree, selectedCategory)
     : null;
-  const isFileCategory = selectedCategoryData?.projectType === "FILE";
+  const isFileCategory = selectedCategoryData?.architectureType === "FILE";
 
   // File handlers
   const handleFileUpload = async (file: File) => {
@@ -301,9 +301,9 @@ export const ProjectDetailView = () => {
 
   // 트리에서 형제 노드 찾기 (재귀)
   const findSiblings = (
-    nodes: ProjectCategory[],
+    nodes: ArchitectureCategory[],
     targetId: number,
-  ): ProjectCategory[] | null => {
+  ): ArchitectureCategory[] | null => {
     for (const node of nodes) {
       if (node.id === targetId) return nodes;
       if (node.children) {
@@ -316,10 +316,10 @@ export const ProjectDetailView = () => {
 
   // 트리에서 형제 노드 교체 (재귀, 불변성 유지)
   const replaceSiblings = (
-    nodes: ProjectCategory[],
+    nodes: ArchitectureCategory[],
     targetId: number,
-    newSiblings: ProjectCategory[],
-  ): ProjectCategory[] => {
+    newSiblings: ArchitectureCategory[],
+  ): ArchitectureCategory[] => {
     // 현재 레벨에서 찾으면 교체
     if (nodes.some((n) => n.id === targetId)) {
       return newSiblings;
@@ -402,7 +402,7 @@ export const ProjectDetailView = () => {
     const parentId = siblings[0].parentId;
 
     try {
-      await projectApi.reorderCategories(categoryIds, parentId);
+      await architectureApi.reorderCategories(categoryIds, parentId);
       refetchTree();
     } catch (error) {
       console.error("Failed to reorder categories:", error);
@@ -448,7 +448,7 @@ export const ProjectDetailView = () => {
     const contentIds = tempContents.map((c) => c.id);
 
     try {
-      await projectApi.reorderContents(selectedCategory, contentIds);
+      await architectureApi.reorderContents(selectedCategory, contentIds);
       refetchContents();
     } catch (error) {
       console.error("Failed to reorder contents:", error);
@@ -459,9 +459,9 @@ export const ProjectDetailView = () => {
 
   // 트리를 플랫 배열로 변환 (expanded 상태 고려)
   const flattenTree = (
-    categories: ProjectCategory[],
-    result: ProjectCategory[] = [],
-  ): ProjectCategory[] => {
+    categories: ArchitectureCategory[],
+    result: ArchitectureCategory[] = [],
+  ): ArchitectureCategory[] => {
     for (const cat of categories) {
       result.push(cat);
       if (cat.children && cat.children.length > 0 && expandedIds.has(cat.id)) {
@@ -473,7 +473,7 @@ export const ProjectDetailView = () => {
 
   const flatCategories = flattenTree(filteredTree);
 
-  const renderTreeItem = (cat: ProjectCategory) => (
+  const renderTreeItem = (cat: ArchitectureCategory) => (
     <SortableTreeItem key={cat.id} id={cat.id} isAdminMode={isAdminMode}>
       {({ attributes, listeners }) => (
         <div
@@ -511,7 +511,7 @@ export const ProjectDetailView = () => {
             ) : (
               <div className="mr-2">
                 <ContentTypeIcon
-                  type={cat.projectType}
+                  type={cat.architectureType}
                   className="h-4 w-4 text-gray-400"
                 />
               </div>
@@ -531,7 +531,7 @@ export const ProjectDetailView = () => {
                   setCategoryForm({
                     name: "",
                     parentId: cat.id,
-                    projectType: "FILE",
+                    architectureType: "FILE",
                   });
                   setIsCategoryModalOpen(true);
                 }}
@@ -549,7 +549,7 @@ export const ProjectDetailView = () => {
                   setCategoryForm({
                     name: cat.name,
                     parentId: cat.parentId,
-                    projectType: cat.projectType,
+                    architectureType: cat.architectureType,
                   });
                   setIsCategoryModalOpen(true);
                 }}
@@ -590,7 +590,7 @@ export const ProjectDetailView = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => router.push("/projects")}
+            onClick={() => router.push("/architectures")}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
@@ -663,7 +663,7 @@ export const ProjectDetailView = () => {
                     title: "",
                     content: "",
                     contentType:
-                      (selectedCategoryData?.projectType as any) || "NOTE",
+                      (selectedCategoryData?.architectureType as any) || "NOTE",
                     metadata: {},
                   });
                   setIsContentModalOpen(true);
@@ -885,16 +885,16 @@ export const ProjectDetailView = () => {
         submitLabel={categoryModalMode === "create" ? "Create" : "Save"}
         onSubmit={async () => {
           if (categoryModalMode === "create") {
-            await projectApi.createCategory({
+            await architectureApi.createCategory({
               name: categoryForm.name,
               parentId: categoryForm.parentId ?? undefined,
-              projectType: categoryForm.projectType,
+              architectureType: categoryForm.architectureType,
               techType: tech || undefined,
             });
           } else if (editingCategory) {
-            await projectApi.updateCategory(editingCategory.id, {
+            await architectureApi.updateCategory(editingCategory.id, {
               name: categoryForm.name,
-              projectType: categoryForm.projectType,
+              architectureType: categoryForm.architectureType,
             });
           }
           setIsCategoryModalOpen(false);
@@ -908,10 +908,10 @@ export const ProjectDetailView = () => {
                 key={type}
                 type="button"
                 onClick={() =>
-                  setCategoryForm({ ...categoryForm, projectType: type })
+                  setCategoryForm({ ...categoryForm, architectureType: type })
                 }
                 className={`flex items-center justify-center gap-1 py-1.5 rounded-md transition-all ${
-                  categoryForm.projectType === type
+                  categoryForm.architectureType === type
                     ? "bg-white text-blue-600 shadow-sm font-semibold"
                     : "text-gray-500 hover:text-gray-700"
                 }`}
@@ -949,7 +949,7 @@ export const ProjectDetailView = () => {
         fullScreen
         onSubmit={async () => {
           if (contentModalMode === "create" && selectedCategory) {
-            await projectApi.createContent({
+            await architectureApi.createContent({
               categoryId: selectedCategory,
               title: contentForm.title,
               content: contentForm.content,
@@ -957,7 +957,7 @@ export const ProjectDetailView = () => {
               metadata: contentForm.metadata,
             });
           } else if (editingContent) {
-            await projectApi.updateContent(editingContent.id, {
+            await architectureApi.updateContent(editingContent.id, {
               title: contentForm.title,
               content: contentForm.content,
               contentType: contentForm.contentType,
@@ -1087,7 +1087,7 @@ export const ProjectDetailView = () => {
         variant="destructive"
         onConfirm={async () => {
           if (categoryToDelete) {
-            await projectApi.deleteCategory(categoryToDelete);
+            await architectureApi.deleteCategory(categoryToDelete);
             if (selectedCategory === categoryToDelete)
               setSelectedCategory(null);
             refetchTree();
@@ -1105,7 +1105,7 @@ export const ProjectDetailView = () => {
         variant="destructive"
         onConfirm={async () => {
           if (contentToDelete) {
-            await projectApi.deleteContent(contentToDelete);
+            await architectureApi.deleteContent(contentToDelete);
             refetchContents();
             setContentToDelete(null);
           }
@@ -1210,7 +1210,7 @@ export const ProjectDetailView = () => {
         fullScreen
         onSubmit={async () => {
           if (answerContent) {
-            await projectApi.updateContent(answerContent.id, {
+            await architectureApi.updateContent(answerContent.id, {
               content: answerText,
             });
             setIsAnswerModalOpen(false);

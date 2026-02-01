@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { projectApi } from '../api/projectApi';
-import type { ProjectContent } from '@/entities/project/model/types';
+import { architectureApi } from '../api/architectureApi';
+import type { ArchitectureContent } from '@/entities/architecture/model/types';
 
-export const useProjectContents = (categoryId: number | null) => {
-    const [contents, setContents] = useState<ProjectContent[]>([]);
+export const useArchitectureContents = (categoryId: number | null) => {
+    const [contents, setContents] = useState<ArchitectureContent[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -18,7 +18,7 @@ export const useProjectContents = (categoryId: number | null) => {
         setIsLoading(true);
         setError(null);
         try {
-            const data = await projectApi.getContents(categoryId);
+            const data = await architectureApi.getContents(categoryId);
             setContents(data);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch contents');

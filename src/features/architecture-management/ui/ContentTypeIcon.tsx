@@ -6,10 +6,10 @@ import {
   FileUp,
   Figma,
 } from "lucide-react";
-import { ContentType, ProjectType } from "@/entities/project/model/types";
+import { ContentType, ArchitectureType } from "@/entities/architecture/model/types";
 
 interface ContentTypeIconProps {
-  type: ContentType | ProjectType;
+  type: ContentType | ArchitectureType;
   className?: string;
 }
 

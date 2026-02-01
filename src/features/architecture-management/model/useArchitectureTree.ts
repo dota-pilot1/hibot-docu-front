@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { projectApi } from '../api/projectApi';
-import type { ProjectCategory, ProjectType } from '@/entities/project/model/types';
+import { architectureApi } from '../api/architectureApi';
+import type { ArchitectureCategory, ArchitectureType } from '@/entities/architecture/model/types';
 
-export const useProjectTree = (type?: ProjectType) => {
-    const [tree, setTree] = useState<ProjectCategory[]>([]);
+export const useArchitectureTree = (type?: ArchitectureType) => {
+    const [tree, setTree] = useState<ArchitectureCategory[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -14,8 +14,8 @@ export const useProjectTree = (type?: ProjectType) => {
         setError(null);
         try {
             const data = type
-                ? await projectApi.getCategoriesByType(type)
-                : await projectApi.getTree();
+                ? await architectureApi.getCategoriesByType(type)
+                : await architectureApi.getTree();
             setTree(data);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch project tree');

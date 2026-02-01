@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from 'react';
-import { projectApi } from '../api/projectApi';
+import { architectureApi } from '../api/architectureApi';
 import type {
     CreateCategoryRequest,
     UpdateCategoryRequest,
     CreateContentRequest,
     UpdateContentRequest,
-} from '@/entities/project/model/types';
+} from '@/entities/architecture/model/types';
 
-export const useProjectMutations = () => {
+export const useArchitectureMutations = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +17,7 @@ export const useProjectMutations = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const result = await projectApi.createCategory(dto);
+            const result = await architectureApi.createCategory(dto);
             return result;
         } catch (err: any) {
             setError(err.message || 'Failed to create category');
@@ -31,7 +31,7 @@ export const useProjectMutations = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const result = await projectApi.updateCategory(id, dto);
+            const result = await architectureApi.updateCategory(id, dto);
             return result;
         } catch (err: any) {
             setError(err.message || 'Failed to update category');
@@ -45,7 +45,7 @@ export const useProjectMutations = () => {
         setIsLoading(true);
         setError(null);
         try {
-            await projectApi.deleteCategory(id);
+            await architectureApi.deleteCategory(id);
         } catch (err: any) {
             setError(err.message || 'Failed to delete category');
             throw err;
@@ -58,7 +58,7 @@ export const useProjectMutations = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const result = await projectApi.createContent(dto);
+            const result = await architectureApi.createContent(dto);
             return result;
         } catch (err: any) {
             setError(err.message || 'Failed to create content');
@@ -72,7 +72,7 @@ export const useProjectMutations = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const result = await projectApi.updateContent(id, dto);
+            const result = await architectureApi.updateContent(id, dto);
             return result;
         } catch (err: any) {
             setError(err.message || 'Failed to update content');
@@ -86,7 +86,7 @@ export const useProjectMutations = () => {
         setIsLoading(true);
         setError(null);
         try {
-            await projectApi.deleteContent(id);
+            await architectureApi.deleteContent(id);
         } catch (err: any) {
             setError(err.message || 'Failed to delete content');
             throw err;

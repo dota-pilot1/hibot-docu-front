@@ -1,26 +1,26 @@
 import { api } from "@/shared/api";
 import type {
-  ProjectCategory,
-  ProjectContent,
+  ArchitectureCategory,
+  ArchitectureContent,
   CreateCategoryRequest,
   UpdateCategoryRequest,
   CreateContentRequest,
   UpdateContentRequest,
-  ProjectType,
+  ArchitectureType,
   CategoryFile,
-} from "@/entities/project/model/types";
+} from "@/entities/architecture/model/types";
 
-export const projectApi = {
+export const architectureApi = {
   // Category endpoints
-  getTree: async (): Promise<ProjectCategory[]> => {
-    const { data } = await api.get("/projects/tree");
+  getTree: async (): Promise<ArchitectureCategory[]> => {
+    const { data } = await api.get("/architectures/tree");
     return data;
   },
 
   getCategoriesByType: async (
-    type: ProjectType,
-  ): Promise<ProjectCategory[]> => {
-    const { data } = await api.get("/projects/categories", {
+    type: ArchitectureType,
+  ): Promise<ArchitectureCategory[]> => {
+    const { data } = await api.get("/architectures/categories", {
       params: { type },
     });
     return data;
@@ -28,63 +28,73 @@ export const projectApi = {
 
   createCategory: async (
     dto: CreateCategoryRequest,
-  ): Promise<ProjectCategory> => {
-    const { data } = await api.post("/projects/categories", dto);
+  ): Promise<ArchitectureCategory> => {
+    const { data } = await api.post("/architectures/categories", dto);
     return data;
   },
 
   updateCategory: async (
     id: number,
     dto: UpdateCategoryRequest,
-  ): Promise<ProjectCategory> => {
-    const { data } = await api.patch(`/projects/categories/${id}`, dto);
+  ): Promise<ArchitectureCategory> => {
+    const { data } = await api.patch(`/architectures/categories/${id}`, dto);
     return data;
   },
 
   deleteCategory: async (id: number): Promise<void> => {
-    await api.delete(`/projects/categories/${id}`);
+    await api.delete(`/architectures/categories/${id}`);
   },
 
   // Content endpoints
-  getContents: async (categoryId: number): Promise<ProjectContent[]> => {
-    const { data } = await api.get(`/projects/contents/${categoryId}`);
+  getContents: async (categoryId: number): Promise<ArchitectureContent[]> => {
+    const { data } = await api.get(`/architectures/contents/${categoryId}`);
     return data;
   },
 
-  createContent: async (dto: CreateContentRequest): Promise<ProjectContent> => {
-    const { data } = await api.post("/projects/contents", dto);
+  createContent: async (
+    dto: CreateContentRequest,
+  ): Promise<ArchitectureContent> => {
+    const { data } = await api.post("/architectures/contents", dto);
     return data;
   },
 
   updateContent: async (
     id: number,
     dto: UpdateContentRequest,
-  ): Promise<ProjectContent> => {
-    const { data } = await api.patch(`/projects/contents/${id}`, dto);
+  ): Promise<ArchitectureContent> => {
+    const { data } = await api.patch(`/architectures/contents/${id}`, dto);
     return data;
   },
 
   deleteContent: async (id: number): Promise<void> => {
-    await api.delete(`/projects/contents/${id}`);
+    await api.delete(`/architectures/contents/${id}`);
   },
 
   reorderCategories: async (
     categoryIds: number[],
     parentId: number | null,
   ): Promise<void> => {
-    await api.patch("/projects/categories/reorder", { categoryIds, parentId });
+    await api.patch("/architectures/categories/reorder", {
+      categoryIds,
+      parentId,
+    });
   },
 
   reorderContents: async (
     categoryId: number,
     contentIds: number[],
   ): Promise<void> => {
-    await api.patch("/projects/contents/reorder", { categoryId, contentIds });
+    await api.patch("/architectures/contents/reorder", {
+      categoryId,
+      contentIds,
+    });
   },
 
   // File endpoints
   getFiles: async (categoryId: number): Promise<CategoryFile[]> => {
-    const { data } = await api.get(`/projects/categories/${categoryId}/files`);
+    const { data } = await api.get(
+      `/architectures/categories/${categoryId}/files`,
+    );
     return data;
   },
 
@@ -92,7 +102,7 @@ export const projectApi = {
     const formData = new FormData();
     formData.append("file", file);
     const { data } = await api.post(
-      `/projects/categories/${categoryId}/files`,
+      `/architectures/categories/${categoryId}/files`,
       formData,
       { headers: { "Content-Type": "multipart/form-data" } },
     );
@@ -100,14 +110,14 @@ export const projectApi = {
   },
 
   deleteFile: async (fileId: number): Promise<void> => {
-    await api.delete(`/projects/files/${fileId}`);
+    await api.delete(`/architectures/files/${fileId}`);
   },
 
   renameFile: async (
     fileId: number,
     newName: string,
   ): Promise<CategoryFile> => {
-    const { data } = await api.patch(`/projects/files/${fileId}/rename`, {
+    const { data } = await api.patch(`/architectures/files/${fileId}/rename`, {
       newName,
     });
     return data;

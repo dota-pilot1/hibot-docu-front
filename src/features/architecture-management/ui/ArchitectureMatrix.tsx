@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { projectApi } from "../api/projectApi";
-import { useProjectMutations } from "../model/useProjectMutations";
+import { architectureApi } from "../api/architectureApi";
+import { useArchitectureMutations } from "../model/useArchitectureMutations";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
@@ -10,12 +10,12 @@ import { FormDialog } from "@/shared/ui/dialogs/FormDialog";
 import { ConfirmDialog } from "@/shared/ui/dialogs/ConfirmDialog";
 import { Input } from "@/shared/ui/input";
 import { Textarea } from "@/shared/ui/textarea";
-import { ProjectCard } from "./ProjectCard";
-import type { ProjectCategory } from "@/entities/project/model/types";
+import { ArchitectureCard } from "./ArchitectureCard";
+import type { ArchitectureCategory } from "@/entities/architecture/model/types";
 import { PlusIcon, TrashIcon } from "lucide-react";
 
-export const ProjectMatrix = () => {
-  const [tree, setTree] = useState<ProjectCategory[]>([]);
+export const ArchitectureMatrix = () => {
+  const [tree, setTree] = useState<ArchitectureCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAdminMode, setIsAdminMode] = useState(false);
@@ -33,14 +33,14 @@ export const ProjectMatrix = () => {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
 
-  const { createCategory, deleteCategory } = useProjectMutations();
+  const { createCategory, deleteCategory } = useArchitectureMutations();
 
   const fetchData = async () => {
     setIsLoading(true);
     setError(null);
     try {
       console.log("Fetching project tree...");
-      const data = await projectApi.getTree();
+      const data = await architectureApi.getTree();
       console.log("Received tree:", data);
       setTree(data);
     } catch (err: any) {
@@ -58,7 +58,7 @@ export const ProjectMatrix = () => {
   const handleAddGroup = async () => {
     if (!groupName.trim()) return;
     try {
-      await createCategory({ name: groupName, projectType: "NOTE" });
+      await createCategory({ name: groupName, architectureType: "NOTE" });
       setShowGroupModal(false);
       setGroupName("");
       fetchData();
@@ -75,7 +75,7 @@ export const ProjectMatrix = () => {
         techType: techData.techType,
         description: techData.description,
         parentId: techData.parentId ?? undefined,
-        projectType: "NOTE",
+        architectureType: "NOTE",
       });
       setShowTechModal(false);
       setTechData({ name: "", techType: "", description: "", parentId: null });
@@ -115,7 +115,7 @@ export const ProjectMatrix = () => {
   }
 
   // Render tree recursively
-  const renderCategory = (category: ProjectCategory) => {
+  const renderCategory = (category: ArchitectureCategory) => {
     const hasChildren = category.children && category.children.length > 0;
     const isTopLevel = category.depth === 0;
 
@@ -173,7 +173,7 @@ export const ProjectMatrix = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {category.children!.map((child) => (
-                  <ProjectCard
+                  <ArchitectureCard
                     key={child.id}
                     project={child}
                     isAdminMode={isAdminMode}
@@ -195,10 +195,10 @@ export const ProjectMatrix = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Project Management
+            Architecture Management
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            기술 스택별 프로젝트 관리
+            기술 스택별 아키텍처 관리
           </p>
         </div>
         <div
@@ -224,7 +224,7 @@ export const ProjectMatrix = () => {
         <Card className="border-gray-200 shadow-sm">
           <CardContent className="py-12">
             <p className="text-center text-gray-400">
-              프로젝트가 없습니다. Admin 모드를 켜고 그룹을 추가해주세요.
+              아키텍처가 없습니다. Admin 모드를 켜고 그룹을 추가해주세요.
             </p>
           </CardContent>
         </Card>

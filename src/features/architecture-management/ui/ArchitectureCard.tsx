@@ -4,24 +4,24 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
 import { FolderOpen, TrashIcon, ArrowRight } from "lucide-react";
-import type { ProjectCategory } from "@/entities/project/model/types";
+import type { ArchitectureCategory } from "@/entities/architecture/model/types";
 
-interface ProjectCardProps {
-  project: ProjectCategory;
+interface ArchitectureCardProps {
+  project: ArchitectureCategory;
   isAdminMode?: boolean;
   onDelete?: (id: number) => void;
 }
 
-export const ProjectCard = ({
+export const ArchitectureCard = ({
   project,
   isAdminMode = false,
   onDelete,
-}: ProjectCardProps) => {
+}: ArchitectureCardProps) => {
   const router = useRouter();
   const subCategoryCount = project.children?.length || 0;
 
   const handleNavigate = () => {
-    router.push(`/projects?tech=${project.techType || project.id}`);
+    router.push(`/architectures?tech=${project.techType || project.id}`);
   };
 
   return (
@@ -42,7 +42,7 @@ export const ProjectCard = ({
             {project.name}
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
-            {project.description || "프로젝트 문서를 확인하세요."}
+            {project.description || "아키텍처 문서를 확인하세요."}
           </p>
         </div>
 

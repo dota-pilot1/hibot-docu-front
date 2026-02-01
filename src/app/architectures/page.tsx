@@ -4,8 +4,8 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useUserStore, userStore } from "@/entities/user/model/store";
-import { ProjectMatrix } from "@/features/project-management/ui/ProjectMatrix";
-import { ProjectDetailView } from "@/features/project-management/ui/ProjectDetailView";
+import { ArchitectureMatrix } from "@/features/architecture-management/ui/ArchitectureMatrix";
+import { ArchitectureDetailView } from "@/features/architecture-management/ui/ArchitectureDetailView";
 
 function ProjectsContent() {
     const router = useRouter();
@@ -38,7 +38,7 @@ function ProjectsContent() {
 
     return (
         <div className="container mx-auto py-10 px-4">
-            {tech ? <ProjectDetailView /> : <ProjectMatrix />}
+            {tech ? <ArchitectureDetailView /> : <ArchitectureMatrix />}
         </div>
     );
 }

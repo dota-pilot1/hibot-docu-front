@@ -1,4 +1,4 @@
-export type ProjectType =
+export type ArchitectureType =
   | "ROOT"
   | "NOTE"
   | "MERMAID"
@@ -36,11 +36,11 @@ export interface CategoryFile {
   updatedAt: string | null;
 }
 
-export interface ProjectCategory {
+export interface ArchitectureCategory {
   id: number;
   userId: number;
   name: string;
-  projectType: ProjectType;
+  architectureType: ArchitectureType;
   techType: string | null;
   description: string | null;
   parentId: number | null;
@@ -50,10 +50,10 @@ export interface ProjectCategory {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  children?: ProjectCategory[];
+  children?: ArchitectureCategory[];
 }
 
-export interface ProjectContent {
+export interface ArchitectureContent {
   id: number;
   categoryId: number;
   userId: number;
@@ -69,7 +69,7 @@ export interface ProjectContent {
 
 export interface CreateCategoryRequest {
   name: string;
-  projectType?: ProjectType;
+  architectureType?: ArchitectureType;
   techType?: string;
   description?: string;
   parentId?: number;
@@ -78,7 +78,7 @@ export interface CreateCategoryRequest {
 
 export interface UpdateCategoryRequest {
   name?: string;
-  projectType?: ProjectType;
+  architectureType?: ArchitectureType;
   description?: string;
   displayOrder?: number;
   icon?: string;
