@@ -67,7 +67,7 @@ export const taskPriorityConfig: Record<
   TaskPriority,
   { label: string; color: string; icon: string }
 > = {
-  high: { label: "높음", color: "text-red-600", icon: "🔴" },
-  medium: { label: "중간", color: "text-yellow-600", icon: "🟡" },
-  low: { label: "낮음", color: "text-gray-500", icon: "⚪" },
+  high: { label: "높음", color: "text-red-600", icon: "●" },
+  medium: { label: "중간", color: "text-yellow-600", icon: "●" },
+  low: { label: "낮음", color: "text-gray-500", icon: "●" },
 };
