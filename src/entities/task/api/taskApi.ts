@@ -64,6 +64,16 @@ export const taskApi = {
   // Task 삭제
   delete: (id: number) => api.delete(`/tasks/${id}`),
 
+  // 현재 작업 설정
+  setCurrentTask: (id: number) =>
+    api.patch<Task>(`/tasks/${id}/current`).then((res) => res.data),
+
+  // 현재 작업 조회
+  getCurrentTask: (userId: number) =>
+    api
+      .get<Task | null>(`/tasks/user/${userId}/current`)
+      .then((res) => res.data),
+
   // 유저 Task 통계
   getUserStats: (userId: number) =>
     api.get<TaskStats>(`/tasks/user/${userId}/stats`).then((res) => res.data),

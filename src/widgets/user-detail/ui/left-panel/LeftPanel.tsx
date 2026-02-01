@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Task, taskApi } from "@/entities/task";
 import { TaskGrid, TaskGridRef } from "./TaskGrid";
 import { Button } from "@/shared/ui/button";
@@ -10,14 +11,9 @@ import { Plus, Save, Trash2, Check } from "lucide-react";
 interface LeftPanelProps {
   userId: number;
   currentTask?: Task | null;
-  onTaskSelect?: (task: Task | null) => void;
 }
 
-export const LeftPanel = ({
-  userId,
-  currentTask,
-  onTaskSelect,
-}: LeftPanelProps) => {
+export const LeftPanel = ({ userId, currentTask }: LeftPanelProps) => {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<string>("all");
   const [pendingCount, setPendingCount] = useState(0);
@@ -32,6 +28,18 @@ export const LeftPanel = ({
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks", "user", userId] });
+    },
+  });
+
+  const setCurrentTaskMutation = useMutation({
+    mutationFn: (taskId: number) => taskApi.setCurrentTask(taskId),
+    onSuccess: (task) => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", "user", userId] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", "current", userId] });
+      toast.success(`"${task.title}" 을(를) 현재 작업으로 설정했습니다.`);
+    },
+    onError: () => {
+      toast.error("현재 작업 설정에 실패했습니다.");
     },
   });
 
@@ -53,7 +61,7 @@ export const LeftPanel = ({
   const handleSelectCurrentTask = () => {
     const selectedTask = gridRef.current?.getSelectedTask();
     if (selectedTask) {
-      onTaskSelect?.(selectedTask);
+      setCurrentTaskMutation.mutate(selectedTask.id);
     }
   };
 
@@ -138,7 +146,6 @@ export const LeftPanel = ({
           userId={userId}
           filter={filter}
           currentTaskId={currentTask?.id}
-          onTaskSelect={onTaskSelect}
           onPendingChange={handlePendingChange}
           onSelectionChange={handleSelectionChange}
         />

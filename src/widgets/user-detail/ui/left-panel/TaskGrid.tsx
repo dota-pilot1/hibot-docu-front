@@ -52,7 +52,6 @@ interface TaskGridProps {
   userId: number;
   filter?: string;
   currentTaskId?: number | null;
-  onTaskSelect?: (task: Task | null) => void;
   onPendingChange?: (count: number) => void;
   onSelectionChange?: (count: number) => void;
 }
@@ -106,7 +105,6 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       userId,
       filter = "all",
       currentTaskId,
-      onTaskSelect,
       onPendingChange,
       onSelectionChange,
     },
@@ -307,9 +305,6 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
             mode: "multiRow",
             headerCheckbox: true,
             checkboxes: true,
-          }}
-          onRowClicked={(event) => {
-            onTaskSelect?.(event.data || null);
           }}
           onCellValueChanged={handleCellValueChanged}
           onSelectionChanged={handleSelectionChanged}

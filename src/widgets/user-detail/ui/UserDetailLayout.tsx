@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Task } from "@/entities/task";
+import { useQuery } from "@tanstack/react-query";
+import { Task, taskApi } from "@/entities/task";
 import { LeftPanel } from "./left-panel/LeftPanel";
 import { RightPanel } from "./right-panel/RightPanel";
 
@@ -14,17 +14,17 @@ export const UserDetailLayout = ({
   userId,
   userName,
 }: UserDetailLayoutProps) => {
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  // 현재 작업을 서버에서 조회
+  const { data: currentTask = null } = useQuery({
+    queryKey: ["tasks", "current", userId],
+    queryFn: () => taskApi.getCurrentTask(userId),
+  });
 
   return (
     <div className="flex h-full w-full">
       {/* 좌측 패널 - 행동 중심 (60%) */}
       <div className="w-[60%] h-full border-r border-zinc-200 dark:border-zinc-700 overflow-hidden">
-        <LeftPanel
-          userId={userId}
-          currentTask={selectedTask}
-          onTaskSelect={setSelectedTask}
-        />
+        <LeftPanel userId={userId} currentTask={currentTask} />
       </div>
 
       {/* 우측 패널 - 정보 중심 (40%) */}
@@ -32,7 +32,7 @@ export const UserDetailLayout = ({
         <RightPanel
           userId={userId}
           userName={userName}
-          selectedTask={selectedTask}
+          selectedTask={currentTask}
         />
       </div>
     </div>

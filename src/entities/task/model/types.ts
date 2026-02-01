@@ -14,6 +14,7 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   assigneeId: number;
+  isCurrent: boolean;
   dueDate?: string;
   createdAt: string;
   updatedAt: string;
