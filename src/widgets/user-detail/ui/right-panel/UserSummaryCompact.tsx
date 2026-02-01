@@ -1,7 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { taskApi } from "@/entities/task";
+import { taskApi, useUserTasks } from "@/entities/task";
 
 interface UserSummaryCompactProps {
   userId: number;
@@ -16,6 +17,13 @@ export const UserSummaryCompact = ({
     queryKey: ["tasks", "stats", userId],
     queryFn: () => taskApi.getUserStats(userId),
   });
+
+  const { data: tasks = [] } = useUserTasks(userId);
+
+  // 진행중인 Task 개수
+  const inProgressCount = useMemo(() => {
+    return tasks.filter((task) => task.status === "in_progress").length;
+  }, [tasks]);
 
   return (
     <div className="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
@@ -42,6 +50,11 @@ export const UserSummaryCompact = ({
             <span className="text-green-600">{stats?.todayCompleted ?? 0}</span>
             <span className="text-zinc-400"> / {stats?.todayTotal ?? 0}</span>
           </p>
+          {inProgressCount > 0 && (
+            <p className="text-xs text-blue-600 mt-0.5">
+              진행중 {inProgressCount}건
+            </p>
+          )}
         </div>
       </div>
     </div>

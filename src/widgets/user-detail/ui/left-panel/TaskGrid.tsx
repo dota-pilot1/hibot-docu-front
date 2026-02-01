@@ -152,10 +152,28 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       return map;
     }, [users]);
 
-    // 필터링된 Task 목록
+    // 필터링 및 정렬된 Task 목록
+    // 정렬 순서: 1) 현재 작업 2) 진행중 3) 나머지 (생성일 역순)
     const filteredTasks = useMemo(() => {
-      if (filter === "all") return tasks;
-      return tasks.filter((task) => task.status === filter);
+      let result =
+        filter === "all"
+          ? tasks
+          : tasks.filter((task) => task.status === filter);
+
+      return [...result].sort((a, b) => {
+        // 현재 작업 우선
+        if (a.isCurrent && !b.isCurrent) return -1;
+        if (!a.isCurrent && b.isCurrent) return 1;
+
+        // 진행중 우선
+        if (a.status === "in_progress" && b.status !== "in_progress") return -1;
+        if (a.status !== "in_progress" && b.status === "in_progress") return 1;
+
+        // 나머지는 생성일 역순
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      });
     }, [tasks, filter]);
 
     // 배치 수정/삭제 훅
