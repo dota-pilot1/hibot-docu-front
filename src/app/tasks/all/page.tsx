@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { taskApi } from "@/entities/task";
+import { useCreateTask } from "@/entities/task";
 import {
   TaskGrid,
   TaskGridRef,
@@ -12,23 +10,12 @@ import { Button } from "@/shared/ui/button";
 import { Plus, Save, Trash2 } from "lucide-react";
 
 export default function AllTasksPage() {
-  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<string>("all");
   const [pendingCount, setPendingCount] = useState(0);
   const [selectedCount, setSelectedCount] = useState(0);
   const gridRef = useRef<TaskGridRef>(null);
 
-  const createTaskMutation = useMutation({
-    mutationFn: () =>
-      taskApi.create({
-        title: "새 Task",
-        assigneeId: 1, // 기본값 (실제로는 선택하도록 해야 함)
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("새 Task가 생성되었습니다.");
-    },
-  });
+  const createTaskMutation = useCreateTask();
 
   const filters = [
     { key: "all", label: "전체" },
@@ -39,7 +26,6 @@ export default function AllTasksPage() {
 
   const handleSave = async () => {
     await gridRef.current?.saveChanges();
-    toast.success("변경사항이 저장되었습니다.");
   };
 
   const handleDelete = async () => {
@@ -83,7 +69,9 @@ export default function AllTasksPage() {
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => createTaskMutation.mutate()}
+              onClick={() =>
+                createTaskMutation.mutate({ title: "새 Task", assigneeId: 1 })
+              }
               disabled={createTaskMutation.isPending}
               className="h-8 w-8 p-0"
               title="새 Task 추가"

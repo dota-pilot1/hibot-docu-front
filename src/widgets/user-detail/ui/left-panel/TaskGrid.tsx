@@ -16,7 +16,7 @@ import {
   AllCommunityModule,
   CellValueChangedEvent,
 } from "ag-grid-community";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 // AG Grid 모듈 등록
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -28,6 +28,8 @@ import {
   taskStatusConfig,
   taskPriorityConfig,
   taskApi,
+  useBatchUpdateTasks,
+  useBatchDeleteTasks,
 } from "@/entities/task";
 import { organizationApi } from "@/features/organization/api/organizationApi";
 import { DatePickerCellEditor } from "./editors/DatePickerCellEditor";
@@ -113,7 +115,6 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
     },
     ref,
   ) => {
-    const queryClient = useQueryClient();
     const gridRef = useRef<AgGridReact<Task>>(null);
     const [pendingChanges, setPendingChanges] = useState<
       Map<number, Partial<Task>>
@@ -157,34 +158,22 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       return tasks.filter((task) => task.status === filter);
     }, [tasks, filter]);
 
-    // Task 수정 mutation
-    const updateTaskMutation = useMutation({
-      mutationFn: ({ id, data }: { id: number; data: Partial<Task> }) =>
-        taskApi.update(id, data),
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["tasks"] });
-        if (userId) {
-          queryClient.invalidateQueries({ queryKey: ["activities", userId] });
-        }
-      },
-    });
-
-    // Task 삭제 mutation
-    const deleteTaskMutation = useMutation({
-      mutationFn: (id: number) => taskApi.delete(id),
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      },
-    });
+    // 배치 수정/삭제 훅
+    const batchUpdateMutation = useBatchUpdateTasks();
+    const batchDeleteMutation = useBatchDeleteTasks();
 
     // 모든 변경사항 저장
     const saveChanges = useCallback(async () => {
-      const promises = Array.from(pendingChanges.entries()).map(([id, data]) =>
-        updateTaskMutation.mutateAsync({ id, data }),
+      if (pendingChanges.size === 0) return;
+      const updates = Array.from(pendingChanges.entries()).map(
+        ([id, data]) => ({
+          id,
+          data,
+        }),
       );
-      await Promise.all(promises);
+      await batchUpdateMutation.mutateAsync(updates);
       setPendingChanges(new Map());
-    }, [pendingChanges, updateTaskMutation]);
+    }, [pendingChanges, batchUpdateMutation]);
 
     // 선택된 항목 삭제
     const deleteSelected = useCallback(async () => {
@@ -192,12 +181,9 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       if (!confirm(`${selectedIds.length}개의 Task를 삭제하시겠습니까?`))
         return;
 
-      const promises = selectedIds.map((id) =>
-        deleteTaskMutation.mutateAsync(id),
-      );
-      await Promise.all(promises);
+      await batchDeleteMutation.mutateAsync(selectedIds);
       setSelectedIds([]);
-    }, [selectedIds, deleteTaskMutation]);
+    }, [selectedIds, batchDeleteMutation]);
 
     // 선택된 단일 Task 가져오기
     const getSelectedTask = useCallback((): Task | null => {

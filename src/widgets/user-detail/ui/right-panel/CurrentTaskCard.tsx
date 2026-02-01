@@ -1,8 +1,11 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { Task, TaskStatus, taskStatusConfig, taskApi } from "@/entities/task";
+import {
+  Task,
+  TaskStatus,
+  taskStatusConfig,
+  useUpdateTaskStatus,
+} from "@/entities/task";
 
 interface CurrentTaskCardProps {
   task: Task | null;
@@ -10,23 +13,7 @@ interface CurrentTaskCardProps {
 }
 
 export const CurrentTaskCard = ({ task, userId }: CurrentTaskCardProps) => {
-  const queryClient = useQueryClient();
-
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: TaskStatus }) =>
-      taskApi.updateStatus(id, status),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["tasks", "user", userId] });
-      queryClient.invalidateQueries({ queryKey: ["tasks", "current", userId] });
-      queryClient.invalidateQueries({ queryKey: ["activities", userId] });
-      queryClient.invalidateQueries({ queryKey: ["tasks", "stats", userId] });
-      const statusLabel = taskStatusConfig[variables.status].label;
-      toast.success(`상태가 "${statusLabel}"(으)로 변경되었습니다.`);
-    },
-    onError: () => {
-      toast.error("상태 변경에 실패했습니다.");
-    },
-  });
+  const updateStatusMutation = useUpdateTaskStatus(userId);
 
   if (!task) {
     return (

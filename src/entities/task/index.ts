@@ -1,2 +1,3 @@
 export * from "./model/types";
 export * from "./api/taskApi";
+export * from "./hooks/useTasks";

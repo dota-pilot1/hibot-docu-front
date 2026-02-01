@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { Task, taskApi } from "@/entities/task";
+import { Task, useCreateTask, useSetCurrentTask } from "@/entities/task";
 import { TaskGrid, TaskGridRef } from "./TaskGrid";
 import { Button } from "@/shared/ui/button";
 import { Plus, Save, Trash2, Check } from "lucide-react";
@@ -14,34 +12,13 @@ interface LeftPanelProps {
 }
 
 export const LeftPanel = ({ userId, currentTask }: LeftPanelProps) => {
-  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<string>("all");
   const [pendingCount, setPendingCount] = useState(0);
   const [selectedCount, setSelectedCount] = useState(0);
   const gridRef = useRef<TaskGridRef>(null);
 
-  const createTaskMutation = useMutation({
-    mutationFn: () =>
-      taskApi.create({
-        title: "새 Task",
-        assigneeId: userId,
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks", "user", userId] });
-    },
-  });
-
-  const setCurrentTaskMutation = useMutation({
-    mutationFn: (taskId: number) => taskApi.setCurrentTask(taskId),
-    onSuccess: (task) => {
-      queryClient.invalidateQueries({ queryKey: ["tasks", "user", userId] });
-      queryClient.invalidateQueries({ queryKey: ["tasks", "current", userId] });
-      toast.success(`"${task.title}" 을(를) 현재 작업으로 설정했습니다.`);
-    },
-    onError: () => {
-      toast.error("현재 작업 설정에 실패했습니다.");
-    },
-  });
+  const createTaskMutation = useCreateTask();
+  const setCurrentTaskMutation = useSetCurrentTask(userId);
 
   const filters = [
     { key: "all", label: "전체" },
@@ -110,7 +87,12 @@ export const LeftPanel = ({ userId, currentTask }: LeftPanelProps) => {
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => createTaskMutation.mutate()}
+            onClick={() =>
+              createTaskMutation.mutate({
+                title: "새 Task",
+                assigneeId: userId,
+              })
+            }
             disabled={createTaskMutation.isPending}
             className="h-8 w-8 p-0"
             title="새 Task 추가"
