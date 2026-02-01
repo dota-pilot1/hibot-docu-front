@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Task, taskApi } from "@/entities/task";
 import { TaskGrid, TaskGridRef } from "./TaskGrid";
 import { Button } from "@/shared/ui/button";
-import { Plus, Save, Trash2 } from "lucide-react";
+import { Plus, Save, Trash2, Check } from "lucide-react";
 
 interface LeftPanelProps {
   userId: number;
@@ -45,6 +45,13 @@ export const LeftPanel = ({ userId, onTaskSelect }: LeftPanelProps) => {
     await gridRef.current?.deleteSelected();
   };
 
+  const handleSelectCurrentTask = () => {
+    const selectedTask = gridRef.current?.getSelectedTask();
+    if (selectedTask) {
+      onTaskSelect?.(selectedTask);
+    }
+  };
+
   const handlePendingChange = useCallback((count: number) => {
     setPendingCount(count);
   }, []);
@@ -76,6 +83,17 @@ export const LeftPanel = ({ userId, onTaskSelect }: LeftPanelProps) => {
 
         {/* 오른쪽: 액션 버튼들 */}
         <div className="flex items-center gap-1">
+          {selectedCount === 1 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleSelectCurrentTask}
+              className="h-8 px-3 border-green-500 text-green-600 hover:bg-green-50"
+            >
+              <Check className="h-4 w-4 mr-1" />
+              선택
+            </Button>
+          )}
           <Button
             size="sm"
             variant="ghost"

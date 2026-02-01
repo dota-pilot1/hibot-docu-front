@@ -7,6 +7,7 @@ import {
   useCallback,
   forwardRef,
   useImperativeHandle,
+  useEffect,
 } from "react";
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -60,6 +61,7 @@ export interface TaskGridRef {
   deleteSelected: () => Promise<void>;
   getPendingCount: () => number;
   getSelectedCount: () => number;
+  getSelectedTask: () => Task | null;
 }
 
 // 상태 셀 렌더러
@@ -104,6 +106,15 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
     >(new Map());
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
+    // 부모에게 상태 변경 알림 (useEffect로 렌더링 후 호출)
+    useEffect(() => {
+      onPendingChange?.(pendingChanges.size);
+    }, [pendingChanges.size, onPendingChange]);
+
+    useEffect(() => {
+      onSelectionChange?.(selectedIds.length);
+    }, [selectedIds.length, onSelectionChange]);
+
     // Task 목록 조회
     const { data: tasks = [], isLoading } = useQuery({
       queryKey: ["tasks", "user", userId],
@@ -141,8 +152,7 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       );
       await Promise.all(promises);
       setPendingChanges(new Map());
-      onPendingChange?.(0);
-    }, [pendingChanges, updateTaskMutation, onPendingChange]);
+    }, [pendingChanges, updateTaskMutation]);
 
     // 선택된 항목 삭제
     const deleteSelected = useCallback(async () => {
@@ -157,12 +167,22 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       setSelectedIds([]);
     }, [selectedIds, deleteTaskMutation]);
 
+    // 선택된 단일 Task 가져오기
+    const getSelectedTask = useCallback((): Task | null => {
+      const selectedRows = gridRef.current?.api.getSelectedRows() || [];
+      if (selectedRows.length === 1) {
+        return selectedRows[0];
+      }
+      return null;
+    }, []);
+
     // 부모 컴포넌트에 메서드 노출
     useImperativeHandle(ref, () => ({
       saveChanges,
       deleteSelected,
       getPendingCount: () => pendingChanges.size,
       getSelectedCount: () => selectedIds.length,
+      getSelectedTask,
     }));
 
     const columnDefs = useMemo<ColDef<Task>[]>(
@@ -234,20 +254,17 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
             const newMap = new Map(prev);
             const existing = newMap.get(taskId) || {};
             newMap.set(taskId, { ...existing, [field]: value });
-            onPendingChange?.(newMap.size);
             return newMap;
           });
         }
       },
-      [onPendingChange],
+      [],
     );
 
     const handleSelectionChanged = useCallback(() => {
       const selectedRows = gridRef.current?.api.getSelectedRows() || [];
-      const ids = selectedRows.map((row) => row.id);
-      setSelectedIds(ids);
-      onSelectionChange?.(ids.length);
-    }, [onSelectionChange]);
+      setSelectedIds(selectedRows.map((row) => row.id));
+    }, []);
 
     if (isLoading) {
       return (
