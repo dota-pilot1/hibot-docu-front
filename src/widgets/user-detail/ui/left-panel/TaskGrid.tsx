@@ -24,6 +24,23 @@ import {
   taskApi,
 } from "@/entities/task";
 import { DatePickerCellEditor } from "./editors/DatePickerCellEditor";
+import { SelectCellEditor } from "./editors/SelectCellEditor";
+
+// 상태 옵션 (한글 라벨)
+const statusOptions = Object.entries(taskStatusConfig).map(
+  ([value, config]) => ({
+    value,
+    label: config.label,
+  }),
+);
+
+// 우선순위 옵션 (한글 라벨)
+const priorityOptions = Object.entries(taskPriorityConfig).map(
+  ([value, config]) => ({
+    value,
+    label: `${config.icon} ${config.label}`,
+  }),
+);
 
 interface TaskGridProps {
   userId: number;
@@ -102,9 +119,9 @@ export const TaskGrid = ({ userId, onTaskSelect }: TaskGridProps) => {
         width: 120,
         editable: true,
         cellRenderer: StatusCellRenderer,
-        cellEditor: "agSelectCellEditor",
+        cellEditor: SelectCellEditor,
         cellEditorParams: {
-          values: Object.keys(taskStatusConfig),
+          options: statusOptions,
         },
       },
       {
@@ -113,9 +130,9 @@ export const TaskGrid = ({ userId, onTaskSelect }: TaskGridProps) => {
         width: 120,
         editable: true,
         cellRenderer: PriorityCellRenderer,
-        cellEditor: "agSelectCellEditor",
+        cellEditor: SelectCellEditor,
         cellEditorParams: {
-          values: Object.keys(taskPriorityConfig),
+          options: priorityOptions,
         },
       },
       {
