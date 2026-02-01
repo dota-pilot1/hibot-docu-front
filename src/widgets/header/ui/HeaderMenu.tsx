@@ -13,8 +13,8 @@ interface HeaderMenuProps {
 
 const defaultMenuItems: MenuItem[] = [
   { label: "업무 관리", href: "/tasks" },
-  { label: "문서 관리", href: "/documents" },
   { label: "아키텍처 관리", href: "/architectures" },
+  { label: "문서 관리", href: "/documents" },
   { label: "노트", href: "/notes" },
   { label: "게시판", href: "/posts" },
   { label: "사용자 관리", href: "/users" },
