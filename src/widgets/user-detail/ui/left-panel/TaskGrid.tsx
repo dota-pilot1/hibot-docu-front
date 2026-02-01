@@ -51,6 +51,7 @@ const priorityOptions = Object.entries(taskPriorityConfig).map(
 interface TaskGridProps {
   userId: number;
   filter?: string;
+  currentTaskId?: number | null;
   onTaskSelect?: (task: Task | null) => void;
   onPendingChange?: (count: number) => void;
   onSelectionChange?: (count: number) => void;
@@ -88,11 +89,23 @@ const PriorityCellRenderer = (props: { value: TaskPriority }) => {
   );
 };
 
+// 현재 작업 표시 셀 렌더러
+const CurrentTaskCellRenderer = (props: {
+  data: Task;
+  currentTaskId?: number | null;
+}) => {
+  if (props.data?.id === props.currentTaskId) {
+    return <span className="text-green-600 font-bold">✓</span>;
+  }
+  return null;
+};
+
 export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
   (
     {
       userId,
       filter = "all",
+      currentTaskId,
       onTaskSelect,
       onPendingChange,
       onSelectionChange,
@@ -227,8 +240,16 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
             return new Date(params.value).toLocaleDateString("ko-KR");
           },
         },
+        {
+          headerName: "",
+          width: 50,
+          cellRenderer: CurrentTaskCellRenderer,
+          cellRendererParams: {
+            currentTaskId,
+          },
+        },
       ],
-      [],
+      [currentTaskId],
     );
 
     const defaultColDef = useMemo<ColDef>(

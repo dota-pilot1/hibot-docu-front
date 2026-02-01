@@ -9,10 +9,15 @@ import { Plus, Save, Trash2, Check } from "lucide-react";
 
 interface LeftPanelProps {
   userId: number;
+  currentTask?: Task | null;
   onTaskSelect?: (task: Task | null) => void;
 }
 
-export const LeftPanel = ({ userId, onTaskSelect }: LeftPanelProps) => {
+export const LeftPanel = ({
+  userId,
+  currentTask,
+  onTaskSelect,
+}: LeftPanelProps) => {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<string>("all");
   const [pendingCount, setPendingCount] = useState(0);
@@ -132,6 +137,7 @@ export const LeftPanel = ({ userId, onTaskSelect }: LeftPanelProps) => {
           ref={gridRef}
           userId={userId}
           filter={filter}
+          currentTaskId={currentTask?.id}
           onTaskSelect={onTaskSelect}
           onPendingChange={handlePendingChange}
           onSelectionChange={handleSelectionChange}
