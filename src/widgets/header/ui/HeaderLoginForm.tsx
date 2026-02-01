@@ -8,13 +8,29 @@ import { Input } from "@/shared/ui/input";
 import { AlertDialog } from "@/shared/ui/dialogs/AlertDialog";
 import { useHeaderAuth } from "../model/useHeaderAuth";
 import { useUserStore } from "@/entities/user/model/store";
+import { useHeaderStore, headerStore } from "../model/useHeaderStore";
 
 export const HeaderLoginForm = () => {
   const { form, onSubmit, isLoading, error } = useHeaderAuth();
   const loginFocusTrigger = useUserStore((state) => state.loginFocusTrigger);
+  const rememberCredentials = useHeaderStore(
+    (state) => state.rememberCredentials,
+  );
+  const savedEmail = useHeaderStore((state) => state.savedEmail);
+  const savedPassword = useHeaderStore((state) => state.savedPassword);
   const emailRef = useRef<HTMLInputElement>(null);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+
+  // 저장된 자격 증명 로드
+  useEffect(() => {
+    if (!initialized && rememberCredentials && savedEmail) {
+      form.setValue("email", savedEmail);
+      form.setValue("password", savedPassword);
+      setInitialized(true);
+    }
+  }, [initialized, rememberCredentials, savedEmail, savedPassword, form]);
 
   // Effect to focus email input when triggered
   useEffect(() => {
@@ -30,10 +46,29 @@ export const HeaderLoginForm = () => {
     }
   }, [error]);
 
+  const handleRememberChange = (checked: boolean) => {
+    headerStore.state.setRememberCredentials(checked);
+    if (checked) {
+      const email = form.getValues("email");
+      const password = form.getValues("password");
+      headerStore.state.saveCredentials(email, password);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    // 로그인 전에 저장하기 옵션이 켜져 있으면 저장
+    if (rememberCredentials) {
+      const email = form.getValues("email");
+      const password = form.getValues("password");
+      headerStore.state.saveCredentials(email, password);
+    }
+    onSubmit(e);
+  };
+
   const { ref: formRef, ...emailRegister } = form.register("email");
 
   return (
-    <form onSubmit={onSubmit} className="flex items-center gap-2">
+    <form onSubmit={handleSubmit} className="flex items-center gap-2">
       <div className="flex flex-col relative">
         <Input
           {...emailRegister}
@@ -54,7 +89,7 @@ export const HeaderLoginForm = () => {
           {...form.register("password")}
           placeholder="비밀번호"
           type={showPassword ? "text" : "password"}
-          className="h-8 w-32 text-xs pr-7"
+          className="h-8 w-40 text-xs pr-7"
           disabled={isLoading}
           autoComplete="new-password"
         />
@@ -66,6 +101,15 @@ export const HeaderLoginForm = () => {
           {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
         </button>
       </div>
+      <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer select-none whitespace-nowrap">
+        <input
+          type="checkbox"
+          checked={rememberCredentials}
+          onChange={(e) => handleRememberChange(e.target.checked)}
+          className="h-3 w-3 rounded border-gray-300 cursor-pointer"
+        />
+        저장
+      </label>
       <Button
         type="submit"
         size="sm"
