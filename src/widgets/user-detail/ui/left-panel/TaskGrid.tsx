@@ -29,6 +29,7 @@ import {
   taskPriorityConfig,
   taskApi,
 } from "@/entities/task";
+import { organizationApi } from "@/features/organization/api/organizationApi";
 import { DatePickerCellEditor } from "./editors/DatePickerCellEditor";
 import { SelectCellEditor } from "./editors/SelectCellEditor";
 
@@ -49,9 +50,10 @@ const priorityOptions = Object.entries(taskPriorityConfig).map(
 );
 
 interface TaskGridProps {
-  userId: number;
+  userId?: number; // undefined면 전체 Task 조회
   filter?: string;
   currentTaskId?: number | null;
+  showAssignee?: boolean; // 담당자 컬럼 표시 여부
   onPendingChange?: (count: number) => void;
   onSelectionChange?: (count: number) => void;
 }
@@ -105,6 +107,7 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       userId,
       filter = "all",
       currentTaskId,
+      showAssignee = false,
       onPendingChange,
       onSelectionChange,
     },
@@ -126,11 +129,27 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       onSelectionChange?.(selectedIds.length);
     }, [selectedIds.length, onSelectionChange]);
 
-    // Task 목록 조회
+    // Task 목록 조회 (userId 있으면 유저별, 없으면 전체)
     const { data: tasks = [], isLoading } = useQuery({
-      queryKey: ["tasks", "user", userId],
-      queryFn: () => taskApi.getByUser(userId),
+      queryKey: userId ? ["tasks", "user", userId] : ["tasks", "all"],
+      queryFn: () => (userId ? taskApi.getByUser(userId) : taskApi.getAll()),
     });
+
+    // 유저 목록 조회 (담당자 표시용)
+    const { data: users = [] } = useQuery({
+      queryKey: ["users"],
+      queryFn: () => organizationApi.getUsers(),
+      enabled: showAssignee,
+    });
+
+    // 유저 ID -> 이름 맵
+    const userMap = useMemo(() => {
+      const map = new Map<number, string>();
+      users.forEach((user) => {
+        map.set(user.id, user.name || user.email.split("@")[0]);
+      });
+      return map;
+    }, [users]);
 
     // 필터링된 Task 목록
     const filteredTasks = useMemo(() => {
@@ -143,8 +162,10 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       mutationFn: ({ id, data }: { id: number; data: Partial<Task> }) =>
         taskApi.update(id, data),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["tasks", "user", userId] });
-        queryClient.invalidateQueries({ queryKey: ["activities", userId] });
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        if (userId) {
+          queryClient.invalidateQueries({ queryKey: ["activities", userId] });
+        }
       },
     });
 
@@ -152,7 +173,7 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
     const deleteTaskMutation = useMutation({
       mutationFn: (id: number) => taskApi.delete(id),
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["tasks", "user", userId] });
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });
       },
     });
 
@@ -196,8 +217,8 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       getSelectedTask,
     }));
 
-    const columnDefs = useMemo<ColDef<Task>[]>(
-      () => [
+    const columnDefs = useMemo<ColDef<Task>[]>(() => {
+      const cols: ColDef<Task>[] = [
         {
           field: "title",
           headerName: "제목",
@@ -205,6 +226,19 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
           minWidth: 200,
           editable: true,
         },
+      ];
+
+      // 담당자 컬럼 (showAssignee가 true일 때만)
+      if (showAssignee) {
+        cols.push({
+          field: "assigneeId",
+          headerName: "담당자",
+          width: 120,
+          valueFormatter: (params) => userMap.get(params.value) || "-",
+        });
+      }
+
+      cols.push(
         {
           field: "status",
           headerName: "상태",
@@ -246,9 +280,10 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
             currentTaskId,
           },
         },
-      ],
-      [currentTaskId],
-    );
+      );
+
+      return cols;
+    }, [currentTaskId, showAssignee, userMap]);
 
     const defaultColDef = useMemo<ColDef>(
       () => ({
