@@ -1,29 +1,37 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui/dialog";
-import {
-  Task,
-  taskApi,
-  taskStatusConfig,
-  taskPriorityConfig,
-} from "@/entities/task";
+import { Button } from "@/shared/ui/button";
+import { taskApi, taskStatusConfig } from "@/entities/task";
 import { organizationApi } from "@/features/organization/api/organizationApi";
 import { cn } from "@/shared/lib/utils";
+import { ExternalLink } from "lucide-react";
 
 interface AllTasksDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+interface UserTaskSummary {
+  userId: number;
+  userName: string;
+  total: number;
+  inProgress: number;
+  pending: number;
+  completed: number;
+  currentTask?: string;
+}
+
 export const AllTasksDialog = ({ open, onOpenChange }: AllTasksDialogProps) => {
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const router = useRouter();
 
   // 전체 Task 조회
   const { data: tasks = [], isLoading } = useQuery({
@@ -32,98 +40,113 @@ export const AllTasksDialog = ({ open, onOpenChange }: AllTasksDialogProps) => {
     enabled: open,
   });
 
-  // 전체 유저 조회 (assignee 이름 표시용)
+  // 전체 유저 조회
   const { data: users = [] } = useQuery({
     queryKey: ["users"],
     queryFn: () => organizationApi.getUsers(),
     enabled: open,
   });
 
-  // 유저 ID -> 이름 맵
-  const userMap = useMemo(() => {
-    const map = new Map<number, string>();
+  // 담당자별 요약 데이터
+  const summaryData = useMemo<UserTaskSummary[]>(() => {
+    const userMap = new Map<number, UserTaskSummary>();
+
+    // 유저 초기화
     users.forEach((user) => {
-      map.set(user.id, user.name || user.email.split("@")[0]);
+      userMap.set(user.id, {
+        userId: user.id,
+        userName: user.name || user.email.split("@")[0],
+        total: 0,
+        inProgress: 0,
+        pending: 0,
+        completed: 0,
+      });
     });
-    return map;
-  }, [users]);
 
-  // 필터링된 Task
-  const filteredTasks = useMemo(() => {
-    if (statusFilter === "all") return tasks;
-    return tasks.filter((task) => task.status === statusFilter);
-  }, [tasks, statusFilter]);
+    // Task 집계
+    tasks.forEach((task) => {
+      const summary = userMap.get(task.assigneeId);
+      if (summary) {
+        summary.total++;
+        if (task.status === "in_progress") summary.inProgress++;
+        else if (task.status === "pending") summary.pending++;
+        else if (task.status === "completed") summary.completed++;
 
-  const filters = [
-    { key: "all", label: "전체" },
-    { key: "in_progress", label: "진행중" },
-    { key: "pending", label: "대기" },
-    { key: "completed", label: "완료" },
-  ];
+        if (task.isCurrent) {
+          summary.currentTask = task.title;
+        }
+      }
+    });
+
+    return Array.from(userMap.values()).filter((s) => s.total > 0);
+  }, [tasks, users]);
+
+  // 전체 통계
+  const totalStats = useMemo(() => {
+    return {
+      total: tasks.length,
+      inProgress: tasks.filter((t) => t.status === "in_progress").length,
+      pending: tasks.filter((t) => t.status === "pending").length,
+      completed: tasks.filter((t) => t.status === "completed").length,
+    };
+  }, [tasks]);
+
+  const handleGoToTasks = () => {
+    onOpenChange(false);
+    router.push("/tasks");
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle>전체 업무 목록</DialogTitle>
+      <DialogContent className="max-w-[600px] p-5">
+        <DialogHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-base">담당자별 업무 요약</DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleGoToTasks}
+              className="h-7 px-2 text-xs text-zinc-500 hover:text-zinc-900"
+            >
+              전체 목록 <ExternalLink className="h-3 w-3 ml-1" />
+            </Button>
+          </div>
         </DialogHeader>
 
-        {/* 필터 */}
-        <div className="flex gap-1 mb-4">
-          {filters.map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setStatusFilter(f.key)}
-              className={cn(
-                "px-3 py-1 text-xs rounded-full border transition-colors",
-                statusFilter === f.key
-                  ? "bg-primary text-white border-primary"
-                  : "border-zinc-300 dark:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800",
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
+        {/* 전체 통계 */}
+        <div className="flex gap-3 mb-4 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+          <StatBadge label="전체" count={totalStats.total} />
+          <StatBadge
+            label="진행중"
+            count={totalStats.inProgress}
+            color="text-green-600"
+          />
+          <StatBadge
+            label="대기"
+            count={totalStats.pending}
+            color="text-yellow-600"
+          />
+          <StatBadge
+            label="완료"
+            count={totalStats.completed}
+            color="text-zinc-400"
+          />
         </div>
 
-        {/* Task 목록 */}
-        <div className="flex-1 overflow-auto">
+        {/* 담당자별 목록 */}
+        <div className="space-y-2 max-h-[360px] overflow-auto">
           {isLoading ? (
-            <div className="flex items-center justify-center h-32 text-zinc-500">
+            <div className="flex items-center justify-center h-20 text-zinc-500 text-sm">
               로딩 중...
             </div>
-          ) : filteredTasks.length === 0 ? (
-            <div className="flex items-center justify-center h-32 text-zinc-500">
+          ) : summaryData.length === 0 ? (
+            <div className="flex items-center justify-center h-20 text-zinc-500 text-sm">
               업무가 없습니다.
             </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-zinc-50 dark:bg-zinc-800 sticky top-0">
-                <tr>
-                  <th className="text-left px-3 py-2 font-medium">제목</th>
-                  <th className="text-left px-3 py-2 font-medium w-24">
-                    담당자
-                  </th>
-                  <th className="text-left px-3 py-2 font-medium w-20">상태</th>
-                  <th className="text-left px-3 py-2 font-medium w-24">
-                    우선순위
-                  </th>
-                  <th className="text-left px-3 py-2 font-medium w-28">기한</th>
-                  <th className="text-center px-3 py-2 font-medium w-16">
-                    현재
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTasks.map((task) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    assigneeName={userMap.get(task.assigneeId) || "-"}
-                  />
-                ))}
-              </tbody>
-            </table>
+            summaryData.map((summary) => (
+              <UserSummaryRow key={summary.userId} summary={summary} />
+            ))
           )}
         </div>
       </DialogContent>
@@ -131,45 +154,47 @@ export const AllTasksDialog = ({ open, onOpenChange }: AllTasksDialogProps) => {
   );
 };
 
-interface TaskRowProps {
-  task: Task;
-  assigneeName: string;
-}
+const StatBadge = ({
+  label,
+  count,
+  color = "text-zinc-700",
+}: {
+  label: string;
+  count: number;
+  color?: string;
+}) => (
+  <div className="flex items-center gap-1.5">
+    <span className="text-xs text-zinc-500">{label}</span>
+    <span className={cn("text-sm font-semibold", color)}>{count}</span>
+  </div>
+);
 
-const TaskRow = ({ task, assigneeName }: TaskRowProps) => {
-  const statusConfig = taskStatusConfig[task.status];
-  const priorityConfig = taskPriorityConfig[task.priority];
-
+const UserSummaryRow = ({ summary }: { summary: UserTaskSummary }) => {
   return (
-    <tr className="border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-      <td className="px-3 py-2">{task.title}</td>
-      <td className="px-3 py-2 text-zinc-600 dark:text-zinc-400">
-        {assigneeName}
-      </td>
-      <td className="px-3 py-2">
-        <span
-          className={cn(
-            "px-2 py-0.5 rounded-full text-xs",
-            statusConfig.bgColor,
-            statusConfig.color,
+    <div className="flex items-center justify-between p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/30">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-sm">{summary.userName}</span>
+          {summary.currentTask && (
+            <span className="text-xs text-green-600 truncate max-w-[200px]">
+              ● {summary.currentTask}
+            </span>
           )}
-        >
-          {statusConfig.label}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 text-xs">
+        <span className="text-zinc-500">
+          <span className="text-green-600 font-medium">
+            {summary.inProgress}
+          </span>
+          {" / "}
+          <span className="text-yellow-600 font-medium">{summary.pending}</span>
+          {" / "}
+          <span className="text-zinc-400 font-medium">{summary.completed}</span>
         </span>
-      </td>
-      <td className="px-3 py-2">
-        <span className={cn("text-sm", priorityConfig.color)}>
-          {priorityConfig.icon} {priorityConfig.label}
-        </span>
-      </td>
-      <td className="px-3 py-2 text-zinc-600 dark:text-zinc-400">
-        {task.dueDate
-          ? new Date(task.dueDate).toLocaleDateString("ko-KR")
-          : "-"}
-      </td>
-      <td className="px-3 py-2 text-center">
-        {task.isCurrent && <span className="text-green-600 font-bold">✓</span>}
-      </td>
-    </tr>
+        <span className="text-zinc-400 w-8 text-right">{summary.total}건</span>
+      </div>
+    </div>
   );
 };
