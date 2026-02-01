@@ -93,4 +93,20 @@ export const taskApi = {
     api
       .patch<UserMemo>(`/users/${userId}/memo`, { memo })
       .then((res) => res.data),
+
+  // 부서별 오늘 활동 조회
+  getDepartmentActivitiesToday: (departmentId: number) =>
+    api
+      .get<
+        TaskActivity[]
+      >(`/tasks/departments/${departmentId}/activities/today`)
+      .then((res) => res.data),
+
+  // 부서별 오늘 활동 수 요약
+  getDepartmentActivitySummaryToday: () =>
+    api
+      .get<
+        { departmentId: number; departmentName: string; count: number }[]
+      >("/tasks/departments/activities/today/summary")
+      .then((res) => res.data),
 };
