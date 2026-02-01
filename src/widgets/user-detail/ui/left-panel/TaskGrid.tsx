@@ -1,9 +1,16 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useRef, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
-import { ColDef, ModuleRegistry, AllCommunityModule } from "ag-grid-community";
+import {
+  ColDef,
+  ModuleRegistry,
+  AllCommunityModule,
+  CellValueChangedEvent,
+} from "ag-grid-community";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/shared/ui/button";
+import { Save } from "lucide-react";
 
 // AG Grid 모듈 등록
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -16,6 +23,7 @@ import {
   taskPriorityConfig,
   taskApi,
 } from "@/entities/task";
+import { DatePickerCellEditor } from "./editors/DatePickerCellEditor";
 
 interface TaskGridProps {
   userId: number;
@@ -48,6 +56,10 @@ const PriorityCellRenderer = (props: { value: TaskPriority }) => {
 
 export const TaskGrid = ({ userId, onTaskSelect }: TaskGridProps) => {
   const queryClient = useQueryClient();
+  const gridRef = useRef<AgGridReact<Task>>(null);
+  const [pendingChanges, setPendingChanges] = useState<
+    Map<number, Partial<Task>>
+  >(new Map());
 
   // Task 목록 조회
   const { data: tasks = [], isLoading } = useQuery({
@@ -61,8 +73,19 @@ export const TaskGrid = ({ userId, onTaskSelect }: TaskGridProps) => {
       taskApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks", "user", userId] });
+      queryClient.invalidateQueries({ queryKey: ["activities", userId] });
     },
   });
+
+  // 모든 변경사항 저장
+  const handleSaveAll = useCallback(async () => {
+    console.log("handleSaveAll called, pendingChanges:", pendingChanges);
+    const promises = Array.from(pendingChanges.entries()).map(([id, data]) =>
+      updateTaskMutation.mutateAsync({ id, data }),
+    );
+    await Promise.all(promises);
+    setPendingChanges(new Map());
+  }, [pendingChanges, updateTaskMutation]);
 
   const columnDefs = useMemo<ColDef<Task>[]>(
     () => [
@@ -76,19 +99,31 @@ export const TaskGrid = ({ userId, onTaskSelect }: TaskGridProps) => {
       {
         field: "status",
         headerName: "상태",
-        width: 100,
+        width: 120,
+        editable: true,
         cellRenderer: StatusCellRenderer,
+        cellEditor: "agSelectCellEditor",
+        cellEditorParams: {
+          values: Object.keys(taskStatusConfig),
+        },
       },
       {
         field: "priority",
         headerName: "우선순위",
-        width: 110,
+        width: 120,
+        editable: true,
         cellRenderer: PriorityCellRenderer,
+        cellEditor: "agSelectCellEditor",
+        cellEditorParams: {
+          values: Object.keys(taskPriorityConfig),
+        },
       },
       {
         field: "dueDate",
         headerName: "기한",
-        width: 110,
+        width: 150,
+        editable: true,
+        cellEditor: DatePickerCellEditor,
         valueFormatter: (params) => {
           if (!params.value) return "-";
           return new Date(params.value).toLocaleDateString("ko-KR");
@@ -106,6 +141,36 @@ export const TaskGrid = ({ userId, onTaskSelect }: TaskGridProps) => {
     [],
   );
 
+  const handleCellValueChanged = useCallback(
+    (event: CellValueChangedEvent<Task>) => {
+      console.log(
+        "handleCellValueChanged:",
+        event.colDef.field,
+        event.oldValue,
+        "->",
+        event.newValue,
+      );
+      if (event.data && event.colDef.field) {
+        const taskId = event.data.id;
+        const field = event.colDef.field as keyof Task;
+
+        // dueDate의 경우 ISO 문자열로 변환
+        let value = event.newValue;
+        if (field === "dueDate" && value) {
+          value = new Date(value).toISOString();
+        }
+
+        setPendingChanges((prev) => {
+          const newMap = new Map(prev);
+          const existing = newMap.get(taskId) || {};
+          newMap.set(taskId, { ...existing, [field]: value });
+          return newMap;
+        });
+      }
+    },
+    [],
+  );
+
   if (isLoading) {
     return (
       <div className="h-full w-full flex items-center justify-center text-zinc-500">
@@ -114,26 +179,42 @@ export const TaskGrid = ({ userId, onTaskSelect }: TaskGridProps) => {
     );
   }
 
+  const hasChanges = pendingChanges.size > 0;
+
   return (
-    <div className="ag-theme-alpine h-full w-full">
-      <AgGridReact<Task>
-        rowData={tasks}
-        columnDefs={columnDefs}
-        defaultColDef={defaultColDef}
-        animateRows={true}
-        rowSelection="single"
-        onRowClicked={(event) => {
-          onTaskSelect?.(event.data || null);
-        }}
-        onCellValueChanged={(event) => {
-          if (event.data && event.colDef.field) {
-            updateTaskMutation.mutate({
-              id: event.data.id,
-              data: { [event.colDef.field]: event.newValue },
-            });
-          }
-        }}
-      />
+    <div className="h-full w-full flex flex-col">
+      {/* 저장 버튼 영역 */}
+      <div className="flex justify-end p-2 border-b bg-zinc-50">
+        <Button
+          size="sm"
+          onClick={handleSaveAll}
+          disabled={!hasChanges || updateTaskMutation.isPending}
+          className={hasChanges ? "bg-blue-600 hover:bg-blue-700" : ""}
+        >
+          <Save className="h-4 w-4 mr-1" />
+          저장 {hasChanges && `(${pendingChanges.size})`}
+        </Button>
+      </div>
+
+      {/* AG Grid */}
+      <div className="ag-theme-alpine flex-1">
+        <AgGridReact<Task>
+          ref={gridRef}
+          rowData={tasks}
+          columnDefs={columnDefs}
+          defaultColDef={defaultColDef}
+          animateRows={true}
+          rowSelection={{
+            mode: "multiRow",
+            headerCheckbox: true,
+            checkboxes: true,
+          }}
+          onRowClicked={(event) => {
+            onTaskSelect?.(event.data || null);
+          }}
+          onCellValueChanged={handleCellValueChanged}
+        />
+      </div>
     </div>
   );
 };
