@@ -368,6 +368,16 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       }
     }, [onTaskSelect]);
 
+    // 행 클릭 시 해당 Task 선택
+    const handleRowClicked = useCallback(
+      (event: { data: Task | undefined }) => {
+        if (event.data && onTaskSelect) {
+          onTaskSelect(event.data);
+        }
+      },
+      [onTaskSelect],
+    );
+
     if (isLoading) {
       return (
         <div className="h-full w-full flex items-center justify-center text-zinc-500">
@@ -388,9 +398,11 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
             mode: "multiRow",
             headerCheckbox: true,
             checkboxes: true,
+            enableClickSelection: true,
           }}
           onCellValueChanged={handleCellValueChanged}
           onSelectionChanged={handleSelectionChanged}
+          onRowClicked={handleRowClicked}
         />
       </div>
     );

@@ -19,6 +19,8 @@ export const useCreateTaskIssue = (taskId: number | null) => {
     mutationFn: (content: string) => taskApi.createTaskIssue(taskId!, content),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["taskIssues", taskId] });
+      // Task 목록 갱신 (issueCount 업데이트)
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
       // 활동 로그도 갱신
       queryClient.invalidateQueries({ queryKey: ["userActivities"] });
       toast.success("이슈가 등록되었습니다");
@@ -59,6 +61,8 @@ export const useDeleteTaskIssue = (taskId: number | null) => {
     mutationFn: (issueId: number) => taskApi.deleteTaskIssue(issueId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["taskIssues", taskId] });
+      // Task 목록 갱신 (issueCount 업데이트)
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
       toast.success("이슈가 삭제되었습니다");
     },
     onError: () => {

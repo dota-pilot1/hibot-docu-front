@@ -81,7 +81,7 @@ export default function ProfilePage() {
         const [profileRes, postsRes, activitiesRes] = await Promise.all([
           api.get("/auth/profile"),
           api.get("/posts/my"),
-          taskApi.getUserActivities(user.userId, 10),
+          taskApi.getUserActivities(user.userId),
         ]);
         setProfile(profileRes.data);
         setMyPosts(postsRes.data);
