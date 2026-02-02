@@ -199,10 +199,10 @@ export function TaskDetailAttachments({
         <label
           htmlFor={fileInputId}
           className={cn(
-            "border-2 border-dashed rounded-lg p-8 text-center transition-colors block cursor-pointer",
+            "border-2 border-dashed rounded-lg p-6 text-center transition-colors block cursor-pointer",
             isDragging
-              ? "border-blue-500 bg-blue-50"
-              : "border-gray-200 hover:border-gray-300",
+              ? "border-violet-500 bg-violet-50"
+              : "border-gray-200 hover:border-violet-300",
             !canEdit && "cursor-not-allowed opacity-50",
           )}
           onDragOver={handleDragOver}
@@ -211,22 +211,24 @@ export function TaskDetailAttachments({
         >
           {isDragging ? (
             <>
-              <CloudUpload className="h-12 w-12 text-blue-500 mx-auto mb-2 animate-bounce" />
-              <p className="text-sm text-blue-600 font-medium">
+              <CloudUpload className="h-10 w-10 text-violet-500 mx-auto mb-2 animate-bounce" />
+              <p className="text-sm text-violet-600 font-medium">
                 파일을 여기에 놓으세요
               </p>
             </>
           ) : (
             <>
-              <CloudUpload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600 mb-2">
-                파일을 드래그하거나 클릭하여 업로드
-              </p>
-              <p className="text-xs text-gray-400">
+              <CloudUpload className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+              <p className="text-xs text-gray-500">
                 {canEdit
-                  ? "최대 50MB까지 업로드 가능합니다"
-                  : "등록된 첨부파일이 없습니다"}
+                  ? "파일을 드래그하거나 클릭하여 업로드"
+                  : "등록된 파일이 없습니다"}
               </p>
+              {canEdit && (
+                <p className="text-xs text-gray-400 mt-1">
+                  최대 50MB까지 업로드 가능합니다
+                </p>
+              )}
             </>
           )}
         </label>

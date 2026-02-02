@@ -186,10 +186,10 @@ export function TaskDetailImages({
         <label
           htmlFor={fileInputId}
           className={cn(
-            "border-2 border-dashed rounded-lg p-8 text-center transition-colors block cursor-pointer",
+            "border-2 border-dashed rounded-lg p-6 text-center transition-colors block cursor-pointer",
             isDragging
               ? "border-blue-500 bg-blue-50"
-              : "border-gray-200 hover:border-gray-300",
+              : "border-gray-200 hover:border-blue-300",
             !canEdit && "cursor-not-allowed opacity-50",
           )}
           onDragOver={handleDragOver}
@@ -198,15 +198,15 @@ export function TaskDetailImages({
         >
           {isDragging ? (
             <>
-              <CloudUpload className="h-12 w-12 text-blue-500 mx-auto mb-2 animate-bounce" />
+              <CloudUpload className="h-10 w-10 text-blue-500 mx-auto mb-2 animate-bounce" />
               <p className="text-sm text-blue-600 font-medium">
                 이미지를 여기에 놓으세요
               </p>
             </>
           ) : (
             <>
-              <ImageIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-500 mb-3">
+              <ImageIcon className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+              <p className="text-xs text-gray-500">
                 {canEdit
                   ? "이미지를 드래그하거나 버튼을 클릭하세요"
                   : "등록된 이미지가 없습니다."}
