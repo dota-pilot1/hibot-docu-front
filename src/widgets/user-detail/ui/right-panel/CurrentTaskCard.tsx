@@ -6,6 +6,7 @@ import {
   taskStatusConfig,
   useUpdateTaskStatus,
 } from "@/entities/task";
+import { TaskDetailSection } from "./task-detail/TaskDetailSection";
 
 interface CurrentTaskCardProps {
   task: Task | null;
@@ -80,6 +81,9 @@ export const CurrentTaskCard = ({ task, userId }: CurrentTaskCardProps) => {
           },
         )}
       </div>
+
+      {/* 업무 상세 섹션 */}
+      <TaskDetailSection taskId={task.id} />
     </div>
   );
 };

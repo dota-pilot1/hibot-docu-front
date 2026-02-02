@@ -16,6 +16,7 @@ import {
   Pencil,
   Check,
   X,
+  Activity,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
@@ -26,6 +27,7 @@ import { useUserStore } from "@/entities/user/model/store";
 import { api } from "@/shared/api";
 import { getImageUrl } from "@/shared/lib/utils";
 import { toast } from "sonner";
+import { taskApi, TaskActivity } from "@/entities/task";
 
 interface Profile {
   id: number;
@@ -53,6 +55,7 @@ export default function ProfilePage() {
   const setUser = useUserStore((state) => state.setUser);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [myPosts, setMyPosts] = useState<Post[]>([]);
+  const [recentActivities, setRecentActivities] = useState<TaskActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -75,12 +78,14 @@ export default function ProfilePage() {
 
     const fetchData = async () => {
       try {
-        const [profileRes, postsRes] = await Promise.all([
+        const [profileRes, postsRes, activitiesRes] = await Promise.all([
           api.get("/auth/profile"),
           api.get("/posts/my"),
+          taskApi.getUserActivities(user.userId, 10),
         ]);
         setProfile(profileRes.data);
         setMyPosts(postsRes.data);
+        setRecentActivities(activitiesRes);
       } catch (error) {
         console.error("Failed to fetch data:", error);
       } finally {
@@ -331,6 +336,44 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* 최근 활동 */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Activity className="w-5 h-5" />
+              최근 활동 ({recentActivities.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {recentActivities.length === 0 ? (
+              <p className="text-gray-500 text-sm">최근 활동이 없습니다.</p>
+            ) : (
+              <ul className="space-y-2">
+                {recentActivities.map((activity) => (
+                  <li
+                    key={activity.id}
+                    className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-900">
+                        {activity.description}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(activity.createdAt).toLocaleString("ko-KR", {
+                          month: "long",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
 

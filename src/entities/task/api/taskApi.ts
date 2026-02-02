@@ -6,6 +6,10 @@ import type {
   TaskActivity,
   TaskIssue,
   TaskIssueReply,
+  TaskDetail,
+  TaskDetailImage,
+  TaskDetailAttachment,
+  UpdateTaskDetailDto,
 } from "../model/types";
 
 export interface CreateTaskDto {
@@ -172,4 +176,104 @@ export const taskApi = {
   // 이슈 답변 삭제
   deleteIssueReply: (replyId: number) =>
     api.delete(`/tasks/issues/replies/${replyId}`),
+
+  // ============================================
+  // Task Details (업무 상세)
+  // ============================================
+
+  // 업무 상세 조회
+  getTaskDetail: (taskId: number) =>
+    api.get<TaskDetail>(`/tasks/${taskId}/detail`).then((res) => res.data),
+
+  // 업무 상세 수정
+  updateTaskDetail: (taskId: number, data: UpdateTaskDetailDto) =>
+    api
+      .patch<TaskDetail>(`/tasks/${taskId}/detail`, data)
+      .then((res) => res.data),
+
+  // 업무 상세 삭제
+  deleteTaskDetail: (taskId: number) => api.delete(`/tasks/${taskId}/detail`),
+
+  // 이미지 목록 조회
+  getTaskDetailImages: (taskId: number) =>
+    api
+      .get<TaskDetailImage[]>(`/tasks/${taskId}/detail/images`)
+      .then((res) => res.data),
+
+  // 이미지 업로드
+  uploadTaskImage: (
+    taskId: number,
+    file: File,
+    caption?: string,
+    altText?: string,
+  ) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    if (caption) formData.append("caption", caption);
+    if (altText) formData.append("altText", altText);
+
+    return api
+      .post<TaskDetailImage>(`/tasks/${taskId}/detail/images`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((res) => res.data);
+  },
+
+  // 이미지 정보 수정
+  updateTaskImage: (
+    taskId: number,
+    imageId: number,
+    data: { caption?: string; altText?: string; displayOrder?: number },
+  ) =>
+    api
+      .patch<TaskDetailImage>(`/tasks/${taskId}/detail/images/${imageId}`, data)
+      .then((res) => res.data),
+
+  // 이미지 삭제
+  deleteTaskImage: (taskId: number, imageId: number) =>
+    api.delete(`/tasks/${taskId}/detail/images/${imageId}`),
+
+  // 이미지 순서 변경
+  reorderTaskImages: (taskId: number, imageIds: number[]) =>
+    api.patch(`/tasks/${taskId}/detail/images/reorder`, { imageIds }),
+
+  // 첨부파일 목록 조회
+  getTaskDetailAttachments: (taskId: number) =>
+    api
+      .get<TaskDetailAttachment[]>(`/tasks/${taskId}/detail/attachments`)
+      .then((res) => res.data),
+
+  // 첨부파일 업로드
+  uploadTaskAttachment: (taskId: number, file: File, description?: string) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    if (description) formData.append("description", description);
+
+    return api
+      .post<TaskDetailAttachment>(
+        `/tasks/${taskId}/detail/attachments`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      )
+      .then((res) => res.data);
+  },
+
+  // 첨부파일 정보 수정
+  updateTaskAttachment: (
+    taskId: number,
+    attachmentId: number,
+    data: { description?: string; displayOrder?: number },
+  ) =>
+    api
+      .patch<TaskDetailAttachment>(
+        `/tasks/${taskId}/detail/attachments/${attachmentId}`,
+        data,
+      )
+      .then((res) => res.data),
+
+  // 첨부파일 삭제
+  deleteTaskAttachment: (taskId: number, attachmentId: number) =>
+    api.delete(`/tasks/${taskId}/detail/attachments/${attachmentId}`),
 };

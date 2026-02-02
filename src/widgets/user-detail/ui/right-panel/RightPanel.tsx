@@ -4,7 +4,6 @@ import { Task } from "@/entities/task";
 import { UserSummaryCompact } from "./UserSummaryCompact";
 import { CurrentTaskCard } from "./CurrentTaskCard";
 import { TaskIssueList } from "./TaskIssueList";
-import { RecentActivityList } from "./RecentActivityList";
 import { PersonalMemo } from "./PersonalMemo";
 
 interface RightPanelProps {
@@ -28,9 +27,6 @@ export const RightPanel = ({
 
       {/* 이슈 내역 */}
       <TaskIssueList taskId={selectedTask?.id || null} />
-
-      {/* 최근 활동 */}
-      <RecentActivityList userId={userId} />
 
       {/* 개인 메모 */}
       <PersonalMemo userId={userId} />
