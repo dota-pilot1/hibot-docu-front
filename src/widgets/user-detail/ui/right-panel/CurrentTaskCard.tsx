@@ -66,12 +66,12 @@ export const CurrentTaskCard = ({ task, userId }: CurrentTaskCardProps) => {
             return (
               <button
                 key={status}
-                onClick={() => handleStatusChange(status)}
-                disabled={updateStatusMutation.isPending || isActive}
-                className={`flex-1 px-2 py-1 text-xs rounded-md border transition-colors ${
+                onClick={() => !isActive && handleStatusChange(status)}
+                disabled={updateStatusMutation.isPending}
+                className={`flex-1 px-2 py-1 text-xs rounded-md border-2 transition-colors ${
                   isActive
-                    ? `${config.bgColor} ${config.color} border-transparent`
-                    : "border-zinc-300 dark:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                    ? `${config.bgColor} ${config.color} border-current font-semibold`
+                    : "border-zinc-200 dark:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-700"
                 } disabled:opacity-50`}
               >
                 {config.label}
