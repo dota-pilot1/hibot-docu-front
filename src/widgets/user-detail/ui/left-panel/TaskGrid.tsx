@@ -57,10 +57,14 @@ interface TaskGridProps {
   currentTaskId?: number | null;
   showAssignee?: boolean; // 담당자 컬럼 표시 여부
   showIssueColumn?: boolean; // 이슈 컬럼 표시 여부
+  showDetailColumn?: boolean; // 상세 버튼 컬럼 표시 여부
+  showCurrentTaskColumn?: boolean; // 현재 작업 설정 컬럼 표시 여부
   onPendingChange?: (count: number) => void;
   onSelectionChange?: (count: number) => void;
   onTaskSelect?: (task: Task | null) => void; // 단일 Task 선택 시 콜백
   onIssueClick?: (task: Task) => void; // 이슈 컬럼 클릭 시 콜백
+  onDetailClick?: (task: Task) => void; // 상세 버튼 클릭 시 콜백
+  onCurrentTaskChange?: (taskId: number) => void; // 현재 작업 변경 콜백
 }
 
 export interface TaskGridRef {
@@ -95,15 +99,33 @@ const PriorityCellRenderer = (props: { value: TaskPriority }) => {
   );
 };
 
-// 현재 작업 표시 셀 렌더러
-const CurrentTaskCellRenderer = (props: {
+// 진행 시작 토글 셀 렌더러
+const StartToggleCellRenderer = (props: {
   data: Task;
-  currentTaskId?: number | null;
+  onToggle?: (task: Task, isStarting: boolean) => void;
 }) => {
-  if (props.data?.id === props.currentTaskId) {
-    return <span className="text-green-600 font-bold">✓</span>;
-  }
-  return null;
+  if (!props.data) return null;
+
+  const isStarted = !!props.data.startedAt;
+
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        props.onToggle?.(props.data, !isStarted);
+      }}
+      className={`w-8 h-5 rounded-full transition-colors relative ${
+        isStarted ? "bg-green-500" : "bg-gray-300"
+      }`}
+      title={isStarted ? "진행 중지" : "진행 시작"}
+    >
+      <span
+        className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+          isStarted ? "left-3.5" : "left-0.5"
+        }`}
+      />
+    </button>
+  );
 };
 
 // 이슈 버튼 셀 렌더러
@@ -127,6 +149,84 @@ const IssueCellRenderer = (props: {
   );
 };
 
+// 상세 버튼 셀 렌더러
+const DetailCellRenderer = (props: {
+  data: Task;
+  onDetailClick?: (task: Task) => void;
+}) => {
+  if (!props.data) return null;
+
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        props.onDetailClick?.(props.data);
+      }}
+      className="px-2 py-0.5 text-xs border border-blue-500 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+    >
+      상세
+    </button>
+  );
+};
+
+// 현재 작업 체크 셀 렌더러
+const CurrentTaskCheckRenderer = (props: {
+  data: Task;
+  currentTaskId?: number | null;
+  onCurrentTaskChange?: (taskId: number) => void;
+}) => {
+  if (!props.data) return null;
+
+  const isCurrent = props.data.id === props.currentTaskId;
+
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!isCurrent) {
+          props.onCurrentTaskChange?.(props.data.id);
+        }
+      }}
+      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+        isCurrent
+          ? "bg-green-500 border-green-500 text-white"
+          : "border-gray-300 hover:border-green-400"
+      }`}
+      title={isCurrent ? "현재 작업" : "현재 작업으로 설정"}
+    >
+      {isCurrent && <span className="text-xs font-bold">✓</span>}
+    </button>
+  );
+};
+
+// 남은 시간 셀 렌더러
+const RemainingTimeCellRenderer = (props: { data: Task }) => {
+  if (!props.data?.dueDate) return <span className="text-gray-400">-</span>;
+
+  const now = new Date();
+  const dueDate = new Date(props.data.dueDate);
+  const diffTime = dueDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (props.data.status === "completed") {
+    return <span className="text-gray-400">완료</span>;
+  }
+
+  if (diffDays < 0) {
+    return (
+      <span className="text-red-600 font-medium">
+        {Math.abs(diffDays)}일 초과
+      </span>
+    );
+  } else if (diffDays === 0) {
+    return <span className="text-orange-600 font-medium">오늘 마감</span>;
+  } else if (diffDays <= 3) {
+    return <span className="text-orange-500">{diffDays}일 남음</span>;
+  } else {
+    return <span className="text-gray-600">{diffDays}일 남음</span>;
+  }
+};
+
 export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
   (
     {
@@ -135,10 +235,14 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       currentTaskId,
       showAssignee = false,
       showIssueColumn = false,
+      showDetailColumn = false,
+      showCurrentTaskColumn = false,
       onPendingChange,
       onSelectionChange,
       onTaskSelect,
       onIssueClick,
+      onDetailClick,
+      onCurrentTaskChange,
     },
     ref,
   ) => {
@@ -227,6 +331,29 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       return null;
     }, []);
 
+    // 진행 시작/중지 토글 핸들러
+    const handleStartToggle = useCallback((task: Task, isStarting: boolean) => {
+      const taskId = task.id;
+      const updates: Partial<Task> = isStarting
+        ? {
+            startedAt: new Date().toISOString(),
+            status: "in_progress" as TaskStatus,
+          }
+        : { startedAt: undefined };
+
+      setPendingChanges((prev) => {
+        const newMap = new Map(prev);
+        const existing = newMap.get(taskId) || {};
+        newMap.set(taskId, { ...existing, ...updates });
+        return newMap;
+      });
+
+      // 그리드 데이터 즉시 업데이트
+      gridRef.current?.api.applyTransaction({
+        update: [{ ...task, ...updates }],
+      });
+    }, []);
+
     // 부모 컴포넌트에 메서드 노출
     useImperativeHandle(ref, () => ({
       saveChanges,
@@ -241,9 +368,23 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
         {
           field: "title",
           headerName: "제목",
-          flex: 2,
+          flex: 1,
           minWidth: 200,
+          maxWidth: 500,
           editable: true,
+        },
+        {
+          headerName: "시작",
+          width: 70,
+          cellRenderer: StartToggleCellRenderer,
+          cellRendererParams: {
+            onToggle: handleStartToggle,
+          },
+          cellStyle: {
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          },
         },
       ];
 
@@ -274,7 +415,7 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
         {
           field: "status",
           headerName: "상태",
-          width: 120,
+          width: 95,
           editable: true,
           cellRenderer: StatusCellRenderer,
           cellEditor: SelectCellEditor,
@@ -285,7 +426,7 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
         {
           field: "priority",
           headerName: "우선순위",
-          width: 120,
+          width: 100,
           editable: true,
           cellRenderer: PriorityCellRenderer,
           cellEditor: SelectCellEditor,
@@ -294,9 +435,9 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
           },
         },
         {
-          field: "dueDate",
-          headerName: "기한",
-          width: 150,
+          field: "startedAt",
+          headerName: "시작일",
+          width: 105,
           editable: true,
           cellEditor: DatePickerCellEditor,
           valueFormatter: (params) => {
@@ -305,35 +446,88 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
           },
         },
         {
-          headerName: "",
-          width: 50,
-          cellRenderer: CurrentTaskCellRenderer,
-          cellRendererParams: {
-            currentTaskId,
+          field: "dueDate",
+          headerName: "기한",
+          width: 105,
+          editable: true,
+          cellEditor: DatePickerCellEditor,
+          valueFormatter: (params) => {
+            if (!params.value) return "-";
+            return new Date(params.value).toLocaleDateString("ko-KR");
           },
+        },
+        {
+          headerName: "D-Day",
+          width: 85,
+          cellRenderer: RemainingTimeCellRenderer,
         },
       );
 
       // 이슈 컬럼 (showIssueColumn이 true일 때만)
       if (showIssueColumn) {
         cols.push({
-          headerName: "이슈",
-          width: 100,
+          headerName: "",
+          width: 85,
           cellRenderer: IssueCellRenderer,
           cellRendererParams: {
             onIssueClick,
+          },
+          cellStyle: {
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          },
+        });
+      }
+
+      // 상세 버튼 컬럼 (showDetailColumn이 true일 때만)
+      if (showDetailColumn) {
+        cols.push({
+          headerName: "",
+          width: 70,
+          cellRenderer: DetailCellRenderer,
+          cellRendererParams: {
+            onDetailClick,
+          },
+          cellStyle: {
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          },
+        });
+      }
+
+      // 현재 작업 체크 컬럼 (showCurrentTaskColumn이 true일 때만)
+      if (showCurrentTaskColumn) {
+        cols.push({
+          headerName: "",
+          width: 50,
+          cellRenderer: CurrentTaskCheckRenderer,
+          cellRendererParams: {
+            currentTaskId,
+            onCurrentTaskChange,
+          },
+          cellStyle: {
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           },
         });
       }
 
       return cols;
     }, [
-      currentTaskId,
       showAssignee,
       showIssueColumn,
+      showDetailColumn,
+      showCurrentTaskColumn,
+      currentTaskId,
       userMap,
       users,
       onIssueClick,
+      onDetailClick,
+      onCurrentTaskChange,
+      handleStartToggle,
     ]);
 
     const defaultColDef = useMemo<ColDef>(
@@ -351,7 +545,7 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
           const field = event.colDef.field as keyof Task;
 
           let value = event.newValue;
-          if (field === "dueDate" && value) {
+          if ((field === "dueDate" || field === "startedAt") && value) {
             value = new Date(value).toISOString();
           }
           if (field === "assigneeId" && value) {

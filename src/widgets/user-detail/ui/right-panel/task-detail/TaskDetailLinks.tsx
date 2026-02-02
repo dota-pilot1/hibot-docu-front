@@ -10,14 +10,9 @@ import { ExternalLink, Trash2, Plus, Link as LinkIcon } from "lucide-react";
 interface TaskDetailLinksProps {
   taskId: number;
   links: LinkItem[];
-  canEdit: boolean;
 }
 
-export function TaskDetailLinks({
-  taskId,
-  links,
-  canEdit,
-}: TaskDetailLinksProps) {
+export function TaskDetailLinks({ taskId, links }: TaskDetailLinksProps) {
   const { mutate: updateDetail } = useUpdateTaskDetail(taskId);
   const [newLinkTitle, setNewLinkTitle] = useState("");
   const [newLinkUrl, setNewLinkUrl] = useState("");
@@ -58,20 +53,10 @@ export function TaskDetailLinks({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-3">
         <h4 className="font-medium text-sm flex items-center gap-2">
           🔗 관련 링크 ({links.length})
         </h4>
-        {canEdit && !isAdding && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsAdding(true)}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            링크 추가
-          </Button>
-        )}
       </div>
 
       {/* 링크 목록 */}
@@ -93,30 +78,24 @@ export function TaskDetailLinks({
                   {link.title}
                   <ExternalLink className="h-3 w-3" />
                 </a>
-                <p className="text-xs text-gray-500 truncate">
-                  {link.url}
-                </p>
+                <p className="text-xs text-gray-500 truncate">{link.url}</p>
               </div>
-              {canEdit && (
-                <button
-                  onClick={() => handleDeleteLink(index)}
-                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
+              <button
+                onClick={() => handleDeleteLink(index)}
+                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
           ))}
         </div>
       )}
 
       {/* 새 링크 추가 폼 */}
-      {canEdit && isAdding && (
+      {isAdding && (
         <div className="border border-gray-200 rounded-lg p-3 space-y-3 bg-gray-50">
           <div>
-            <label className="text-xs text-gray-600 block mb-1">
-              제목
-            </label>
+            <label className="text-xs text-gray-600 block mb-1">제목</label>
             <Input
               placeholder="링크 제목 (예: 참고 문서)"
               value={newLinkTitle}
@@ -125,9 +104,7 @@ export function TaskDetailLinks({
             />
           </div>
           <div>
-            <label className="text-xs text-gray-600 block mb-1">
-              URL
-            </label>
+            <label className="text-xs text-gray-600 block mb-1">URL</label>
             <Input
               placeholder="https://example.com"
               value={newLinkUrl}
@@ -159,15 +136,15 @@ export function TaskDetailLinks({
         </div>
       )}
 
-      {links.length === 0 && !isAdding && (
-        <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center">
-          <LinkIcon className="h-6 w-6 text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">
-            {canEdit
-              ? "관련 링크를 추가해보세요."
-              : "등록된 링크가 없습니다."}
-          </p>
-        </div>
+      {/* 클릭하면 추가 폼 열기 */}
+      {!isAdding && (
+        <button
+          onClick={() => setIsAdding(true)}
+          className="w-full border-2 border-dashed border-gray-200 rounded-lg p-4 text-center transition-colors cursor-pointer hover:border-blue-300"
+        >
+          <LinkIcon className="h-5 w-5 text-gray-400 mx-auto mb-1" />
+          <p className="text-xs text-gray-500">클릭하여 링크를 추가하세요</p>
+        </button>
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useUpdateTaskDetail } from "@/entities/task/hooks/useTaskDetail";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -11,22 +11,26 @@ import { MarkdownCodeBlock } from "@/shared/ui/MarkdownCodeBlock";
 interface TaskDetailEditorProps {
   taskId: number;
   value: string;
-  isEditing: boolean;
 }
 
-export function TaskDetailEditor({
-  taskId,
-  value,
-  isEditing,
-}: TaskDetailEditorProps) {
+export function TaskDetailEditor({ taskId, value }: TaskDetailEditorProps) {
   const { mutate: updateDetail } = useUpdateTaskDetail(taskId);
   const [content, setContent] = useState(value);
+  const [isEditing, setIsEditing] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     setContent(value);
   }, [value]);
 
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [isEditing]);
+
   const handleBlur = () => {
+    setIsEditing(false);
     if (content !== value) {
       updateDetail({ description: content });
     }
@@ -35,10 +39,11 @@ export function TaskDetailEditor({
   if (isEditing) {
     return (
       <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-700">
-          상세 설명 (Markdown)
-        </label>
+        <h4 className="font-medium text-sm flex items-center gap-2">
+          📋 업무 상세 설명
+        </h4>
         <Textarea
+          ref={textareaRef}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onBlur={handleBlur}
@@ -46,7 +51,7 @@ export function TaskDetailEditor({
           className="min-h-[200px] font-mono text-sm"
         />
         <p className="text-xs text-gray-500">
-          Markdown 문법을 지원합니다. 변경 사항은 자동으로 저장됩니다.
+          Markdown 문법을 지원합니다. 바깥을 클릭하면 자동 저장됩니다.
         </p>
       </div>
     );
@@ -54,22 +59,30 @@ export function TaskDetailEditor({
 
   return (
     <div className="space-y-2">
-      {content ? (
-        <div className="prose prose-sm max-w-none prose-pre:bg-gray-50 prose-pre:border prose-pre:border-gray-200">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm, remarkBreaks]}
-            components={{
-              code: MarkdownCodeBlock as any,
-            }}
-          >
-            {content}
-          </ReactMarkdown>
-        </div>
-      ) : (
-        <p className="text-gray-400 italic text-sm py-4">
-          상세 설명이 없습니다. 편집 버튼을 눌러 추가하세요.
-        </p>
-      )}
+      <h4 className="font-medium text-sm flex items-center gap-2">
+        📋 업무 상세 설명
+      </h4>
+      <div
+        onClick={() => setIsEditing(true)}
+        className="cursor-pointer rounded-lg border border-transparent hover:border-gray-200 hover:bg-gray-50 transition-colors p-2 -m-2"
+      >
+        {content ? (
+          <div className="prose prose-sm max-w-none prose-pre:bg-gray-50 prose-pre:border prose-pre:border-gray-200">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm, remarkBreaks]}
+              components={{
+                code: MarkdownCodeBlock as any,
+              }}
+            >
+              {content}
+            </ReactMarkdown>
+          </div>
+        ) : (
+          <p className="text-gray-400 italic text-sm py-4">
+            클릭하여 상세 설명을 추가하세요...
+          </p>
+        )}
+      </div>
     </div>
   );
 }

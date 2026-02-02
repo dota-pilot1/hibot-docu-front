@@ -5,7 +5,7 @@ import {
   useUploadTaskImage,
   useDeleteTaskImage,
 } from "@/entities/task/hooks/useTaskDetail";
-import { Button } from "@/shared/ui/button";
+
 import { ConfirmDialog } from "@/shared/ui/dialogs/ConfirmDialog";
 import {
   Dialog,
@@ -14,20 +14,15 @@ import {
   DialogTitle,
 } from "@/shared/ui/dialog";
 import { TaskDetailImage } from "@/entities/task/model/types";
-import { Trash2, Upload, X, ImageIcon, CloudUpload } from "lucide-react";
+import { Trash2, ImageIcon, CloudUpload } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
 interface TaskDetailImagesProps {
   taskId: number;
   images: TaskDetailImage[];
-  canEdit: boolean;
 }
 
-export function TaskDetailImages({
-  taskId,
-  images,
-  canEdit,
-}: TaskDetailImagesProps) {
+export function TaskDetailImages({ taskId, images }: TaskDetailImagesProps) {
   const { mutate: uploadImage, isPending: isUploading } =
     useUploadTaskImage(taskId);
   const { mutate: deleteImage, isPending: isDeleting } =
@@ -38,16 +33,11 @@ export function TaskDetailImages({
   );
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleDragOver = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (canEdit) {
-        setIsDragging(true);
-      }
-    },
-    [canEdit],
-  );
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -55,19 +45,14 @@ export function TaskDetailImages({
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragging(false);
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
 
-      if (!canEdit) return;
-
-      const files = Array.from(e.dataTransfer.files);
-      handleUpload(files);
-    },
-    [canEdit],
-  );
+    const files = Array.from(e.dataTransfer.files);
+    handleUpload(files);
+  }, []);
 
   const handleUpload = async (files: File[] | FileList | null) => {
     if (!files) return;
@@ -114,44 +99,51 @@ export function TaskDetailImages({
         accept="image/*"
         className="hidden"
         onChange={(e) => handleUpload(e.target.files)}
-        disabled={isUploading || !canEdit}
+        disabled={isUploading}
       />
 
       <div className="flex items-center justify-between mb-3">
         <h4 className="font-medium text-sm flex items-center gap-2">
           🖼️ 참고 이미지 ({images.length})
+          {isUploading && (
+            <div className="h-4 w-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+          )}
         </h4>
-        <label htmlFor={fileInputId} className="cursor-pointer">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={isUploading || !canEdit}
-            asChild
-          >
-            <span className="flex items-center">
-              {isUploading ? (
-                <>
-                  <div className="h-4 w-4 mr-1 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-                  업로드 중...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4 mr-1" />
-                  이미지 추가
-                </>
-              )}
-            </span>
-          </Button>
-        </label>
       </div>
 
-      {images.length > 0 ? (
-        <div
-          className="grid grid-cols-3 gap-3"
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
+      {/* 드래그앤드롭 영역 */}
+      <label
+        htmlFor={fileInputId}
+        className={cn(
+          "border-2 border-dashed rounded-lg p-4 text-center transition-colors block cursor-pointer",
+          isDragging
+            ? "border-blue-500 bg-blue-50"
+            : "border-gray-200 hover:border-blue-300",
+        )}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {isDragging ? (
+          <>
+            <CloudUpload className="h-8 w-8 text-blue-500 mx-auto mb-2 animate-bounce" />
+            <p className="text-sm text-blue-600 font-medium">
+              이미지를 여기에 놓으세요
+            </p>
+          </>
+        ) : (
+          <>
+            <ImageIcon className="h-5 w-5 text-gray-400 mx-auto mb-1" />
+            <p className="text-xs text-gray-500">
+              클릭하거나 이미지를 드래그하세요
+            </p>
+          </>
+        )}
+      </label>
+
+      {/* 이미지 그리드 */}
+      {images.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 mt-3">
           {images.map((image) => (
             <div
               key={image.id}
@@ -166,14 +158,12 @@ export function TaskDetailImages({
                   loading="lazy"
                 />
               </div>
-              {canEdit && (
-                <button
-                  onClick={(e) => handleDeleteClick(image, e)}
-                  className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
-              )}
+              <button
+                onClick={(e) => handleDeleteClick(image, e)}
+                className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
               {image.caption && (
                 <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-2 truncate">
                   {image.caption}
@@ -182,38 +172,6 @@ export function TaskDetailImages({
             </div>
           ))}
         </div>
-      ) : (
-        <label
-          htmlFor={fileInputId}
-          className={cn(
-            "border-2 border-dashed rounded-lg p-6 text-center transition-colors block cursor-pointer",
-            isDragging
-              ? "border-blue-500 bg-blue-50"
-              : "border-gray-200 hover:border-blue-300",
-            !canEdit && "cursor-not-allowed opacity-50",
-          )}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          {isDragging ? (
-            <>
-              <CloudUpload className="h-10 w-10 text-blue-500 mx-auto mb-2 animate-bounce" />
-              <p className="text-sm text-blue-600 font-medium">
-                이미지를 여기에 놓으세요
-              </p>
-            </>
-          ) : (
-            <>
-              <ImageIcon className="h-6 w-6 text-gray-400 mx-auto mb-2" />
-              <p className="text-xs text-gray-500">
-                {canEdit
-                  ? "이미지를 드래그하거나 버튼을 클릭하세요"
-                  : "등록된 이미지가 없습니다."}
-              </p>
-            </>
-          )}
-        </label>
       )}
 
       {/* 이미지 다이얼로그 */}

@@ -47,7 +47,11 @@ export const IssueTaskCard = ({ task }: IssueTaskCardProps) => {
       </div>
 
       {/* 업무 상세 섹션 */}
-      <TaskDetailSection taskId={task.id} />
+      <TaskDetailSection
+        taskId={task.id}
+        startedAt={task.startedAt}
+        dueDate={task.dueDate}
+      />
     </div>
   );
 };
