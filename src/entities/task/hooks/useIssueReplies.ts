@@ -16,7 +16,13 @@ export const useCreateIssueReply = (issueId: number | null) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (content: string) => taskApi.createIssueReply(issueId!, content),
+    mutationFn: ({
+      content,
+      parentId,
+    }: {
+      content: string;
+      parentId?: number;
+    }) => taskApi.createIssueReply(issueId!, content, parentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["issueReplies", issueId] });
       toast.success("답변이 등록되었습니다");

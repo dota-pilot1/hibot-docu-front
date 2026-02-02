@@ -155,9 +155,12 @@ export const taskApi = {
       .then((res) => res.data),
 
   // 이슈 답변 생성
-  createIssueReply: (issueId: number, content: string) =>
+  createIssueReply: (issueId: number, content: string, parentId?: number) =>
     api
-      .post<TaskIssueReply>(`/tasks/issues/${issueId}/replies`, { content })
+      .post<TaskIssueReply>(`/tasks/issues/${issueId}/replies`, {
+        content,
+        parentId,
+      })
       .then((res) => res.data),
 
   // 이슈 답변 수정

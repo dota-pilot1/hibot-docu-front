@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   useTaskIssues,
   useCreateTaskIssue,
@@ -21,6 +21,7 @@ import {
   ChevronDown,
   ChevronRight,
   MessageSquare,
+  Reply,
 } from "lucide-react";
 
 interface TaskIssueListProps {
@@ -33,6 +34,161 @@ const formatTime = (dateString: string) => {
     hour: "2-digit",
     minute: "2-digit",
   });
+};
+
+// 답변 입력 폼 컴포넌트
+const ReplyInputForm = ({
+  onSubmit,
+  onCancel,
+  isPending,
+  placeholder = "답변을 입력하세요...",
+}: {
+  onSubmit: (content: string) => void;
+  onCancel: () => void;
+  isPending: boolean;
+  placeholder?: string;
+}) => {
+  const [content, setContent] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = () => {
+    if (!content.trim() || isPending || isSubmitting) return;
+    setIsSubmitting(true);
+    onSubmit(content.trim());
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+    if (e.key === "Escape") {
+      onCancel();
+    }
+  };
+
+  return (
+    <div className="mt-2 space-y-1">
+      <input
+        type="text"
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        className="w-full p-1.5 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+        autoFocus
+      />
+      <div className="flex justify-end gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 px-2 text-xs"
+          onClick={onCancel}
+        >
+          취소
+        </Button>
+        <Button
+          size="sm"
+          className="h-6 px-2 text-xs"
+          onClick={handleSubmit}
+          disabled={!content.trim() || isPending || isSubmitting}
+        >
+          등록
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+// 단일 답변 렌더링 컴포넌트 (재귀적)
+const ReplyItem = ({
+  reply,
+  childrenMap,
+  onReply,
+  onDelete,
+  isDeleting,
+  replyingToId,
+  onSubmitReply,
+  onCancelReply,
+  isCreating,
+}: {
+  reply: TaskIssueReply;
+  childrenMap: Map<number, TaskIssueReply[]>;
+  onReply: (replyId: number) => void;
+  onDelete: (replyId: number) => void;
+  isDeleting: boolean;
+  replyingToId: number | null;
+  onSubmitReply: (content: string, parentId: number) => void;
+  onCancelReply: () => void;
+  isCreating: boolean;
+}) => {
+  const childReplies = childrenMap.get(reply.id) || [];
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-start gap-2">
+        <span className="text-zinc-400">↳</span>
+        <div className="flex-1">
+          <p className="text-zinc-700 dark:text-zinc-300">{reply.content}</p>
+          <div className="flex items-center gap-2 mt-0.5 text-zinc-400">
+            <span>{reply.user?.name || "익명"}</span>
+            <span>•</span>
+            <span>{formatTime(reply.createdAt)}</span>
+            <button
+              onClick={() => onReply(reply.id)}
+              className="flex items-center gap-0.5 hover:text-zinc-600 dark:hover:text-zinc-200"
+              title="답글"
+            >
+              <Reply className="h-3 w-3" />
+              <span>답글</span>
+            </button>
+          </div>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-4 w-4 p-0 text-red-500 hover:text-red-600"
+          onClick={() => onDelete(reply.id)}
+          disabled={isDeleting}
+          title="삭제"
+        >
+          <Trash2 className="h-3 w-3" />
+        </Button>
+      </div>
+
+      {/* 대댓글 입력 폼 */}
+      {replyingToId === reply.id && (
+        <div className="ml-5">
+          <ReplyInputForm
+            onSubmit={(content) => onSubmitReply(content, reply.id)}
+            onCancel={onCancelReply}
+            isPending={isCreating}
+            placeholder={`${reply.user?.name || "익명"}님에게 답글...`}
+          />
+        </div>
+      )}
+
+      {/* 대댓글 목록 (재귀) */}
+      {childReplies.length > 0 && (
+        <div className="ml-5 space-y-2 border-l-2 border-zinc-200 dark:border-zinc-700 pl-2">
+          {childReplies.map((childReply) => (
+            <ReplyItem
+              key={childReply.id}
+              reply={childReply}
+              childrenMap={childrenMap}
+              onReply={onReply}
+              onDelete={onDelete}
+              isDeleting={isDeleting}
+              replyingToId={replyingToId}
+              onSubmitReply={onSubmitReply}
+              onCancelReply={onCancelReply}
+              isCreating={isCreating}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 // 이슈 카드 컴포넌트
@@ -51,32 +207,41 @@ const IssueCard = ({
 }) => {
   const [showReplies, setShowReplies] = useState(false);
   const [isAddingReply, setIsAddingReply] = useState(false);
-  const [replyContent, setReplyContent] = useState("");
+  const [replyingToId, setReplyingToId] = useState<number | null>(null);
 
   // 항상 답변 개수를 가져옴 (접힌 상태에서도 개수 표시)
   const { data: replies = [] } = useIssueReplies(issue.id);
   const createReplyMutation = useCreateIssueReply(issue.id);
   const deleteReplyMutation = useDeleteIssueReply(issue.id);
 
-  const handleSubmitReply = () => {
-    if (!replyContent.trim()) return;
-    createReplyMutation.mutate(replyContent.trim(), {
-      onSuccess: () => {
-        setReplyContent("");
-        setIsAddingReply(false);
-      },
-    });
-  };
+  // 답변을 부모/자식으로 분류
+  const { rootReplies, childrenMap } = useMemo(() => {
+    const rootReplies: TaskIssueReply[] = [];
+    const childrenMap: Map<number, TaskIssueReply[]> = new Map();
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmitReply();
-    }
-    if (e.key === "Escape") {
-      setIsAddingReply(false);
-      setReplyContent("");
-    }
+    replies.forEach((reply: TaskIssueReply) => {
+      if (reply.parentId === null) {
+        rootReplies.push(reply);
+      } else {
+        const children = childrenMap.get(reply.parentId) || [];
+        children.push(reply);
+        childrenMap.set(reply.parentId, children);
+      }
+    });
+
+    return { rootReplies, childrenMap };
+  }, [replies]);
+
+  const handleSubmitReply = (content: string, parentId?: number) => {
+    createReplyMutation.mutate(
+      { content, parentId },
+      {
+        onSuccess: () => {
+          setIsAddingReply(false);
+          setReplyingToId(null);
+        },
+      },
+    );
   };
 
   return (
@@ -150,7 +315,10 @@ const IssueCard = ({
               variant="outline"
               size="sm"
               className="h-5 w-5 p-0"
-              onClick={() => setIsAddingReply(true)}
+              onClick={() => {
+                setIsAddingReply(true);
+                setReplyingToId(null);
+              }}
               title="답변 추가"
             >
               <Plus className="h-3 w-3" />
@@ -159,69 +327,36 @@ const IssueCard = ({
         </div>
 
         {/* 답변 목록 */}
-        {showReplies && replies.length > 0 && (
+        {showReplies && rootReplies.length > 0 && (
           <div className="mt-2 ml-3 space-y-2 border-l-2 border-zinc-200 dark:border-zinc-700 pl-2">
-            {replies.map((reply: TaskIssueReply) => (
-              <div key={reply.id} className="flex items-start gap-2">
-                <span className="text-zinc-400">↳</span>
-                <div className="flex-1">
-                  <p className="text-zinc-700 dark:text-zinc-300">
-                    {reply.content}
-                  </p>
-                  <div className="flex items-center gap-2 mt-0.5 text-zinc-400">
-                    <span>{reply.user?.name || "익명"}</span>
-                    <span>•</span>
-                    <span>{formatTime(reply.createdAt)}</span>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 text-red-500 hover:text-red-600"
-                  onClick={() => deleteReplyMutation.mutate(reply.id)}
-                  disabled={deleteReplyMutation.isPending}
-                  title="삭제"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
+            {rootReplies.map((reply: TaskIssueReply) => (
+              <ReplyItem
+                key={reply.id}
+                reply={reply}
+                childrenMap={childrenMap}
+                onReply={(replyId) => {
+                  setReplyingToId(replyId);
+                  setIsAddingReply(false);
+                }}
+                onDelete={(replyId) => deleteReplyMutation.mutate(replyId)}
+                isDeleting={deleteReplyMutation.isPending}
+                replyingToId={replyingToId}
+                onSubmitReply={handleSubmitReply}
+                onCancelReply={() => setReplyingToId(null)}
+                isCreating={createReplyMutation.isPending}
+              />
             ))}
           </div>
         )}
 
-        {/* 답변 입력 폼 */}
+        {/* 새 답변 입력 폼 */}
         {showReplies && isAddingReply && (
-          <div className="mt-2 ml-3 space-y-1">
-            <input
-              type="text"
-              value={replyContent}
-              onChange={(e) => setReplyContent(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="답변을 입력하세요..."
-              className="w-full p-1.5 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-primary"
-              autoFocus
+          <div className="ml-3">
+            <ReplyInputForm
+              onSubmit={(content) => handleSubmitReply(content)}
+              onCancel={() => setIsAddingReply(false)}
+              isPending={createReplyMutation.isPending}
             />
-            <div className="flex justify-end gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-xs"
-                onClick={() => {
-                  setIsAddingReply(false);
-                  setReplyContent("");
-                }}
-              >
-                취소
-              </Button>
-              <Button
-                size="sm"
-                className="h-6 px-2 text-xs"
-                onClick={handleSubmitReply}
-                disabled={!replyContent.trim() || createReplyMutation.isPending}
-              >
-                등록
-              </Button>
-            </div>
           </div>
         )}
       </div>

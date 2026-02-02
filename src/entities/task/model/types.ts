@@ -49,6 +49,7 @@ export interface TaskIssue {
 export interface TaskIssueReply {
   id: number;
   issueId: number;
+  parentId: number | null; // 대댓글인 경우 부모 답변 ID
   userId: number;
   content: string;
   createdAt: string;
