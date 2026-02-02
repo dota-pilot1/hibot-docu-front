@@ -11,6 +11,7 @@ import {
   TaskStatus,
   taskStatusConfig,
   useUpdateTaskStatus,
+  useAllTasks,
 } from "@/entities/task";
 import { TaskDetailSection } from "./right-panel/task-detail/TaskDetailSection";
 
@@ -21,10 +22,15 @@ interface TaskDetailDialogProps {
 }
 
 export function TaskDetailDialog({
-  task,
+  task: initialTask,
   open,
   onOpenChange,
 }: TaskDetailDialogProps) {
+  const { data: allTasks } = useAllTasks();
+
+  // 캐시에서 최신 task 정보 가져오기
+  const task = allTasks?.find((t) => t.id === initialTask?.id) ?? initialTask;
+
   const updateStatusMutation = useUpdateTaskStatus(task?.assigneeId);
 
   if (!task) return null;
