@@ -249,7 +249,7 @@ const IssueCard = ({
     <div
       className={`p-2 rounded border text-xs ${
         issue.isResolved
-          ? "bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 opacity-60"
+          ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
           : "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800"
       }`}
     >
