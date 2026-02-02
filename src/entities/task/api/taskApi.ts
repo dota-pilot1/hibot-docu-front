@@ -4,6 +4,7 @@ import type {
   TaskStatus,
   TaskPriority,
   TaskActivity,
+  TaskIssue,
 } from "../model/types";
 
 export interface CreateTaskDto {
@@ -108,5 +109,37 @@ export const taskApi = {
       .get<
         { departmentId: number; departmentName: string; count: number }[]
       >("/tasks/departments/activities/today/summary")
+      .then((res) => res.data),
+
+  // ============================================
+  // Task Issues (이슈/댓글)
+  // ============================================
+
+  // Task 이슈 목록 조회
+  getTaskIssues: (taskId: number) =>
+    api.get<TaskIssue[]>(`/tasks/${taskId}/issues`).then((res) => res.data),
+
+  // Task 이슈 생성
+  createTaskIssue: (taskId: number, content: string) =>
+    api
+      .post<TaskIssue>(`/tasks/${taskId}/issues`, { content })
+      .then((res) => res.data),
+
+  // Task 이슈 수정
+  updateTaskIssue: (
+    issueId: number,
+    data: { content?: string; isResolved?: boolean },
+  ) =>
+    api
+      .patch<TaskIssue>(`/tasks/issues/${issueId}`, data)
+      .then((res) => res.data),
+
+  // Task 이슈 삭제
+  deleteTaskIssue: (issueId: number) => api.delete(`/tasks/issues/${issueId}`),
+
+  // Task 이슈 해결 처리
+  resolveTaskIssue: (issueId: number) =>
+    api
+      .patch<TaskIssue>(`/tasks/issues/${issueId}/resolve`)
       .then((res) => res.data),
 };

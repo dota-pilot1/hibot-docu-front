@@ -13,13 +13,19 @@ import {
   Trash2,
   Camera,
   Loader2,
+  Pencil,
+  Check,
+  X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
 import { ConfirmDialog } from "@/shared/ui/dialogs/ConfirmDialog";
+import { FormDialog } from "@/shared/ui/dialogs/FormDialog";
 import { useUserStore } from "@/entities/user/model/store";
 import { api } from "@/shared/api";
 import { getImageUrl } from "@/shared/lib/utils";
+import { toast } from "sonner";
 
 interface Profile {
   id: number;
@@ -52,6 +58,14 @@ export default function ProfilePage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 유저네임 수정 관련 상태
+  const [showNameDialog, setShowNameDialog] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [isCheckingName, setIsCheckingName] = useState(false);
+  const [isNameAvailable, setIsNameAvailable] = useState<boolean | null>(null);
+  const [isSavingName, setIsSavingName] = useState(false);
+  const checkNameTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!user || !accessToken) {
@@ -88,6 +102,79 @@ export default function ProfilePage() {
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  // 유저네임 중복 체크
+  const checkNameAvailability = async (name: string) => {
+    if (!name.trim() || name === profile?.name) {
+      setIsNameAvailable(null);
+      return;
+    }
+
+    setIsCheckingName(true);
+    try {
+      const response = await api.get(
+        `/users/check-name/${encodeURIComponent(name)}`,
+      );
+      setIsNameAvailable(response.data.available);
+    } catch (error) {
+      console.error("Failed to check name:", error);
+      setIsNameAvailable(null);
+    } finally {
+      setIsCheckingName(false);
+    }
+  };
+
+  // 유저네임 변경 핸들러 (디바운스 적용)
+  const handleNameChange = (value: string) => {
+    setNewName(value);
+    setIsNameAvailable(null);
+
+    if (checkNameTimeoutRef.current) {
+      clearTimeout(checkNameTimeoutRef.current);
+    }
+
+    if (value.trim() && value !== profile?.name) {
+      checkNameTimeoutRef.current = setTimeout(() => {
+        checkNameAvailability(value);
+      }, 500);
+    }
+  };
+
+  // 유저네임 저장
+  const handleSaveName = async () => {
+    if (!isNameAvailable || !newName.trim()) return;
+
+    setIsSavingName(true);
+    try {
+      const response = await api.patch("/users/me/name", {
+        name: newName.trim(),
+      });
+      setProfile(response.data);
+
+      // user store도 업데이트
+      if (user) {
+        setUser({
+          ...user,
+          name: response.data.name,
+        });
+      }
+
+      toast.success("이름이 변경되었습니다.");
+      setShowNameDialog(false);
+    } catch (error) {
+      console.error("Failed to update name:", error);
+      toast.error("이름 변경에 실패했습니다.");
+    } finally {
+      setIsSavingName(false);
+    }
+  };
+
+  // 다이얼로그 열기
+  const openNameDialog = () => {
+    setNewName(profile?.name || "");
+    setIsNameAvailable(null);
+    setShowNameDialog(true);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -193,9 +280,19 @@ export default function ProfilePage() {
                 />
               </div>
               <div>
-                <CardTitle className="text-xl">
-                  {profile.name || profile.email.split("@")[0]}
-                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-xl">
+                    {profile.name || profile.email.split("@")[0]}
+                  </CardTitle>
+                  <button
+                    type="button"
+                    onClick={openNameDialog}
+                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="이름 수정"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </div>
                 <p className="text-sm text-gray-500">
                   {profile.role === "ADMIN" ? "관리자" : "일반 사용자"}
                 </p>
@@ -298,6 +395,50 @@ export default function ProfilePage() {
           isLoading={isDeleting}
           variant="destructive"
         />
+
+        {/* 유저네임 수정 다이얼로그 */}
+        <FormDialog
+          open={showNameDialog}
+          onOpenChange={setShowNameDialog}
+          title="이름 변경"
+          description="새로운 이름을 입력하세요. 중복 확인 후 저장할 수 있습니다."
+          submitLabel="저장"
+          onSubmit={handleSaveName}
+          isLoading={isSavingName}
+        >
+          <div className="space-y-3">
+            <div className="relative">
+              <Input
+                value={newName}
+                onChange={(e) => handleNameChange(e.target.value)}
+                placeholder="새 이름 입력"
+                className="pr-10"
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                {isCheckingName && (
+                  <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                )}
+                {!isCheckingName && isNameAvailable === true && (
+                  <Check className="w-4 h-4 text-green-500" />
+                )}
+                {!isCheckingName && isNameAvailable === false && (
+                  <X className="w-4 h-4 text-red-500" />
+                )}
+              </div>
+            </div>
+            {isNameAvailable === false && (
+              <p className="text-sm text-red-500">이미 사용 중인 이름입니다.</p>
+            )}
+            {isNameAvailable === true && (
+              <p className="text-sm text-green-500">사용 가능한 이름입니다.</p>
+            )}
+            {newName === profile?.name && newName && (
+              <p className="text-sm text-gray-500">
+                현재 사용 중인 이름입니다.
+              </p>
+            )}
+          </div>
+        </FormDialog>
       </div>
     </div>
   );

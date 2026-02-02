@@ -31,6 +31,21 @@ export interface TaskActivity {
   createdAt: string;
 }
 
+export interface TaskIssue {
+  id: number;
+  taskId: number;
+  userId: number;
+  content: string;
+  isResolved: boolean;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: number;
+    name: string | null;
+    profileImage: string | null;
+  };
+}
+
 // 상태 표시 설정
 export const taskStatusConfig: Record<
   TaskStatus,
