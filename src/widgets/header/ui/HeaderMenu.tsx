@@ -17,6 +17,7 @@ const defaultMenuItems: MenuItem[] = [
   { label: "아키텍처 관리", href: "/architectures" },
   { label: "파일럿 관리", href: "/pilots" },
   { label: "리뷰", href: "/reviews" },
+  { label: "DB 관리", href: "/db-admin" },
   { label: "문서 관리", href: "/documents" },
   { label: "노트", href: "/notes" },
   { label: "게시판", href: "/posts" },
