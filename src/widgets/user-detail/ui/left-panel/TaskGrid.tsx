@@ -57,7 +57,6 @@ interface TaskGridProps {
   currentTaskId?: number | null;
   showAssignee?: boolean; // 담당자 컬럼 표시 여부
   showIssueColumn?: boolean; // 이슈 컬럼 표시 여부
-  sortByCreatedOnly?: boolean; // 생성일 역순으로만 정렬 (기본: false)
   onPendingChange?: (count: number) => void;
   onSelectionChange?: (count: number) => void;
   onTaskSelect?: (task: Task | null) => void; // 단일 Task 선택 시 콜백
@@ -136,7 +135,6 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       currentTaskId,
       showAssignee = false,
       showIssueColumn = false,
-      sortByCreatedOnly = false,
       onPendingChange,
       onSelectionChange,
       onTaskSelect,
@@ -181,8 +179,7 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       return map;
     }, [users]);
 
-    // 필터링 및 정렬된 Task 목록
-    // 정렬 순서: sortByCreatedOnly가 true면 생성일 역순만, 아니면 1) 현재 작업 2) 진행중 3) 나머지 (생성일 역순)
+    // 필터링 및 정렬된 Task 목록 - 생성일 역순 (새 태스크가 맨 위)
     const filteredTasks = useMemo(() => {
       let result =
         filter === "all"
@@ -190,27 +187,11 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
           : tasks.filter((task) => task.status === filter);
 
       return [...result].sort((a, b) => {
-        // 생성일 역순으로만 정렬
-        if (sortByCreatedOnly) {
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        }
-
-        // 현재 작업 우선
-        if (a.isCurrent && !b.isCurrent) return -1;
-        if (!a.isCurrent && b.isCurrent) return 1;
-
-        // 진행중 우선
-        if (a.status === "in_progress" && b.status !== "in_progress") return -1;
-        if (a.status !== "in_progress" && b.status === "in_progress") return 1;
-
-        // 나머지는 생성일 역순
         return (
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
       });
-    }, [tasks, filter, sortByCreatedOnly]);
+    }, [tasks, filter]);
 
     // 배치 수정/삭제 훅
     const batchUpdateMutation = useBatchUpdateTasks();

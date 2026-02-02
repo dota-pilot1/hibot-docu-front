@@ -79,7 +79,7 @@ export default function IssuesPage() {
           <div className="h-full flex flex-col">
             {/* 상단 툴바 */}
             <div className="flex items-center justify-between mb-3">
-              <h1 className="text-lg font-semibold">이슈 관리</h1>
+              <h1 className="text-lg font-semibold">업무 할당</h1>
 
               <div className="flex items-center gap-3">
                 {/* 필터 */}
@@ -145,7 +145,6 @@ export default function IssuesPage() {
                 filter={filter}
                 showAssignee={true}
                 showIssueColumn={true}
-                sortByCreatedOnly={true}
                 onPendingChange={handlePendingChange}
                 onSelectionChange={handleSelectionChange}
                 onIssueClick={handleIssueClick}
