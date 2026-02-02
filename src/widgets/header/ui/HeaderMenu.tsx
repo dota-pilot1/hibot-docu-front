@@ -15,6 +15,7 @@ const defaultMenuItems: MenuItem[] = [
   { label: "업무 할당", href: "/issues" },
   { label: "업무 관리", href: "/tasks" },
   { label: "아키텍처 관리", href: "/architectures" },
+  { label: "파일럿 관리", href: "/pilots" },
   { label: "문서 관리", href: "/documents" },
   { label: "노트", href: "/notes" },
   { label: "게시판", href: "/posts" },
