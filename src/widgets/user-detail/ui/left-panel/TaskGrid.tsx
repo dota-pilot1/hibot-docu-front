@@ -56,8 +56,11 @@ interface TaskGridProps {
   filter?: string;
   currentTaskId?: number | null;
   showAssignee?: boolean; // 담당자 컬럼 표시 여부
+  showIssueColumn?: boolean; // 이슈 컬럼 표시 여부
   onPendingChange?: (count: number) => void;
   onSelectionChange?: (count: number) => void;
+  onTaskSelect?: (task: Task | null) => void; // 단일 Task 선택 시 콜백
+  onIssueClick?: (task: Task) => void; // 이슈 컬럼 클릭 시 콜백
 }
 
 export interface TaskGridRef {
@@ -103,6 +106,27 @@ const CurrentTaskCellRenderer = (props: {
   return null;
 };
 
+// 이슈 버튼 셀 렌더러
+const IssueCellRenderer = (props: {
+  data: Task;
+  onIssueClick?: (task: Task) => void;
+}) => {
+  if (!props.data) return null;
+  const issueCount = props.data.issueCount ?? 0;
+
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        props.onIssueClick?.(props.data);
+      }}
+      className="px-2 py-0.5 text-xs border border-yellow-500 text-yellow-600 hover:bg-yellow-50 rounded transition-colors"
+    >
+      이슈 ({issueCount})
+    </button>
+  );
+};
+
 export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
   (
     {
@@ -110,8 +134,11 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       filter = "all",
       currentTaskId,
       showAssignee = false,
+      showIssueColumn = false,
       onPendingChange,
       onSelectionChange,
+      onTaskSelect,
+      onIssueClick,
     },
     ref,
   ) => {
@@ -286,8 +313,20 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
         },
       );
 
+      // 이슈 컬럼 (showIssueColumn이 true일 때만)
+      if (showIssueColumn) {
+        cols.push({
+          headerName: "이슈",
+          width: 100,
+          cellRenderer: IssueCellRenderer,
+          cellRendererParams: {
+            onIssueClick,
+          },
+        });
+      }
+
       return cols;
-    }, [currentTaskId, showAssignee, userMap]);
+    }, [currentTaskId, showAssignee, showIssueColumn, userMap, onIssueClick]);
 
     const defaultColDef = useMemo<ColDef>(
       () => ({
@@ -322,7 +361,12 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
     const handleSelectionChanged = useCallback(() => {
       const selectedRows = gridRef.current?.api.getSelectedRows() || [];
       setSelectedIds(selectedRows.map((row) => row.id));
-    }, []);
+
+      // 단일 선택 시 콜백 호출
+      if (onTaskSelect) {
+        onTaskSelect(selectedRows.length === 1 ? selectedRows[0] : null);
+      }
+    }, [onTaskSelect]);
 
     if (isLoading) {
       return (

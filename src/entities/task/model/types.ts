@@ -20,6 +20,7 @@ export interface Task {
   updatedAt: string;
   startedAt?: string;
   completedAt?: string;
+  issueCount?: number;
 }
 
 export interface TaskActivity {

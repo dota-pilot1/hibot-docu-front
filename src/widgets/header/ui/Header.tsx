@@ -38,22 +38,7 @@ export const Header = () => {
         </div>
 
         {/* Center Navigation */}
-        <div className="ml-8">
-          {mounted && user && (
-            <HeaderMenu
-              items={[
-                { label: "업무 관리", href: "/tasks" },
-                { label: "이슈 관리", href: "/issues" },
-                { label: "아키텍처 관리", href: "/architectures" },
-                { label: "문서 관리", href: "/documents" },
-                { label: "채팅 관리", href: "/chats" },
-                { label: "노트", href: "/notes" },
-                { label: "게시판", href: "/posts" },
-                { label: "사용자 관리", href: "/users" },
-              ]}
-            />
-          )}
-        </div>
+        <div className="ml-8">{mounted && user && <HeaderMenu />}</div>
 
         {/* Right Side - User Menu or Login */}
         <div className="flex items-center gap-4">

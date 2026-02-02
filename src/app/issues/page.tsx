@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { useCreateTask } from "@/entities/task";
+import { Task, useCreateTask } from "@/entities/task";
 import {
   TaskGrid,
   TaskGridRef,
 } from "@/widgets/user-detail/ui/left-panel/TaskGrid";
-import { DepartmentActivityPanel } from "@/widgets/task-all/DepartmentActivityPanel";
+import { TaskIssueDialog } from "@/widgets/user-detail/ui/right-panel/TaskIssueDialog";
 import { Button } from "@/shared/ui/button";
 import { Plus, Save, Trash2 } from "lucide-react";
 
@@ -14,6 +14,8 @@ export default function IssuesPage() {
   const [filter, setFilter] = useState<string>("all");
   const [pendingCount, setPendingCount] = useState(0);
   const [selectedCount, setSelectedCount] = useState(0);
+  const [issueDialogTask, setIssueDialogTask] = useState<Task | null>(null);
+  const [issueDialogOpen, setIssueDialogOpen] = useState(false);
   const gridRef = useRef<TaskGridRef>(null);
 
   const createTaskMutation = useCreateTask();
@@ -43,10 +45,14 @@ export default function IssuesPage() {
     setSelectedCount(count);
   }, []);
 
+  const handleIssueClick = useCallback((task: Task) => {
+    setIssueDialogTask(task);
+    setIssueDialogOpen(true);
+  }, []);
+
   return (
-    <div className="flex h-full gap-4 p-4">
-      {/* 왼쪽: 테이블 영역 */}
-      <div className="flex-1 flex flex-col min-w-0">
+    <div className="h-full p-4">
+      <div className="h-full flex flex-col">
         {/* 상단 툴바 */}
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-lg font-semibold">이슈 관리</h1>
@@ -75,7 +81,10 @@ export default function IssuesPage() {
                 size="sm"
                 variant="ghost"
                 onClick={() =>
-                  createTaskMutation.mutate({ title: "새 이슈", assigneeId: 1 })
+                  createTaskMutation.mutate({
+                    title: "새 이슈",
+                    assigneeId: 1,
+                  })
                 }
                 disabled={createTaskMutation.isPending}
                 className="h-8 w-8 p-0"
@@ -112,14 +121,20 @@ export default function IssuesPage() {
             ref={gridRef}
             filter={filter}
             showAssignee={true}
+            showIssueColumn={true}
             onPendingChange={handlePendingChange}
             onSelectionChange={handleSelectionChange}
+            onIssueClick={handleIssueClick}
           />
         </div>
       </div>
 
-      {/* 오른쪽: 팀별 히스토리 패널 */}
-      <DepartmentActivityPanel className="w-80 shrink-0" />
+      {/* 이슈 다이얼로그 */}
+      <TaskIssueDialog
+        task={issueDialogTask}
+        open={issueDialogOpen}
+        onOpenChange={setIssueDialogOpen}
+      />
     </div>
   );
 }

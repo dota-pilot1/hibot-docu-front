@@ -8,7 +8,7 @@ interface MenuItem {
 }
 
 interface HeaderMenuProps {
-  items: MenuItem[];
+  items?: MenuItem[];
 }
 
 const defaultMenuItems: MenuItem[] = [
@@ -19,6 +19,7 @@ const defaultMenuItems: MenuItem[] = [
   { label: "노트", href: "/notes" },
   { label: "게시판", href: "/posts" },
   { label: "사용자 관리", href: "/users" },
+  { label: "히스토리", href: "/history" },
 ];
 
 export const HeaderMenu = ({ items = defaultMenuItems }: HeaderMenuProps) => {
