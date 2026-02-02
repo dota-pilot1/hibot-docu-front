@@ -5,6 +5,7 @@ import type {
   TaskPriority,
   TaskActivity,
   TaskIssue,
+  TaskIssueReply,
 } from "../model/types";
 
 export interface CreateTaskDto {
@@ -142,4 +143,30 @@ export const taskApi = {
     api
       .patch<TaskIssue>(`/tasks/issues/${issueId}/resolve`)
       .then((res) => res.data),
+
+  // ============================================
+  // Issue Replies (이슈 답변)
+  // ============================================
+
+  // 이슈 답변 목록 조회
+  getIssueReplies: (issueId: number) =>
+    api
+      .get<TaskIssueReply[]>(`/tasks/issues/${issueId}/replies`)
+      .then((res) => res.data),
+
+  // 이슈 답변 생성
+  createIssueReply: (issueId: number, content: string) =>
+    api
+      .post<TaskIssueReply>(`/tasks/issues/${issueId}/replies`, { content })
+      .then((res) => res.data),
+
+  // 이슈 답변 수정
+  updateIssueReply: (replyId: number, content: string) =>
+    api
+      .patch<TaskIssueReply>(`/tasks/issues/replies/${replyId}`, { content })
+      .then((res) => res.data),
+
+  // 이슈 답변 삭제
+  deleteIssueReply: (replyId: number) =>
+    api.delete(`/tasks/issues/replies/${replyId}`),
 };

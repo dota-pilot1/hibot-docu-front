@@ -46,6 +46,20 @@ export interface TaskIssue {
   };
 }
 
+export interface TaskIssueReply {
+  id: number;
+  issueId: number;
+  userId: number;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: number;
+    name: string | null;
+    profileImage: string | null;
+  };
+}
+
 // 상태 표시 설정
 export const taskStatusConfig: Record<
   TaskStatus,
