@@ -57,6 +57,7 @@ interface TaskGridProps {
   currentTaskId?: number | null;
   showAssignee?: boolean; // 담당자 컬럼 표시 여부
   showIssueColumn?: boolean; // 이슈 컬럼 표시 여부
+  sortByCreatedOnly?: boolean; // 생성일 역순으로만 정렬 (기본: false)
   onPendingChange?: (count: number) => void;
   onSelectionChange?: (count: number) => void;
   onTaskSelect?: (task: Task | null) => void; // 단일 Task 선택 시 콜백
@@ -135,6 +136,7 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       currentTaskId,
       showAssignee = false,
       showIssueColumn = false,
+      sortByCreatedOnly = false,
       onPendingChange,
       onSelectionChange,
       onTaskSelect,
@@ -180,7 +182,7 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
     }, [users]);
 
     // 필터링 및 정렬된 Task 목록
-    // 정렬 순서: 1) 현재 작업 2) 진행중 3) 나머지 (생성일 역순)
+    // 정렬 순서: sortByCreatedOnly가 true면 생성일 역순만, 아니면 1) 현재 작업 2) 진행중 3) 나머지 (생성일 역순)
     const filteredTasks = useMemo(() => {
       let result =
         filter === "all"
@@ -188,6 +190,13 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
           : tasks.filter((task) => task.status === filter);
 
       return [...result].sort((a, b) => {
+        // 생성일 역순으로만 정렬
+        if (sortByCreatedOnly) {
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        }
+
         // 현재 작업 우선
         if (a.isCurrent && !b.isCurrent) return -1;
         if (!a.isCurrent && b.isCurrent) return 1;
@@ -201,7 +210,7 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
       });
-    }, [tasks, filter]);
+    }, [tasks, filter, sortByCreatedOnly]);
 
     // 배치 수정/삭제 훅
     const batchUpdateMutation = useBatchUpdateTasks();
@@ -220,11 +229,9 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       setPendingChanges(new Map());
     }, [pendingChanges, batchUpdateMutation]);
 
-    // 선택된 항목 삭제
+    // 선택된 항목 삭제 (confirm 없이 바로 삭제 - 상위 컴포넌트에서 확인 다이얼로그 처리)
     const deleteSelected = useCallback(async () => {
       if (selectedIds.length === 0) return;
-      if (!confirm(`${selectedIds.length}개의 Task를 삭제하시겠습니까?`))
-        return;
 
       await batchDeleteMutation.mutateAsync(selectedIds);
       setSelectedIds([]);
@@ -261,11 +268,24 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
 
       // 담당자 컬럼 (showAssignee가 true일 때만)
       if (showAssignee) {
+        const assigneeOptions = [
+          { value: "", label: "-" },
+          ...users.map((user) => ({
+            value: user.id,
+            label: user.name || user.email.split("@")[0],
+          })),
+        ];
+
         cols.push({
           field: "assigneeId",
           headerName: "담당자",
           width: 120,
+          editable: true,
           valueFormatter: (params) => userMap.get(params.value) || "-",
+          cellEditor: SelectCellEditor,
+          cellEditorParams: {
+            options: assigneeOptions,
+          },
         });
       }
 
@@ -326,7 +346,14 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       }
 
       return cols;
-    }, [currentTaskId, showAssignee, showIssueColumn, userMap, onIssueClick]);
+    }, [
+      currentTaskId,
+      showAssignee,
+      showIssueColumn,
+      userMap,
+      users,
+      onIssueClick,
+    ]);
 
     const defaultColDef = useMemo<ColDef>(
       () => ({
@@ -345,6 +372,9 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
           let value = event.newValue;
           if (field === "dueDate" && value) {
             value = new Date(value).toISOString();
+          }
+          if (field === "assigneeId" && value) {
+            value = Number(value);
           }
 
           setPendingChanges((prev) => {

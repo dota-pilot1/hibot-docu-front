@@ -9,6 +9,7 @@ import {
 import { TaskIssueDialog } from "@/widgets/user-detail/ui/right-panel/TaskIssueDialog";
 import { IssueRightPanel } from "@/widgets/issue-panel";
 import { Button } from "@/shared/ui/button";
+import { ConfirmDialog } from "@/shared/ui/dialogs/ConfirmDialog";
 import { Plus, Save, Trash2 } from "lucide-react";
 
 export default function IssuesPage() {
@@ -18,6 +19,8 @@ export default function IssuesPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [issueDialogTask, setIssueDialogTask] = useState<Task | null>(null);
   const [issueDialogOpen, setIssueDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const gridRef = useRef<TaskGridRef>(null);
 
   const createTaskMutation = useCreateTask();
@@ -35,8 +38,20 @@ export default function IssuesPage() {
     await gridRef.current?.saveChanges();
   };
 
-  const handleDelete = async () => {
-    await gridRef.current?.deleteSelected();
+  const handleDeleteClick = () => {
+    if (selectedCount > 0) {
+      setDeleteDialogOpen(true);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      await gridRef.current?.deleteSelected();
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+    }
   };
 
   const handlePendingChange = useCallback((count: number) => {
@@ -91,20 +106,19 @@ export default function IssuesPage() {
                     variant="ghost"
                     onClick={() =>
                       createTaskMutation.mutate({
-                        title: "새 이슈",
-                        assigneeId: 1,
+                        title: "새 업무",
                       })
                     }
                     disabled={createTaskMutation.isPending}
                     className="h-8 w-8 p-0"
-                    title="새 이슈 추가"
+                    title="새 업무 추가"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={handleDelete}
+                    onClick={handleDeleteClick}
                     disabled={selectedCount === 0}
                     className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                     title="선택 항목 삭제"
@@ -131,6 +145,7 @@ export default function IssuesPage() {
                 filter={filter}
                 showAssignee={true}
                 showIssueColumn={true}
+                sortByCreatedOnly={true}
                 onPendingChange={handlePendingChange}
                 onSelectionChange={handleSelectionChange}
                 onIssueClick={handleIssueClick}
@@ -151,6 +166,18 @@ export default function IssuesPage() {
         task={issueDialogTask}
         open={issueDialogOpen}
         onOpenChange={setIssueDialogOpen}
+      />
+
+      {/* 삭제 확인 다이얼로그 */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="업무 삭제"
+        description={`선택한 ${selectedCount}개의 업무를 삭제하시겠습니까?`}
+        confirmLabel="삭제"
+        onConfirm={handleDeleteConfirm}
+        isLoading={isDeleting}
+        variant="destructive"
       />
     </div>
   );

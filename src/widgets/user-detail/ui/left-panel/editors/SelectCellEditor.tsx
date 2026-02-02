@@ -3,13 +3,13 @@
 import { useEffect, useRef } from "react";
 
 interface SelectOption {
-  value: string;
+  value: string | number;
   label: string;
 }
 
 interface SelectCellEditorProps {
-  value: string;
-  onValueChange: (value: string) => void;
+  value: string | number;
+  onValueChange: (value: string | number) => void;
   stopEditing: () => void;
   options: SelectOption[];
 }
@@ -27,7 +27,15 @@ export const SelectCellEditor = ({
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onValueChange(e.target.value);
+    const newValue = e.target.value;
+    // 원래 옵션의 value 타입에 맞춰 변환
+    const originalOption = options.find(
+      (opt) => String(opt.value) === newValue,
+    );
+    const typedValue =
+      typeof originalOption?.value === "number" ? Number(newValue) : newValue;
+
+    onValueChange(typedValue);
     setTimeout(() => {
       stopEditing();
     }, 50);
@@ -36,13 +44,13 @@ export const SelectCellEditor = ({
   return (
     <select
       ref={selectRef}
-      value={value}
+      value={String(value)}
       onChange={handleChange}
       className="w-full h-full px-2 border-none outline-none bg-white"
       style={{ fontSize: "14px" }}
     >
       {options.map((opt) => (
-        <option key={opt.value} value={opt.value}>
+        <option key={String(opt.value)} value={String(opt.value)}>
           {opt.label}
         </option>
       ))}
