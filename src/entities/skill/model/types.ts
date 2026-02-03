@@ -1,3 +1,16 @@
+// Skill Category
+export interface SkillCategory {
+  id: number;
+  name: string;
+  description?: string;
+  displayOrder: number;
+  iconUrl?: string;
+  color?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Skill Metadata
 export interface SkillMetadata {
   tags?: string[];
@@ -8,6 +21,7 @@ export interface SkillMetadata {
 // Skill
 export interface Skill {
   id: number;
+  categoryId?: number;
   parentId?: number;
   name: string;
   description?: string;
@@ -65,8 +79,19 @@ export interface DepartmentSkillSummary {
 }
 
 // Create/Update DTOs
+export interface CreateSkillCategoryInput {
+  name: string;
+  description?: string;
+  displayOrder?: number;
+  iconUrl?: string;
+  color?: string;
+}
+
+export interface UpdateSkillCategoryInput extends Partial<CreateSkillCategoryInput> {}
+
 export interface CreateSkillInput {
   name: string;
+  categoryId?: number;
   parentId?: number;
   description?: string;
   displayOrder?: number;

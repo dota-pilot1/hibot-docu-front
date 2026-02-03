@@ -1,14 +1,81 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { skillApi } from "../api/skillApi";
-import type { CreateSkillInput, UpdateSkillInput } from "../model/types";
+import type {
+  CreateSkillCategoryInput,
+  UpdateSkillCategoryInput,
+  CreateSkillInput,
+  UpdateSkillInput,
+} from "../model/types";
 
 // Query Keys
 export const skillKeys = {
   all: ["skills"] as const,
+  categories: () => [...skillKeys.all, "categories"] as const,
   list: () => [...skillKeys.all, "list"] as const,
   withUserLevels: (userId: number) =>
     [...skillKeys.all, "withUserLevels", userId] as const,
   detail: (id: number) => [...skillKeys.all, "detail", id] as const,
+};
+
+// ============================================
+// Skill Categories Hooks
+// ============================================
+
+export const useSkillCategories = () => {
+  return useQuery({
+    queryKey: skillKeys.categories(),
+    queryFn: async () => {
+      const { data } = await skillApi.getAllCategories();
+      return data;
+    },
+  });
+};
+
+export const useCreateSkillCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CreateSkillCategoryInput) => {
+      const { data: category } = await skillApi.createCategory(data);
+      return category;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: skillKeys.categories() });
+    },
+  });
+};
+
+export const useUpdateSkillCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: UpdateSkillCategoryInput;
+    }) => {
+      const { data: category } = await skillApi.updateCategory(id, data);
+      return category;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: skillKeys.categories() });
+    },
+  });
+};
+
+export const useDeleteSkillCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await skillApi.deleteCategory(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: skillKeys.categories() });
+    },
+  });
 };
 
 // ============================================

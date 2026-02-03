@@ -1,16 +1,37 @@
 import { api } from "@/shared/api";
 import type {
   Skill,
+  SkillCategory,
   UserSkill,
   SkillActivity,
   SkillWithUserLevel,
   DepartmentSkillSummary,
+  CreateSkillCategoryInput,
+  UpdateSkillCategoryInput,
   CreateSkillInput,
   UpdateSkillInput,
   UpdateUserSkillInput,
 } from "../model/types";
 
 export const skillApi = {
+  // ============================================
+  // Skill Categories
+  // ============================================
+
+  getAllCategories: () => api.get<SkillCategory[]>("/skills/categories"),
+
+  getCategoryById: (id: number) =>
+    api.get<SkillCategory>(`/skills/categories/${id}`),
+
+  createCategory: (data: CreateSkillCategoryInput) =>
+    api.post<SkillCategory>("/skills/categories", data),
+
+  updateCategory: (id: number, data: UpdateSkillCategoryInput) =>
+    api.patch<SkillCategory>(`/skills/categories/${id}`, data),
+
+  deleteCategory: (id: number) =>
+    api.delete<SkillCategory>(`/skills/categories/${id}`),
+
   // ============================================
   // Skills
   // ============================================
