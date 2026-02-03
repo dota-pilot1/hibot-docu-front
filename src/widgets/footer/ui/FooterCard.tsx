@@ -4,6 +4,8 @@ import { useState } from "react";
 import { FooterHeader } from "./FooterHeader";
 import { FooterBody } from "./FooterBody";
 
+export type TabType = "notice" | "task" | "favorite";
+
 interface StatusCounts {
   pending: number;
   inProgress: number;
@@ -18,6 +20,7 @@ interface FooterCardProps {
 
 export const FooterCard = ({ statusCounts }: FooterCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>("task");
 
   const handleToggle = () => {
     setIsExpanded((prev) => !prev);
@@ -32,8 +35,10 @@ export const FooterCard = ({ statusCounts }: FooterCardProps) => {
         isExpanded={isExpanded}
         onToggle={handleToggle}
         statusCounts={statusCounts}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
-      <FooterBody isExpanded={isExpanded} />
+      <FooterBody isExpanded={isExpanded} activeTab={activeTab} />
     </div>
   );
 };
