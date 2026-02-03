@@ -69,7 +69,7 @@ const LexicalEditor = dynamic(
     loading: () => (
       <div className="h-[200px] w-full bg-gray-50 animate-pulse rounded-lg border border-gray-200" />
     ),
-  }
+  },
 );
 
 import ReactMarkdown from "react-markdown";
@@ -148,24 +148,33 @@ export const FavoriteDetailView = () => {
 
   // 드래그 중 임시 상태
   const [tempTree, setTempTree] = useState<FavoriteCategory[] | null>(null);
-  const [tempContents, setTempContents] = useState<FavoriteContent[] | null>(null);
+  const [tempContents, setTempContents] = useState<FavoriteContent[] | null>(
+    null,
+  );
 
   const displayTree = tempTree ?? tree;
   const displayContents = tempContents ?? contents;
 
   // Modal states
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [categoryModalMode, setCategoryModalMode] = useState<"create" | "edit">("create");
-  const [editingCategory, setEditingCategory] = useState<FavoriteCategory | null>(null);
+  const [categoryModalMode, setCategoryModalMode] = useState<"create" | "edit">(
+    "create",
+  );
+  const [editingCategory, setEditingCategory] =
+    useState<FavoriteCategory | null>(null);
   const [categoryForm, setCategoryForm] = useState({
     name: "",
     parentId: null as number | null,
-    favoriteType: "ROOT" as FavoriteType,
+    favoriteType: "COMMAND" as FavoriteType,
   });
 
   const [isContentModalOpen, setIsContentModalOpen] = useState(false);
-  const [contentModalMode, setContentModalMode] = useState<"create" | "edit">("create");
-  const [editingContent, setEditingContent] = useState<FavoriteContent | null>(null);
+  const [contentModalMode, setContentModalMode] = useState<"create" | "edit">(
+    "create",
+  );
+  const [editingContent, setEditingContent] = useState<FavoriteContent | null>(
+    null,
+  );
   const [contentForm, setContentForm] = useState<{
     title: string;
     content: string;
@@ -179,12 +188,16 @@ export const FavoriteDetailView = () => {
   });
 
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [viewingContent, setViewingContent] = useState<FavoriteContent | null>(null);
+  const [viewingContent, setViewingContent] = useState<FavoriteContent | null>(
+    null,
+  );
 
   // Confirm Modal states
-  const [confirmDeleteCategoryOpen, setConfirmDeleteCategoryOpen] = useState(false);
+  const [confirmDeleteCategoryOpen, setConfirmDeleteCategoryOpen] =
+    useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
-  const [confirmDeleteContentOpen, setConfirmDeleteContentOpen] = useState(false);
+  const [confirmDeleteContentOpen, setConfirmDeleteContentOpen] =
+    useState(false);
   const [contentToDelete, setContentToDelete] = useState<number | null>(null);
 
   // URL 파라미터로 카테고리 선택
@@ -194,11 +207,18 @@ export const FavoriteDetailView = () => {
       if (!isNaN(catId)) {
         setSelectedCategory(catId);
         // 부모 카테고리도 확장
-        const findParents = (nodes: FavoriteCategory[], targetId: number, parents: number[] = []): number[] => {
+        const findParents = (
+          nodes: FavoriteCategory[],
+          targetId: number,
+          parents: number[] = [],
+        ): number[] => {
           for (const node of nodes) {
             if (node.id === targetId) return parents;
             if (node.children) {
-              const found = findParents(node.children, targetId, [...parents, node.id]);
+              const found = findParents(node.children, targetId, [
+                ...parents,
+                node.id,
+              ]);
               if (found.length > 0) return found;
             }
           }
@@ -211,10 +231,14 @@ export const FavoriteDetailView = () => {
   }, [categoryParam, tree]);
 
   // Filter tree: find the selected project and show it as root
-  const getFilteredTree = (sourceTree: FavoriteCategory[]): FavoriteCategory[] => {
+  const getFilteredTree = (
+    sourceTree: FavoriteCategory[],
+  ): FavoriteCategory[] => {
     if (categoryParam && sourceTree.length > 0) {
       const catId = parseInt(categoryParam);
-      const findCategory = (categories: FavoriteCategory[]): FavoriteCategory | null => {
+      const findCategory = (
+        categories: FavoriteCategory[],
+      ): FavoriteCategory | null => {
         for (const cat of categories) {
           if (cat.id === catId) return cat;
           if (cat.children && cat.children.length > 0) {
@@ -264,7 +288,7 @@ export const FavoriteDetailView = () => {
   // Helper to find selected category
   const findCategoryById = (
     nodes: FavoriteCategory[],
-    id: number
+    id: number,
   ): FavoriteCategory | undefined => {
     for (const node of nodes) {
       if (node.id === id) return node;
@@ -300,11 +324,16 @@ export const FavoriteDetailView = () => {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
   // 트리 드래그 핸들러
-  const findSiblings = (nodes: FavoriteCategory[], targetId: number): FavoriteCategory[] | null => {
+  const findSiblings = (
+    nodes: FavoriteCategory[],
+    targetId: number,
+  ): FavoriteCategory[] | null => {
     for (const node of nodes) {
       if (node.id === targetId) return nodes;
       if (node.children) {
@@ -318,14 +347,17 @@ export const FavoriteDetailView = () => {
   const replaceSiblings = (
     nodes: FavoriteCategory[],
     targetId: number,
-    newSiblings: FavoriteCategory[]
+    newSiblings: FavoriteCategory[],
   ): FavoriteCategory[] => {
     if (nodes.some((n) => n.id === targetId)) return newSiblings;
     return nodes.map((node) => {
       if (node.children) {
         const found = node.children.some((c) => c.id === targetId);
         if (found) return { ...node, children: newSiblings };
-        return { ...node, children: replaceSiblings(node.children, targetId, newSiblings) };
+        return {
+          ...node,
+          children: replaceSiblings(node.children, targetId, newSiblings),
+        };
       }
       return node;
     });
@@ -344,7 +376,8 @@ export const FavoriteDetailView = () => {
 
     const activeSiblings = findSiblings(tempTree, activeId);
     const overSiblings = findSiblings(tempTree, overId);
-    if (!activeSiblings || !overSiblings || activeSiblings !== overSiblings) return;
+    if (!activeSiblings || !overSiblings || activeSiblings !== overSiblings)
+      return;
 
     const oldIndex = activeSiblings.findIndex((s) => s.id === activeId);
     const newIndex = activeSiblings.findIndex((s) => s.id === overId);
@@ -417,7 +450,10 @@ export const FavoriteDetailView = () => {
   };
 
   // 트리 플랫 배열 변환
-  const flattenTree = (categories: FavoriteCategory[], result: FavoriteCategory[] = []): FavoriteCategory[] => {
+  const flattenTree = (
+    categories: FavoriteCategory[],
+    result: FavoriteCategory[] = [],
+  ): FavoriteCategory[] => {
     for (const cat of categories) {
       result.push(cat);
       if (cat.children && cat.children.length > 0 && expandedIds.has(cat.id)) {
@@ -466,7 +502,10 @@ export const FavoriteDetailView = () => {
               )
             ) : (
               <div className="mr-2">
-                <ContentTypeIcon type={cat.favoriteType} className="h-4 w-4 text-gray-400" />
+                <ContentTypeIcon
+                  type={cat.favoriteType}
+                  className="h-4 w-4 text-gray-400"
+                />
               </div>
             )}
             <span className="truncate">{cat.name}</span>
@@ -481,7 +520,11 @@ export const FavoriteDetailView = () => {
                 onClick={(e) => {
                   e.stopPropagation();
                   setCategoryModalMode("create");
-                  setCategoryForm({ name: "", parentId: cat.id, favoriteType: "COMMAND" });
+                  setCategoryForm({
+                    name: "",
+                    parentId: cat.id,
+                    favoriteType: "COMMAND",
+                  });
                   setIsCategoryModalOpen(true);
                 }}
               >
@@ -495,7 +538,11 @@ export const FavoriteDetailView = () => {
                   e.stopPropagation();
                   setCategoryModalMode("edit");
                   setEditingCategory(cat);
-                  setCategoryForm({ name: cat.name, parentId: cat.parentId ?? null, favoriteType: cat.favoriteType });
+                  setCategoryForm({
+                    name: cat.name,
+                    parentId: cat.parentId ?? null,
+                    favoriteType: cat.favoriteType,
+                  });
                   setIsCategoryModalOpen(true);
                 }}
               >
@@ -571,7 +618,11 @@ export const FavoriteDetailView = () => {
     <div className="space-y-4">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" onClick={() => router.push("/favorites")}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/favorites")}
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
@@ -581,11 +632,17 @@ export const FavoriteDetailView = () => {
           className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full shadow-sm hover:border-purple-200 transition-all cursor-pointer select-none"
           onClick={() => setIsAdminMode(!isAdminMode)}
         >
-          <span className={`text-xs font-medium ${isAdminMode ? "text-purple-600" : "text-gray-400"}`}>
+          <span
+            className={`text-xs font-medium ${isAdminMode ? "text-purple-600" : "text-gray-400"}`}
+          >
             Admin
           </span>
-          <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${isAdminMode ? "bg-purple-600" : "bg-gray-200"}`}>
-            <div className={`w-3 h-3 bg-white rounded-full transition-transform ${isAdminMode ? "translate-x-4" : "translate-x-0"}`} />
+          <div
+            className={`w-8 h-4 rounded-full p-0.5 transition-colors ${isAdminMode ? "bg-purple-600" : "bg-gray-200"}`}
+          >
+            <div
+              className={`w-3 h-3 bg-white rounded-full transition-transform ${isAdminMode ? "translate-x-4" : "translate-x-0"}`}
+            />
           </div>
         </div>
       </div>
@@ -600,7 +657,11 @@ export const FavoriteDetailView = () => {
                 className="bg-purple-600 hover:bg-purple-700"
                 onClick={() => {
                   setCategoryModalMode("create");
-                  setCategoryForm({ name: "", parentId: null, favoriteType: "ROOT" });
+                  setCategoryForm({
+                    name: "",
+                    parentId: null,
+                    favoriteType: "COMMAND",
+                  });
                   setIsCategoryModalOpen(true);
                 }}
               >
@@ -608,11 +669,13 @@ export const FavoriteDetailView = () => {
               </Button>
             )}
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-2 py-3">
             {treeLoading ? (
-              <p className="text-sm text-muted-foreground">Loading...</p>
+              <p className="text-sm text-muted-foreground px-2">Loading...</p>
             ) : filteredTree.length === 0 ? (
-              <p className="text-sm text-muted-foreground">카테고리가 없습니다</p>
+              <p className="text-sm text-muted-foreground px-2">
+                카테고리가 없습니다
+              </p>
             ) : (
               <div className="space-y-1">
                 <DndContext
@@ -622,7 +685,10 @@ export const FavoriteDetailView = () => {
                   onDragOver={handleCategoryDragOver}
                   onDragEnd={handleCategoryDragEnd}
                 >
-                  <SortableContext items={flatCategories.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+                  <SortableContext
+                    items={flatCategories.map((c) => c.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
                     {flatCategories.map((cat) => renderTreeItem(cat))}
                   </SortableContext>
                 </DndContext>
@@ -655,7 +721,9 @@ export const FavoriteDetailView = () => {
           </CardHeader>
           <CardContent>
             {!selectedCategory ? (
-              <p className="text-sm text-muted-foreground">카테고리를 선택하세요</p>
+              <p className="text-sm text-muted-foreground">
+                카테고리를 선택하세요
+              </p>
             ) : contentsLoading ? (
               <p className="text-sm text-muted-foreground">Loading...</p>
             ) : displayContents.length === 0 ? (
@@ -669,15 +737,25 @@ export const FavoriteDetailView = () => {
                   onDragOver={handleContentDragOver}
                   onDragEnd={handleContentDragEnd}
                 >
-                  <SortableContext items={displayContents.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+                  <SortableContext
+                    items={displayContents.map((c) => c.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
                     {displayContents.map((content) => (
-                      <SortableContentItem key={content.id} id={content.id} isAdminMode={isAdminMode}>
+                      <SortableContentItem
+                        key={content.id}
+                        id={content.id}
+                        isAdminMode={isAdminMode}
+                      >
                         {({ attributes, listeners }) => (
                           <Card className="group/card relative w-full overflow-hidden hover:shadow-md transition-shadow">
-                            <CardHeader className="pb-2">
+                            <CardHeader className="p-3">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                                  <ContentTypeIcon type={content.contentType} className="h-4 w-4 text-purple-500" />
+                                  <ContentTypeIcon
+                                    type={content.contentType}
+                                    className="h-4 w-4 text-purple-500"
+                                  />
                                   <CardTitle
                                     className="text-lg cursor-pointer hover:text-purple-600 transition-colors truncate"
                                     onClick={() => {
@@ -689,19 +767,23 @@ export const FavoriteDetailView = () => {
                                   </CardTitle>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  {content.contentType === "COMMAND" && content.content && (
-                                    <CopyButton text={content.content} />
-                                  )}
-                                  {content.contentType === "LINK" && content.content && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => window.open(content.content, "_blank")}
-                                    >
-                                      <ExternalLink className="h-4 w-4 mr-1" />
-                                      열기
-                                    </Button>
-                                  )}
+                                  {content.contentType === "COMMAND" &&
+                                    content.content && (
+                                      <CopyButton text={content.content} />
+                                    )}
+                                  {content.contentType === "LINK" &&
+                                    content.content && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                          window.open(content.content, "_blank")
+                                        }
+                                      >
+                                        <ExternalLink className="h-4 w-4 mr-1" />
+                                        열기
+                                      </Button>
+                                    )}
                                   {isAdminMode && (
                                     <div className="flex items-center gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
                                       <Button
@@ -746,10 +828,9 @@ export const FavoriteDetailView = () => {
                               </div>
                             </CardHeader>
                             {content.content && (
-                              <CardContent>
-                                <div className="relative max-h-[120px] overflow-hidden">
+                              <CardContent className="p-3 pt-3">
+                                <div className="max-h-[120px] overflow-hidden">
                                   {renderContentPreview(content)}
-                                  <div className="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-white dark:from-slate-950 to-transparent pointer-events-none" />
                                 </div>
                               </CardContent>
                             )}
@@ -765,14 +846,21 @@ export const FavoriteDetailView = () => {
             {/* 파일 섹션 */}
             {selectedCategory && (
               <div className="mt-6 pt-6 border-t">
-                <h3 className="text-sm font-semibold text-gray-700 mb-4">첨부 파일</h3>
+                <h3 className="text-sm font-semibold text-gray-700 mb-4">
+                  첨부 파일
+                </h3>
                 {isAdminMode && (
-                  <CommonFileUploader onUpload={handleFileUpload} isUploading={isUploading} />
+                  <CommonFileUploader
+                    onUpload={handleFileUpload}
+                    isUploading={isUploading}
+                  />
                 )}
                 {filesLoading ? (
                   <p className="text-sm text-muted-foreground">Loading...</p>
                 ) : files.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">파일이 없습니다</p>
+                  <p className="text-sm text-muted-foreground">
+                    파일이 없습니다
+                  </p>
                 ) : (
                   <CommonFileGrid
                     files={files}
@@ -791,7 +879,9 @@ export const FavoriteDetailView = () => {
       <FormDialog
         open={isCategoryModalOpen}
         onOpenChange={setIsCategoryModalOpen}
-        title={categoryModalMode === "create" ? "카테고리 추가" : "카테고리 수정"}
+        title={
+          categoryModalMode === "create" ? "카테고리 추가" : "카테고리 수정"
+        }
         submitLabel={categoryModalMode === "create" ? "생성" : "저장"}
         onSubmit={async () => {
           if (categoryModalMode === "create") {
@@ -811,12 +901,14 @@ export const FavoriteDetailView = () => {
         }}
       >
         <div className="space-y-4">
-          <div className="grid grid-cols-4 gap-2 p-1 bg-gray-100 rounded-lg">
-            {(["ROOT", "COMMAND", "LINK", "DOCUMENT"] as FavoriteType[]).map((type) => (
+          <div className="grid grid-cols-3 gap-2 p-1 bg-gray-100 rounded-lg">
+            {(["COMMAND", "LINK", "DOCUMENT"] as FavoriteType[]).map((type) => (
               <button
                 key={type}
                 type="button"
-                onClick={() => setCategoryForm({ ...categoryForm, favoriteType: type })}
+                onClick={() =>
+                  setCategoryForm({ ...categoryForm, favoriteType: type })
+                }
                 className={`flex items-center justify-center gap-1 py-1.5 rounded-md transition-all ${
                   categoryForm.favoriteType === type
                     ? "bg-white text-purple-600 shadow-sm font-semibold"
@@ -824,7 +916,9 @@ export const FavoriteDetailView = () => {
                 }`}
               >
                 <ContentTypeIcon type={type} className="h-3.5 w-3.5" />
-                <span className="text-xs">{type}</span>
+                <span className="text-xs">
+                  {type === "COMMAND" ? "CODE" : type}
+                </span>
               </button>
             ))}
           </div>
@@ -833,7 +927,9 @@ export const FavoriteDetailView = () => {
             <Input
               id="cat-name"
               value={categoryForm.name}
-              onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+              onChange={(e) =>
+                setCategoryForm({ ...categoryForm, name: e.target.value })
+              }
               placeholder="카테고리 이름 입력"
             />
           </div>
@@ -874,7 +970,9 @@ export const FavoriteDetailView = () => {
               <button
                 key={type}
                 type="button"
-                onClick={() => setContentForm({ ...contentForm, contentType: type })}
+                onClick={() =>
+                  setContentForm({ ...contentForm, contentType: type })
+                }
                 className={`flex items-center justify-center gap-2 py-2 rounded-md transition-all ${
                   contentForm.contentType === type
                     ? "bg-white text-purple-600 shadow-sm font-semibold"
@@ -882,7 +980,9 @@ export const FavoriteDetailView = () => {
                 }`}
               >
                 <ContentTypeIcon type={type} />
-                <span className="text-sm">{type}</span>
+                <span className="text-sm">
+                  {type === "COMMAND" ? "CODE" : type}
+                </span>
               </button>
             ))}
           </div>
@@ -891,22 +991,26 @@ export const FavoriteDetailView = () => {
             <Label>제목</Label>
             <Input
               value={contentForm.title}
-              onChange={(e) => setContentForm({ ...contentForm, title: e.target.value })}
+              onChange={(e) =>
+                setContentForm({ ...contentForm, title: e.target.value })
+              }
               placeholder="제목 입력"
             />
           </div>
 
           <div className="space-y-2">
             <Label>
-              {contentForm.contentType === "COMMAND" && "명령어"}
+              {contentForm.contentType === "COMMAND" && "코드"}
               {contentForm.contentType === "LINK" && "URL"}
               {contentForm.contentType === "DOCUMENT" && "내용"}
             </Label>
             {contentForm.contentType === "COMMAND" && (
               <Textarea
                 value={contentForm.content}
-                onChange={(e) => setContentForm({ ...contentForm, content: e.target.value })}
-                placeholder="명령어를 입력하세요"
+                onChange={(e) =>
+                  setContentForm({ ...contentForm, content: e.target.value })
+                }
+                placeholder="코드를 입력하세요"
                 rows={6}
                 className="font-mono bg-gray-900 text-green-400"
               />
@@ -914,14 +1018,18 @@ export const FavoriteDetailView = () => {
             {contentForm.contentType === "LINK" && (
               <Input
                 value={contentForm.content}
-                onChange={(e) => setContentForm({ ...contentForm, content: e.target.value })}
+                onChange={(e) =>
+                  setContentForm({ ...contentForm, content: e.target.value })
+                }
                 placeholder="https://..."
               />
             )}
             {contentForm.contentType === "DOCUMENT" && (
               <LexicalEditor
                 value={contentForm.content}
-                onChange={(text) => setContentForm({ ...contentForm, content: text })}
+                onChange={(text) =>
+                  setContentForm({ ...contentForm, content: text })
+                }
                 placeholder="내용을 입력하세요"
               />
             )}
@@ -935,7 +1043,10 @@ export const FavoriteDetailView = () => {
                 onChange={(e) =>
                   setContentForm({
                     ...contentForm,
-                    metadata: { ...contentForm.metadata, language: e.target.value },
+                    metadata: {
+                      ...contentForm.metadata,
+                      language: e.target.value,
+                    },
                   })
                 }
                 placeholder="sql, bash, javascript..."
@@ -955,7 +1066,8 @@ export const FavoriteDetailView = () => {
         onConfirm={async () => {
           if (categoryToDelete) {
             await favoriteApi.deleteCategory(categoryToDelete);
-            if (selectedCategory === categoryToDelete) setSelectedCategory(null);
+            if (selectedCategory === categoryToDelete)
+              setSelectedCategory(null);
             refetchTree();
             setCategoryToDelete(null);
           }
@@ -986,20 +1098,38 @@ export const FavoriteDetailView = () => {
           <DialogHeader className="px-6 py-3 bg-purple-100 border-b border-purple-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <ContentTypeIcon type={viewingContent?.contentType || "COMMAND"} className="h-5 w-5 text-purple-600" />
-                <DialogTitle className="text-lg font-bold text-gray-900">{viewingContent?.title}</DialogTitle>
+                <ContentTypeIcon
+                  type={viewingContent?.contentType || "COMMAND"}
+                  className="h-5 w-5 text-purple-600"
+                />
+                <DialogTitle className="text-lg font-bold text-gray-900">
+                  {viewingContent?.title}
+                </DialogTitle>
               </div>
               <div className="flex items-center gap-2">
-                {viewingContent?.contentType === "COMMAND" && viewingContent?.content && (
-                  <CopyButton text={viewingContent.content} />
-                )}
-                {viewingContent?.contentType === "LINK" && viewingContent?.content && (
-                  <Button variant="outline" size="sm" onClick={() => window.open(viewingContent.content, "_blank")}>
-                    <ExternalLink className="h-4 w-4 mr-1" />
-                    열기
-                  </Button>
-                )}
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsViewModalOpen(false)}>
+                {viewingContent?.contentType === "COMMAND" &&
+                  viewingContent?.content && (
+                    <CopyButton text={viewingContent.content} />
+                  )}
+                {viewingContent?.contentType === "LINK" &&
+                  viewingContent?.content && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        window.open(viewingContent.content, "_blank")
+                      }
+                    >
+                      <ExternalLink className="h-4 w-4 mr-1" />
+                      열기
+                    </Button>
+                  )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setIsViewModalOpen(false)}
+                >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -1008,7 +1138,9 @@ export const FavoriteDetailView = () => {
           <div className="flex-1 overflow-y-auto px-8 py-6 bg-white">
             {viewingContent?.contentType === "COMMAND" && (
               <div className="bg-gray-900 rounded-lg p-6 font-mono text-base text-green-400">
-                <pre className="whitespace-pre-wrap">{viewingContent?.content}</pre>
+                <pre className="whitespace-pre-wrap">
+                  {viewingContent?.content}
+                </pre>
               </div>
             )}
             {viewingContent?.contentType === "LINK" && (
