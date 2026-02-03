@@ -73,26 +73,26 @@ export function DataTable<TData>({
     },
     onPaginationChange: onPaginationChange
       ? (updater) => {
-          const newPagination =
-            typeof updater === "function" ? updater(pagination!) : updater;
-          onPaginationChange(newPagination);
-        }
+        const newPagination =
+          typeof updater === "function" ? updater(pagination!) : updater;
+        onPaginationChange(newPagination);
+      }
       : undefined,
     onSortingChange: onSortingChange
       ? (updater) => {
-          const newSorting =
-            typeof updater === "function" ? updater(sorting!) : updater;
-          onSortingChange(newSorting);
-        }
+        const newSorting =
+          typeof updater === "function" ? updater(sorting!) : updater;
+        onSortingChange(newSorting);
+      }
       : undefined,
     onRowSelectionChange: onRowSelectionChange
       ? (updater) => {
-          const newRowSelection =
-            typeof updater === "function"
-              ? updater(rowSelection || {})
-              : updater;
-          onRowSelectionChange(newRowSelection);
-        }
+        const newRowSelection =
+          typeof updater === "function"
+            ? updater(rowSelection || {})
+            : updater;
+        onRowSelectionChange(newRowSelection);
+      }
       : undefined,
     enableRowSelection,
     getCoreRowModel: getCoreRowModel(),
@@ -102,7 +102,7 @@ export function DataTable<TData>({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border">
+      <div className="rounded-lg border border-gray-200 shadow-sm bg-white overflow-hidden">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -125,9 +125,9 @@ export function DataTable<TData>({
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                         {canSort && (
                           <span className="text-gray-400">
                             {sorted === "asc" ? (
@@ -165,7 +165,7 @@ export function DataTable<TData>({
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                   className={
-                    onRowClick ? "cursor-pointer hover:bg-gray-50" : ""
+                    onRowClick ? "cursor-pointer hover:bg-gray-100" : ""
                   }
                   onClick={() => onRowClick?.(row.original)}
                 >

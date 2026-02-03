@@ -1,12 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
-import { Loader2, BookOpen, ChevronDown, ChevronRight, User as UserIcon } from "lucide-react";
+import { Input } from "@/shared/ui/input";
+import { Label } from "@/shared/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/dialog";
+import { Loader2, BookOpen, Plus, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import { useSkillTreeWithUserLevels, useUpdateUserSkill, skillLevelConfig } from "@/entities/skill";
-import type { SkillCategoryWithUserLevels, SkillWithUserLevel } from "@/entities/skill";
+import {
+  useSkillsWithUserLevels,
+  useUpdateUserSkill,
+  skillLevelConfig,
+  useAllSkills,
+  useCreateSkill,
+  useUpdateSkill,
+  useDeleteSkill,
+} from "@/entities/skill";
+import type { Skill } from "@/entities/skill";
 import { SkillLevelSlider } from "./SkillLevelSlider";
 import { toast } from "sonner";
 
@@ -16,132 +31,87 @@ interface UserSkillPanelProps {
   isOwnProfile?: boolean;
 }
 
-function SkillItem({
-  skill,
-  onLevelChange,
-  isUpdating,
-  canEdit,
-}: {
-  skill: SkillWithUserLevel;
-  onLevelChange?: (skillId: number, level: number) => void;
-  isUpdating?: boolean;
-  canEdit?: boolean;
-}) {
-  const level = skill.userSkill?.level || 0;
-  const config = skillLevelConfig[level];
+type ModalMode = "skill-add" | "skill-edit" | null;
 
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50",
-        isUpdating && "opacity-50"
-      )}
-    >
-      <div
-        className={cn(
-          "w-8 h-8 rounded flex items-center justify-center text-xs font-bold shrink-0",
-          config.bgColor,
-          config.color
-        )}
-      >
-        {level}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{skill.name}</p>
-      </div>
-      {canEdit ? (
-        <div className="w-32">
-          <SkillLevelSlider
-            level={level}
-            maxLevel={skill.maxLevel}
-            onChange={(newLevel) => onLevelChange?.(skill.id, newLevel)}
-            disabled={isUpdating}
-            showLabel={false}
-          />
-        </div>
-      ) : (
-        <span className={cn("text-xs px-2 py-1 rounded", config.bgColor, config.color)}>
-          {config.label}
-        </span>
-      )}
-    </div>
-  );
-}
-
-function SkillCategoryGroup({
-  category,
-  onSkillLevelChange,
-  updatingSkillId,
-  canEdit,
-}: {
-  category: SkillCategoryWithUserLevels;
-  onSkillLevelChange?: (skillId: number, level: number) => void;
-  updatingSkillId?: number | null;
-  canEdit?: boolean;
-}) {
-  const [isExpanded, setIsExpanded] = useState(true);
-
-  const avgLevel = category.skills.length > 0
-    ? Math.round(
-        (category.skills.reduce((sum, skill) => sum + (skill.userSkill?.level || 0), 0) /
-          category.skills.length) *
-          10
-      ) / 10
-    : 0;
-
-  const activeCount = category.skills.filter(s => (s.userSkill?.level || 0) > 0).length;
-
-  return (
-    <div className="border rounded-lg">
-      <Button
-        variant="ghost"
-        className="w-full justify-start p-3 h-auto rounded-t-lg rounded-b-none"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="flex items-center gap-2 w-full">
-          {isExpanded ? (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          ) : (
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          )}
-          {category.color && (
-            <div
-              className="w-3 h-3 rounded-full shrink-0"
-              style={{ backgroundColor: category.color }}
-            />
-          )}
-          <span className="font-semibold">{category.name}</span>
-          <div className="flex items-center gap-2 ml-auto text-xs text-muted-foreground">
-            <span>{activeCount}/{category.skills.length}</span>
-            <span>평균 Lv.{avgLevel}</span>
-          </div>
-        </div>
-      </Button>
-
-      {isExpanded && (
-        <div className="p-2 pt-0 space-y-1">
-          {category.skills.map((skill) => (
-            <SkillItem
-              key={skill.id}
-              skill={skill}
-              onLevelChange={onSkillLevelChange}
-              isUpdating={updatingSkillId === skill.id}
-              canEdit={canEdit}
-            />
-          ))}
-          {category.skills.length === 0 && (
-            <p className="text-sm text-muted-foreground p-2">등록된 스킬이 없습니다.</p>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-export function UserSkillPanel({ userId, userName, isOwnProfile = false }: UserSkillPanelProps) {
-  const { data: skillTree, isLoading } = useSkillTreeWithUserLevels(userId);
+export function UserSkillPanel({
+  userId,
+  userName,
+  isOwnProfile = false,
+}: UserSkillPanelProps) {
+  const { data: skillsWithLevels, isLoading } = useSkillsWithUserLevels(userId);
+  const { data: allSkills } = useAllSkills();
   const updateUserSkill = useUpdateUserSkill(userId);
   const [updatingSkillId, setUpdatingSkillId] = useState<number | null>(null);
+
+  // 스킬 관리 mutation hooks
+  const createSkill = useCreateSkill();
+  const updateSkill = useUpdateSkill();
+  const deleteSkill = useDeleteSkill();
+
+  // 모달 상태
+  const [modalMode, setModalMode] = useState<ModalMode>(null);
+  const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
+
+  // 스킬 폼
+  const [skillForm, setSkillForm] = useState({
+    name: "",
+    description: "",
+    maxLevel: 5,
+  });
+
+  const resetForms = () => {
+    setSkillForm({ name: "", description: "", maxLevel: 5 });
+    setSelectedSkill(null);
+    setModalMode(null);
+  };
+
+  // 스킬 핸들러
+  const handleAddSkill = () => {
+    setSkillForm({ name: "", description: "", maxLevel: 5 });
+    setModalMode("skill-add");
+  };
+
+  const handleEditSkill = (skill: Skill) => {
+    setSelectedSkill(skill);
+    setSkillForm({
+      name: skill.name,
+      description: skill.description || "",
+      maxLevel: skill.maxLevel,
+    });
+    setModalMode("skill-edit");
+  };
+
+  const handleDeleteSkill = async (skill: Skill) => {
+    if (!confirm(`"${skill.name}" 스킬을 삭제하시겠습니까?`)) return;
+    try {
+      await deleteSkill.mutateAsync(skill.id);
+      toast.success("스킬이 삭제되었습니다.");
+    } catch (error) {
+      toast.error("스킬 삭제에 실패했습니다.");
+    }
+  };
+
+  const handleSaveSkill = async () => {
+    if (!skillForm.name.trim()) {
+      toast.error("스킬 이름을 입력하세요.");
+      return;
+    }
+    try {
+      if (modalMode === "skill-add") {
+        await createSkill.mutateAsync(skillForm);
+        toast.success("스킬이 추가되었습니다.");
+      } else if (modalMode === "skill-edit" && selectedSkill) {
+        await updateSkill.mutateAsync({
+          id: selectedSkill.id,
+          data: skillForm,
+        });
+        toast.success("스킬이 수정되었습니다.");
+      }
+      resetForms();
+    } catch (error) {
+      toast.error("저장에 실패했습니다.");
+    }
+  };
 
   const handleSkillLevelChange = async (skillId: number, level: number) => {
     if (!isOwnProfile) return;
@@ -160,20 +130,14 @@ export function UserSkillPanel({ userId, userName, isOwnProfile = false }: UserS
     }
   };
 
-  const totalSkills = skillTree?.reduce((sum, cat) => sum + cat.skills.length, 0) || 0;
-  const activeSkills = skillTree?.reduce(
-    (sum, cat) => sum + cat.skills.filter((s) => (s.userSkill?.level || 0) > 0).length,
-    0
-  ) || 0;
-  const avgLevel = totalSkills > 0
-    ? Math.round(
-        (skillTree?.reduce(
-          (sum, cat) =>
-            sum + cat.skills.reduce((s, skill) => s + (skill.userSkill?.level || 0), 0),
-          0
-        ) || 0) / totalSkills * 10
-      ) / 10
-    : 0;
+  // 유저 스킬 레벨 맵
+  const userSkillMap = new Map<number, number>();
+  skillsWithLevels?.forEach((skill) => {
+    userSkillMap.set(skill.id, skill.userSkill?.level || 0);
+  });
+
+  // 표시할 스킬 목록
+  const displaySkills = allSkills || [];
 
   if (isLoading) {
     return (
@@ -184,49 +148,162 @@ export function UserSkillPanel({ userId, userName, isOwnProfile = false }: UserS
   }
 
   return (
-    <div className="h-full flex flex-col">
-      {/* 헤더 */}
-      <div className="p-4 border-b bg-background">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <UserIcon className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h2 className="font-semibold">{userName || "사용자"}</h2>
-              <p className="text-sm text-muted-foreground">
-                {activeSkills}/{totalSkills} 스킬 · 평균 Lv.{avgLevel}
-              </p>
-            </div>
-          </div>
-          {isOwnProfile && (
-            <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-              내 프로필
-            </span>
-          )}
-        </div>
+    <div className="h-full flex flex-col p-4">
+      {/* 상단 툴바: 스킬 추가 버튼 */}
+      <div className="flex items-center justify-between mb-4">
+        <Button onClick={handleAddSkill} size="sm">
+          <Plus className="h-4 w-4 mr-2" />
+          스킬 추가
+        </Button>
       </div>
 
-      {/* 스킬 목록 */}
-      <div className="flex-1 overflow-auto p-4 space-y-3">
-        {skillTree?.map((category) => (
-          <SkillCategoryGroup
-            key={category.id}
-            category={category}
-            onSkillLevelChange={handleSkillLevelChange}
-            updatingSkillId={updatingSkillId}
-            canEdit={isOwnProfile}
-          />
-        ))}
+      {/* 스킬 목록 - 3열 그리드 카드 */}
+      <div className="flex-1 overflow-auto">
+        <div className="grid grid-cols-3 gap-4">
+          {displaySkills.map((skill) => {
+            const level = userSkillMap.get(skill.id) || 0;
+            const config = skillLevelConfig[level];
 
-        {(!skillTree || skillTree.length === 0) && (
+            return (
+              <div
+                key={skill.id}
+                className="border rounded-lg p-4 hover:bg-muted/50 hover:shadow-sm transition-all"
+              >
+                {/* 카드 헤더: 레벨 뱃지 + 스킬명 */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={cn(
+                        "w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold",
+                        config.bgColor,
+                        config.color,
+                      )}
+                    >
+                      {level}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">{skill.name}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        최대 Lv.{skill.maxLevel}
+                      </p>
+                    </div>
+                  </div>
+                  {/* 액션 버튼 */}
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => handleEditSkill(skill)}
+                      title="스킬 수정"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => handleDeleteSkill(skill)}
+                      title="스킬 삭제"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* 설명 */}
+                {skill.description && (
+                  <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+                    {skill.description}
+                  </p>
+                )}
+
+                {/* 레벨 슬라이더 */}
+                {isOwnProfile && (
+                  <div className="pt-2 border-t">
+                    <SkillLevelSlider
+                      level={level}
+                      maxLevel={skill.maxLevel}
+                      onChange={(newLevel) =>
+                        handleSkillLevelChange(skill.id, newLevel)
+                      }
+                      disabled={updatingSkillId === skill.id}
+                      showLabel
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {displaySkills.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
             <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>등록된 스킬 카테고리가 없습니다.</p>
-            <p className="text-sm mt-1">관리자에게 문의하세요.</p>
+            <p>등록된 스킬이 없습니다.</p>
+            <p className="text-sm mt-1">스킬을 추가하세요.</p>
           </div>
         )}
       </div>
+
+      {/* 스킬 추가/수정 모달 */}
+      <Dialog
+        open={modalMode === "skill-add" || modalMode === "skill-edit"}
+        onOpenChange={() => resetForms()}
+      >
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle>
+              {modalMode === "skill-add" ? "스킬 추가" : "스킬 수정"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>스킬 이름</Label>
+              <Input
+                value={skillForm.name}
+                onChange={(e) =>
+                  setSkillForm({ ...skillForm, name: e.target.value })
+                }
+                placeholder="예: React"
+              />
+            </div>
+            <div>
+              <Label>설명</Label>
+              <Input
+                value={skillForm.description}
+                onChange={(e) =>
+                  setSkillForm({ ...skillForm, description: e.target.value })
+                }
+                placeholder="스킬 설명"
+              />
+            </div>
+            <div>
+              <Label>최대 레벨</Label>
+              <Input
+                type="number"
+                min={1}
+                max={10}
+                value={skillForm.maxLevel}
+                onChange={(e) =>
+                  setSkillForm({
+                    ...skillForm,
+                    maxLevel: parseInt(e.target.value) || 5,
+                  })
+                }
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={resetForms}>
+                취소
+              </Button>
+              <Button size="sm" onClick={handleSaveSkill}>
+                저장
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

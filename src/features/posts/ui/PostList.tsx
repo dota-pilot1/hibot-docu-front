@@ -103,7 +103,7 @@ export function PostList() {
         accessorKey: "title",
         header: "제목",
         cell: ({ row }) => (
-          <span className="font-medium text-gray-900 hover:text-blue-600">
+          <span className="font-medium text-gray-800 hover:text-blue-600 transition-colors">
             {row.original.title}
           </span>
         ),

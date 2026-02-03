@@ -1,14 +1,10 @@
 import { api } from "@/shared/api";
 import type {
-  SkillCategory,
   Skill,
   UserSkill,
   SkillActivity,
-  SkillCategoryWithSkills,
-  SkillCategoryWithUserLevels,
+  SkillWithUserLevel,
   DepartmentSkillSummary,
-  CreateSkillCategoryInput,
-  UpdateSkillCategoryInput,
   CreateSkillInput,
   UpdateSkillInput,
   UpdateUserSkillInput,
@@ -16,36 +12,13 @@ import type {
 
 export const skillApi = {
   // ============================================
-  // Skill Categories
-  // ============================================
-
-  getCategories: () => api.get<SkillCategory[]>("/skills/categories"),
-
-  getCategoryById: (id: number) =>
-    api.get<SkillCategory>(`/skills/categories/${id}`),
-
-  createCategory: (data: CreateSkillCategoryInput) =>
-    api.post<SkillCategory>("/skills/categories", data),
-
-  updateCategory: (id: number, data: UpdateSkillCategoryInput) =>
-    api.patch<SkillCategory>(`/skills/categories/${id}`, data),
-
-  deleteCategory: (id: number) =>
-    api.delete<SkillCategory>(`/skills/categories/${id}`),
-
-  // ============================================
   // Skills
   // ============================================
 
   getAll: () => api.get<Skill[]>("/skills"),
 
-  getTree: () => api.get<SkillCategoryWithSkills[]>("/skills/tree"),
-
-  getTreeWithUserLevels: (userId: number) =>
-    api.get<SkillCategoryWithUserLevels[]>(`/skills/tree/user/${userId}`),
-
-  getByCategory: (categoryId: number) =>
-    api.get<Skill[]>(`/skills/category/${categoryId}`),
+  getWithUserLevels: (userId: number) =>
+    api.get<SkillWithUserLevel[]>(`/skills/with-user-levels/${userId}`),
 
   getById: (id: number) => api.get<Skill>(`/skills/${id}`),
 

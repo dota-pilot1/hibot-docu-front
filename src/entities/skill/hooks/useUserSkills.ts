@@ -1,14 +1,16 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { skillApi } from '../api/skillApi';
-import type { UpdateUserSkillInput } from '../model/types';
-import { skillKeys } from './useSkills';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { skillApi } from "../api/skillApi";
+import type { UpdateUserSkillInput } from "../model/types";
+import { skillKeys } from "./useSkills";
 
 // Query Keys
 export const userSkillKeys = {
-  all: ['userSkills'] as const,
+  all: ["userSkills"] as const,
   byUser: (userId: number) => [...userSkillKeys.all, userId] as const,
-  activities: (userId: number) => [...userSkillKeys.all, 'activities', userId] as const,
-  departmentSummary: (departmentId: number) => [...userSkillKeys.all, 'department', departmentId] as const,
+  activities: (userId: number) =>
+    [...userSkillKeys.all, "activities", userId] as const,
+  departmentSummary: (departmentId: number) =>
+    [...userSkillKeys.all, "department", departmentId] as const,
 };
 
 // ============================================
@@ -30,14 +32,28 @@ export const useUpdateUserSkill = (userId: number) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ skillId, data }: { skillId: number; data: UpdateUserSkillInput }) => {
-      const { data: userSkill } = await skillApi.updateUserSkill(userId, skillId, data);
+    mutationFn: async ({
+      skillId,
+      data,
+    }: {
+      skillId: number;
+      data: UpdateUserSkillInput;
+    }) => {
+      const { data: userSkill } = await skillApi.updateUserSkill(
+        userId,
+        skillId,
+        data,
+      );
       return userSkill;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userSkillKeys.byUser(userId) });
-      queryClient.invalidateQueries({ queryKey: userSkillKeys.activities(userId) });
-      queryClient.invalidateQueries({ queryKey: skillKeys.treeWithUser(userId) });
+      queryClient.invalidateQueries({
+        queryKey: userSkillKeys.activities(userId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: skillKeys.withUserLevels(userId),
+      });
     },
   });
 };

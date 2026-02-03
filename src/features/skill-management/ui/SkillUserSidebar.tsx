@@ -5,8 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import {
-  ChevronDown,
-  ChevronRight,
   Search,
   Users,
   User as UserIcon,

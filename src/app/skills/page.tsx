@@ -1,30 +1,59 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useUserStore } from "@/entities/user/model/store";
 import { SkillUserSidebar } from "@/features/skill-management/ui/SkillUserSidebar";
-import { UserSkillPanel } from "@/features/skill-management/ui/UserSkillPanel";
-
-interface SelectedUser {
-  id: number;
-  name?: string;
-  email: string;
-}
+import { SkillMainContent } from "@/features/skill-management/ui/SkillMainContent";
+import {
+  useSkillTabStore,
+  hydrateSkillTabStore,
+} from "@/features/skill-management/model/useSkillTabStore";
 
 export default function SkillsPage() {
   const currentUser = useUserStore((state) => state.user);
-  const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
+  const panels = useSkillTabStore((state) => state.panels);
+  const openTab = useSkillTabStore((state) => state.openTab);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // 초기에 현재 로그인한 사용자 선택
+  // 클라이언트 마운트 확인 및 localStorage에서 상태 복원
   useEffect(() => {
-    if (currentUser && !selectedUser) {
-      setSelectedUser({
+    hydrateSkillTabStore();
+    setIsMounted(true);
+  }, []);
+
+  // 초기에 현재 로그인한 사용자를 탭에 추가 (탭이 없을 경우)
+  useEffect(() => {
+    const hasAnyTabs = panels.some((p) => p.tabs.length > 0);
+    if (currentUser && !hasAnyTabs && isMounted) {
+      openTab({
         id: currentUser.userId,
         name: currentUser.name || undefined,
         email: currentUser.email,
       });
     }
-  }, [currentUser, selectedUser]);
+  }, [currentUser, panels, isMounted, openTab]);
+
+  const handleSelectUser = (user: {
+    id: number;
+    name?: string;
+    email: string;
+  }) => {
+    openTab(user);
+  };
+
+  // 현재 활성 탭 ID (사이드바 선택 표시용)
+  const activePanelId = useSkillTabStore((state) => state.activePanelId);
+  const activePanel = panels.find((p) => p.id === activePanelId);
+  const selectedUserId = activePanel?.activeTabId ?? undefined;
+
+  // 서버/클라이언트 hydration 불일치 방지
+  if (!isMounted) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-muted-foreground">로딩 중...</p>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return (
@@ -39,27 +68,15 @@ export default function SkillsPage() {
       {/* 좌측: 부서별 사용자 목록 */}
       <div className="w-64 shrink-0">
         <SkillUserSidebar
-          selectedUserId={selectedUser?.id}
-          onSelectUser={(user) =>
-            setSelectedUser({ id: user.id, name: user.name, email: user.email })
-          }
+          selectedUserId={selectedUserId}
+          onSelectUser={handleSelectUser}
           currentUserId={currentUser.userId}
         />
       </div>
 
-      {/* 우측: 선택한 사용자의 스킬 정보 */}
+      {/* 우측: 다중 패널 (탭 헤더 + 본문) */}
       <div className="flex-1">
-        {selectedUser ? (
-          <UserSkillPanel
-            userId={selectedUser.id}
-            userName={selectedUser.name || selectedUser.email.split("@")[0]}
-            isOwnProfile={selectedUser.id === currentUser.userId}
-          />
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground h-full">
-            <p>사용자를 선택하세요</p>
-          </div>
-        )}
+        <SkillMainContent currentUserId={currentUser.userId} />
       </div>
     </div>
   );
