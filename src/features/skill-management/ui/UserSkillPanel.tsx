@@ -343,7 +343,7 @@ export function UserSkillPanel({
   return (
     <div className="h-full flex flex-col p-4">
       {/* 상단 툴바 */}
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center justify-end gap-2 mb-4">
         <Button onClick={handleAddCategory} size="sm" variant="outline">
           <FolderPlus className="h-4 w-4 mr-2" />
           카테고리 추가
