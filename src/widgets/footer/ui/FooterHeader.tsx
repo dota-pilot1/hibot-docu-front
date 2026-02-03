@@ -13,6 +13,7 @@ interface StatusCounts {
   pending: number;
   inProgress: number;
   completed: number;
+  blocked: number;
   delayed: number;
 }
 
@@ -52,6 +53,15 @@ export const FooterHeader = ({
           <span className="text-zinc-600 dark:text-zinc-400">진행</span>
           <span className="font-semibold text-blue-600 dark:text-blue-400">
             {statusCounts.inProgress}
+          </span>
+        </div>
+
+        {/* 막힘 */}
+        <div className="flex items-center gap-1.5 text-sm">
+          <AlertTriangle className="w-4 h-4 text-orange-500" />
+          <span className="text-zinc-600 dark:text-zinc-400">막힘</span>
+          <span className="font-semibold text-orange-600 dark:text-orange-400">
+            {statusCounts.blocked}
           </span>
         </div>
 

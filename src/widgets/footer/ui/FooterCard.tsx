@@ -8,6 +8,7 @@ interface StatusCounts {
   pending: number;
   inProgress: number;
   completed: number;
+  blocked: number;
   delayed: number;
 }
 

@@ -5,6 +5,7 @@ interface StatusCounts {
   pending: number;
   inProgress: number;
   completed: number;
+  blocked: number;
   delayed: number;
 }
 
@@ -16,7 +17,8 @@ export const useFooterStatusCounts = (): StatusCounts => {
       pending: tasks.filter((t: Task) => t.status === "pending").length,
       inProgress: tasks.filter((t: Task) => t.status === "in_progress").length,
       completed: tasks.filter((t: Task) => t.status === "completed").length,
-      delayed: tasks.filter((t: Task) => t.status === "blocked").length,
+      blocked: tasks.filter((t: Task) => t.status === "blocked").length,
+      delayed: 0, // TODO: 지연 로직 추가 필요
     };
   }, [tasks]);
 
