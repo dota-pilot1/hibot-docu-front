@@ -44,10 +44,8 @@ export function FormDialog({
       description={description}
       maxWidth={maxWidth}
       fullScreen={fullScreen}
-    >
-      <form onSubmit={handleOnSubmit} className="space-y-4">
-        <div className="py-2">{children}</div>
-        <div className="flex justify-end gap-2 mt-4">
+      footer={
+        <div className="flex justify-end gap-2">
           <Button
             type="button"
             variant="outline"
@@ -55,10 +53,14 @@ export function FormDialog({
           >
             {cancelLabel}
           </Button>
-          <Button type="submit" isLoading={isLoading}>
+          <Button type="submit" isLoading={isLoading} onClick={handleOnSubmit}>
             {submitLabel}
           </Button>
         </div>
+      }
+    >
+      <form onSubmit={handleOnSubmit} className="space-y-4">
+        <div className="py-2">{children}</div>
       </form>
     </BaseDialog>
   );
