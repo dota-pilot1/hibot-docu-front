@@ -41,6 +41,7 @@ export const useHeaderAuth = () => {
       setUser({
         userId: profile.data.id,
         email: profile.data.email,
+        name: profile.data.name,
         role: profile.data.role,
         profileImage: profile.data.profileImage,
       });
