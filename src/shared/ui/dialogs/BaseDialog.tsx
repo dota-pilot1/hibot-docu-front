@@ -45,7 +45,7 @@ export function BaseDialog({
             : cn("max-h-[90vh]", maxWidth),
           className,
         )}
-        showCloseButton={false}
+        showCloseButton={true}
       >
         <DialogHeader className="shrink-0 rounded-t-lg">
           <DialogTitle>{title}</DialogTitle>

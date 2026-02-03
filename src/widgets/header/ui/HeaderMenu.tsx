@@ -32,9 +32,16 @@ const boardMenuItems: MenuItem[] = [
   { label: "Q&A", href: "/boards/qna" },
 ];
 
+// 일지 서브메뉴
+const journalMenuItems: MenuItem[] = [
+  { label: "개발 일지", href: "/journals/dev" },
+  { label: "학습 일지", href: "/journals/study" },
+];
+
 const defaultMenuItems: MenuEntry[] = [
   { label: "업무 관리", href: "/issues" },
   { label: "개인 업무", href: "/tasks" },
+  { label: "일지", basePath: "/journals", items: journalMenuItems },
   { label: "채팅 관리", href: "/chats" },
   { label: "아키텍처 관리", href: "/architectures" },
   { label: "파일럿 관리", href: "/pilots" },
