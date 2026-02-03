@@ -44,6 +44,7 @@ const defaultMenuItems: MenuEntry[] = [
   { label: "일지", basePath: "/journals", items: journalMenuItems },
   { label: "채팅 관리", href: "/chats" },
   { label: "아키텍처 관리", href: "/architectures" },
+  { label: "디자인 관리", href: "/design-systems" },
   { label: "파일럿 관리", href: "/pilots" },
   { label: "리뷰", href: "/reviews" },
   { label: "DB 관리", href: "/db-admin" },

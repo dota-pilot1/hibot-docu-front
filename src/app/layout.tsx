@@ -7,6 +7,8 @@ import { AuthInitializer } from "./AuthInitializer";
 import { QueryProvider } from "./QueryProvider";
 import { FooterWrapper } from "@/widgets/footer";
 import { Toaster } from "sonner";
+import { ErrorBoundary } from "react-error-boundary";
+import { ErrorBoundaryFallback } from "@/shared/ui/ErrorBoundaryFallback";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +39,9 @@ export default function RootLayout({
           <AuthInitializer>
             <Header />
             <div className="flex pt-10 h-screen pb-14">
-              <ResizableLayout>{children}</ResizableLayout>
+              <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
+                <ResizableLayout>{children}</ResizableLayout>
+              </ErrorBoundary>
             </div>
             <FooterWrapper />
           </AuthInitializer>
