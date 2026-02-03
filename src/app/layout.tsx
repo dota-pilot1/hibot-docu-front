@@ -5,6 +5,7 @@ import { Header } from "@/widgets/header/ui/Header";
 import { ResizableLayout } from "@/widgets/sidebar";
 import { AuthInitializer } from "./AuthInitializer";
 import { QueryProvider } from "./QueryProvider";
+import { FooterWrapper } from "@/widgets/footer";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({
@@ -35,9 +36,10 @@ export default function RootLayout({
         <QueryProvider>
           <AuthInitializer>
             <Header />
-            <div className="flex pt-10 h-screen">
+            <div className="flex pt-10 h-screen pb-14">
               <ResizableLayout>{children}</ResizableLayout>
             </div>
+            <FooterWrapper />
           </AuthInitializer>
         </QueryProvider>
         <Toaster position="bottom-right" richColors />

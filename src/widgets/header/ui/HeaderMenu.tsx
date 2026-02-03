@@ -12,8 +12,8 @@ interface HeaderMenuProps {
 }
 
 const defaultMenuItems: MenuItem[] = [
-  { label: "업무 할당", href: "/issues" },
-  { label: "업무 관리", href: "/tasks" },
+  { label: "업무 관리", href: "/issues" },
+  { label: "개인 업무", href: "/tasks" },
   { label: "채팅 관리", href: "/chats" },
   { label: "아키텍처 관리", href: "/architectures" },
   { label: "파일럿 관리", href: "/pilots" },

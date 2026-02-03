@@ -78,7 +78,7 @@ export default function IssuesPage() {
       {/* 상단 툴바 */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-4">
-          <h1 className="text-lg font-semibold">업무 할당</h1>
+          <h1 className="text-lg font-semibold">업무 관리</h1>
 
           {/* 필터 */}
           <div className="flex gap-1">
