@@ -1,16 +1,33 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useUserStore } from "@/entities/user/model/store";
-import {
-  MySkillList,
-  SkillTreeView,
-  SkillActivityList,
-} from "@/features/skill-management";
+import { SkillUserSidebar } from "@/features/skill-management/ui/SkillUserSidebar";
+import { UserSkillPanel } from "@/features/skill-management/ui/UserSkillPanel";
+import { SkillActivityList } from "@/features/skill-management";
+
+interface SelectedUser {
+  id: number;
+  name?: string;
+  email: string;
+}
 
 export default function SkillsPage() {
-  const user = useUserStore((state) => state.user);
+  const currentUser = useUserStore((state) => state.user);
+  const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
 
-  if (!user) {
+  // 초기에 현재 로그인한 사용자 선택
+  useEffect(() => {
+    if (currentUser && !selectedUser) {
+      setSelectedUser({
+        id: currentUser.userId,
+        name: currentUser.name || undefined,
+        email: currentUser.email,
+      });
+    }
+  }, [currentUser, selectedUser]);
+
+  if (!currentUser) {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-muted-foreground">로그인이 필요합니다.</p>
@@ -19,16 +36,41 @@ export default function SkillsPage() {
   }
 
   return (
-    <div className="h-full flex gap-4 p-4">
-      {/* Left Panel - 내 스킬 목록 */}
-      <div className="flex-1 min-w-0">
-        <MySkillList userId={user.userId} />
+    <div className="h-full flex">
+      {/* 좌측: 부서별 사용자 목록 */}
+      <div className="w-64 shrink-0">
+        <SkillUserSidebar
+          selectedUserId={selectedUser?.id}
+          onSelectUser={(user) =>
+            setSelectedUser({ id: user.id, name: user.name, email: user.email })
+          }
+          currentUserId={currentUser.userId}
+        />
       </div>
 
-      {/* Right Panel - 스킬 트리 & 활동 */}
-      <div className="flex-1 min-w-0 space-y-4 overflow-auto">
-        <SkillTreeView userId={user.userId} />
-        <SkillActivityList userId={user.userId} />
+      {/* 우측: 선택한 사용자의 스킬 정보 */}
+      <div className="flex-1 flex">
+        {selectedUser ? (
+          <>
+            {/* 스킬 목록 */}
+            <div className="flex-1 border-r">
+              <UserSkillPanel
+                userId={selectedUser.id}
+                userName={selectedUser.name || selectedUser.email.split("@")[0]}
+                isOwnProfile={selectedUser.id === currentUser.userId}
+              />
+            </div>
+
+            {/* 활동 기록 */}
+            <div className="w-80 shrink-0 p-4 overflow-auto bg-muted/30">
+              <SkillActivityList userId={selectedUser.id} />
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-muted-foreground">
+            <p>사용자를 선택하세요</p>
+          </div>
+        )}
       </div>
     </div>
   );
