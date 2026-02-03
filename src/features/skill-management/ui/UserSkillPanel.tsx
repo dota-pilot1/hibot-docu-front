@@ -159,7 +159,7 @@ export function UserSkillPanel({
 
       {/* 스킬 목록 - 3열 그리드 카드 */}
       <div className="flex-1 overflow-auto">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
           {displaySkills.map((skill) => {
             const level = userSkillMap.get(skill.id) || 0;
             const config = skillLevelConfig[level];
