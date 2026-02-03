@@ -40,11 +40,11 @@ const defaultMenuItems: MenuEntry[] = [
   { label: "파일럿 관리", href: "/pilots" },
   { label: "리뷰", href: "/reviews" },
   { label: "DB 관리", href: "/db-admin" },
+  { label: "스킬 관리", href: "/skills" },
   { label: "즐찾 관리", href: "/favorites" },
-  { label: "문서 관리", href: "/documents" },
   { label: "노트", href: "/notes" },
   { label: "게시판", basePath: "/boards", items: boardMenuItems },
-  { label: "스킬 관리", href: "/skills" },
+  { label: "문서 관리", href: "/documents" },
   { label: "사용자 관리", href: "/users" },
 ];
 

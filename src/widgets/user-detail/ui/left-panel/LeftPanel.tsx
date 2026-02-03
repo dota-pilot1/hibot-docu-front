@@ -57,17 +57,15 @@ export const LeftPanel = ({ userId, currentTask }: LeftPanelProps) => {
         {/* 왼쪽: 필터 탭 */}
         <div className="flex gap-1">
           {filters.map((f) => (
-            <button
+            <Button
               key={f.key}
               onClick={() => setFilter(f.key)}
-              className={`px-3 py-1 text-xs rounded-full border transition-colors ${
-                filter === f.key
-                  ? "bg-primary text-white border-primary"
-                  : "border-zinc-300 dark:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              }`}
+              variant={filter === f.key ? "default" : "outline"}
+              size="sm"
+              className="rounded-full"
             >
               {f.label}
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -78,10 +76,10 @@ export const LeftPanel = ({ userId, currentTask }: LeftPanelProps) => {
               size="sm"
               variant="outline"
               onClick={handleSelectCurrentTask}
-              className="h-8 px-3 border-green-500 text-green-600 hover:bg-green-50"
+              className="border-green-500 text-green-600 hover:bg-green-50 dark:border-green-600 dark:text-green-500 dark:hover:bg-green-950/30"
             >
-              <Check className="h-4 w-4 mr-1" />
-              선택
+              <Check className="h-4 w-4" />
+              <span className="ml-1">선택</span>
             </Button>
           )}
           <Button
@@ -94,29 +92,32 @@ export const LeftPanel = ({ userId, currentTask }: LeftPanelProps) => {
               })
             }
             disabled={createTaskMutation.isPending}
-            className="h-8 w-8 p-0"
             title="새 Task 추가"
           >
             <Plus className="h-4 w-4" />
+            <span className="ml-1">추가</span>
           </Button>
           <Button
             size="sm"
             variant="ghost"
             onClick={handleDelete}
             disabled={selectedCount === 0}
-            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+            className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30"
             title="선택 항목 삭제"
           >
             <Trash2 className="h-4 w-4" />
+            <span className="ml-1">삭제</span>
           </Button>
           <Button
             size="sm"
+            variant={pendingCount > 0 ? "default" : "ghost"}
             onClick={handleSave}
             disabled={pendingCount === 0}
-            className={`h-8 px-3 ${pendingCount > 0 ? "bg-blue-600 hover:bg-blue-700" : ""}`}
           >
-            <Save className="h-4 w-4 mr-1" />
-            저장{pendingCount > 0 && ` (${pendingCount})`}
+            <Save className="h-4 w-4" />
+            <span className="ml-1">
+              저장{pendingCount > 0 && ` (${pendingCount})`}
+            </span>
           </Button>
         </div>
       </div>

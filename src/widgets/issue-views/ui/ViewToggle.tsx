@@ -1,7 +1,7 @@
 "use client";
 
 import { Table, Kanban, GanttChart } from "lucide-react";
-import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 
 export type ViewType = "table" | "kanban" | "gantt";
 
@@ -18,23 +18,19 @@ const views = [
 
 export const ViewToggle = ({ view, onViewChange }: ViewToggleProps) => {
   return (
-    <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1">
+    <div className="flex items-center gap-1">
       {views.map((v) => {
         const Icon = v.icon;
         return (
-          <button
+          <Button
             key={v.id}
             onClick={() => onViewChange(v.id)}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors",
-              view === v.id
-                ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
-                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
-            )}
+            variant={view === v.id ? "default" : "outline"}
+            size="sm"
           >
             <Icon className="w-4 h-4" />
-            {v.label}
-          </button>
+            <span className="ml-1">{v.label}</span>
+          </Button>
         );
       })}
     </div>
