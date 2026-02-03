@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useUserStore } from "@/entities/user/model/store";
 import { SkillUserSidebar } from "@/features/skill-management/ui/SkillUserSidebar";
 import { UserSkillPanel } from "@/features/skill-management/ui/UserSkillPanel";
-import { SkillActivityList } from "@/features/skill-management";
 
 interface SelectedUser {
   id: number;
@@ -49,25 +48,15 @@ export default function SkillsPage() {
       </div>
 
       {/* 우측: 선택한 사용자의 스킬 정보 */}
-      <div className="flex-1 flex">
+      <div className="flex-1">
         {selectedUser ? (
-          <>
-            {/* 스킬 목록 */}
-            <div className="flex-1 border-r">
-              <UserSkillPanel
-                userId={selectedUser.id}
-                userName={selectedUser.name || selectedUser.email.split("@")[0]}
-                isOwnProfile={selectedUser.id === currentUser.userId}
-              />
-            </div>
-
-            {/* 활동 기록 */}
-            <div className="w-80 shrink-0 p-4 overflow-auto bg-muted/30">
-              <SkillActivityList userId={selectedUser.id} />
-            </div>
-          </>
+          <UserSkillPanel
+            userId={selectedUser.id}
+            userName={selectedUser.name || selectedUser.email.split("@")[0]}
+            isOwnProfile={selectedUser.id === currentUser.userId}
+          />
         ) : (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground">
+          <div className="flex-1 flex items-center justify-center text-muted-foreground h-full">
             <p>사용자를 선택하세요</p>
           </div>
         )}

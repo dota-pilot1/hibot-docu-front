@@ -58,7 +58,7 @@ function DepartmentGroup({
     ? users.filter(
         (u) =>
           u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          u.email.toLowerCase().includes(searchQuery.toLowerCase())
+          u.email.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : users;
 
@@ -94,7 +94,7 @@ function DepartmentGroup({
               size="sm"
               className={cn(
                 "w-full justify-start px-2 py-1.5 h-auto",
-                selectedUserId === user.id && "bg-primary/10 text-primary"
+                selectedUserId === user.id && "bg-primary/10 text-primary",
               )}
               onClick={() => onSelectUser(user)}
             >
@@ -170,7 +170,7 @@ export function SkillUserSidebar({
       <div className="p-3 border-b">
         <div className="flex items-center gap-2 mb-3">
           <Users className="h-5 w-5 text-primary" />
-          <h2 className="font-semibold">스킬 트리</h2>
+          <h2 className="font-semibold">스킬 관리</h2>
         </div>
         <div className="relative">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
