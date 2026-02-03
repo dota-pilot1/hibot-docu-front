@@ -1,12 +1,20 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { usePost, useDeletePost } from "@/features/posts/model/usePosts";
 import { Button } from "@/shared/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/ui/card";
 import { ConfirmDialog } from "@/shared/ui/dialogs/ConfirmDialog";
-import { ArrowLeft, Pencil, Trash2, Eye, Calendar, User } from "lucide-react";
-import { useState } from "react";
+import {
+  ArrowLeft,
+  Pencil,
+  Trash2,
+  Eye,
+  Calendar,
+  User,
+  Pin,
+} from "lucide-react";
 import { useUserStore } from "@/entities/user/model/store";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -14,11 +22,17 @@ import remarkBreaks from "remark-breaks";
 import { MarkdownCodeBlock } from "@/shared/ui/MarkdownCodeBlock";
 import { MarkdownImage } from "@/shared/ui/MarkdownImage";
 import { CommentList } from "@/features/comments/ui/CommentList";
+import { LikeButton } from "@/features/likes/ui/LikeButton";
+import { AttachmentList } from "@/features/attachments/ui/AttachmentList";
 
-export default function PostDetailClient() {
-  const params = useParams();
+interface Props {
+  boardCode: string;
+  postId: string;
+}
+
+export function BoardPostDetailClient({ boardCode, postId }: Props) {
   const router = useRouter();
-  const id = Number(params.id);
+  const id = Number(postId);
   const user = useUserStore((state) => state.user);
 
   const { data: post, isLoading } = usePost(id);
@@ -30,7 +44,7 @@ export default function PostDetailClient() {
 
   const handleDelete = async () => {
     await deletePost.mutateAsync(id);
-    router.push("/posts");
+    router.push(`/boards/${boardCode}`);
   };
 
   if (isLoading) {
@@ -60,7 +74,7 @@ export default function PostDetailClient() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => router.push("/posts")}
+          onClick={() => router.push(`/boards/${boardCode}`)}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           목록으로
@@ -70,7 +84,9 @@ export default function PostDetailClient() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => router.push(`/posts/write?edit=${id}`)}
+              onClick={() =>
+                router.push(`/boards/${boardCode}/write?edit=${id}`)
+              }
             >
               <Pencil className="h-4 w-4 mr-2" />
               수정
@@ -90,7 +106,12 @@ export default function PostDetailClient() {
       <Card>
         <CardHeader className="border-b bg-gray-50">
           <div className="space-y-3">
-            <CardTitle className="text-2xl">{post.title}</CardTitle>
+            <div className="flex items-center gap-2">
+              {post.isPinned && (
+                <Pin className="h-5 w-5 text-blue-500 fill-blue-500" />
+              )}
+              <CardTitle className="text-2xl">{post.title}</CardTitle>
+            </div>
             <div className="flex items-center gap-4 text-sm text-gray-500">
               <div className="flex items-center gap-1">
                 <User className="h-4 w-4" />
@@ -110,6 +131,7 @@ export default function PostDetailClient() {
                 <Eye className="h-4 w-4" />
                 {post.viewCount}
               </div>
+              <LikeButton postId={id} />
             </div>
           </div>
         </CardHeader>
@@ -124,6 +146,11 @@ export default function PostDetailClient() {
             >
               {post.content}
             </ReactMarkdown>
+          </div>
+
+          {/* 첨부파일 */}
+          <div className="mt-6 pt-6 border-t">
+            <AttachmentList postId={id} authorId={post.authorId} />
           </div>
         </CardContent>
       </Card>
