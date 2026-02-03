@@ -447,7 +447,7 @@ export function UserSkillPanel({
                       </Button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4">
                       {categorySkills.map((skill) => {
                         const level = userSkillMap.get(skill.id) || 0;
                         const config =
@@ -456,14 +456,14 @@ export function UserSkillPanel({
                         return (
                           <div
                             key={skill.id}
-                            className="border rounded-lg p-3 hover:bg-muted/30 hover:shadow-sm transition-all"
+                            className="border rounded-lg p-4 hover:bg-muted/30 hover:shadow-sm transition-all"
                           >
                             {/* 카드 헤더 */}
-                            <div className="flex items-start justify-between mb-2">
-                              <div className="flex items-center gap-2">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center gap-3">
                                 <div
                                   className={cn(
-                                    "w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold",
+                                    "w-12 h-12 rounded-lg flex items-center justify-center text-xl font-bold",
                                     config.bgColor,
                                     config.color,
                                   )}
@@ -471,11 +471,11 @@ export function UserSkillPanel({
                                   {level}
                                 </div>
                                 <div>
-                                  <h4 className="font-medium text-sm">
+                                  <h4 className="font-semibold text-base">
                                     {skill.name}
                                   </h4>
-                                  <p className="text-xs text-muted-foreground">
-                                    Lv.{skill.maxLevel}
+                                  <p className="text-sm text-muted-foreground">
+                                    최대 Lv.{skill.maxLevel}
                                   </p>
                                 </div>
                               </div>
@@ -483,25 +483,25 @@ export function UserSkillPanel({
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-6 w-6 p-0"
+                                  className="h-8 w-8 p-0"
                                   onClick={() => handleEditSkill(skill)}
                                 >
-                                  <Pencil className="h-3 w-3" />
+                                  <Pencil className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-6 w-6 p-0"
+                                  className="h-8 w-8 p-0"
                                   onClick={() => handleDeleteSkill(skill)}
                                 >
-                                  <Trash2 className="h-3 w-3 text-destructive" />
+                                  <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                               </div>
                             </div>
 
                             {/* 설명 */}
                             {skill.description && (
-                              <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                                 {skill.description}
                               </p>
                             )}
@@ -543,8 +543,8 @@ export function UserSkillPanel({
                 </span>
               </div>
             </div>
-            <div className="p-3">
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
+            <div className="p-4">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4">
                 {uncategorizedSkills.map((skill) => {
                   const level = userSkillMap.get(skill.id) || 0;
                   const config = skillLevelConfig[level] || skillLevelConfig[0];
@@ -552,13 +552,13 @@ export function UserSkillPanel({
                   return (
                     <div
                       key={skill.id}
-                      className="border rounded-lg p-3 hover:bg-muted/30 hover:shadow-sm transition-all"
+                      className="border rounded-lg p-4 hover:bg-muted/30 hover:shadow-sm transition-all"
                     >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
                           <div
                             className={cn(
-                              "w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold",
+                              "w-12 h-12 rounded-lg flex items-center justify-center text-xl font-bold",
                               config.bgColor,
                               config.color,
                             )}
@@ -566,11 +566,11 @@ export function UserSkillPanel({
                             {level}
                           </div>
                           <div>
-                            <h4 className="font-medium text-sm">
+                            <h4 className="font-semibold text-base">
                               {skill.name}
                             </h4>
-                            <p className="text-xs text-muted-foreground">
-                              Lv.{skill.maxLevel}
+                            <p className="text-sm text-muted-foreground">
+                              최대 Lv.{skill.maxLevel}
                             </p>
                           </div>
                         </div>
@@ -578,23 +578,23 @@ export function UserSkillPanel({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-6 w-6 p-0"
+                            className="h-8 w-8 p-0"
                             onClick={() => handleEditSkill(skill)}
                           >
-                            <Pencil className="h-3 w-3" />
+                            <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-6 w-6 p-0"
+                            className="h-8 w-8 p-0"
                             onClick={() => handleDeleteSkill(skill)}
                           >
-                            <Trash2 className="h-3 w-3 text-destructive" />
+                            <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
                       </div>
                       {skill.description && (
-                        <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                           {skill.description}
                         </p>
                       )}
