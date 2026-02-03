@@ -863,7 +863,18 @@ export const FavoriteDetailView = () => {
                   </p>
                 ) : (
                   <CommonFileGrid
-                    files={files}
+                    files={files.map((f) => ({
+                      ...f,
+                      fileType: f.fileType as
+                        | "PDF"
+                        | "DOCX"
+                        | "XLSX"
+                        | "TXT"
+                        | "IMAGE"
+                        | "VIDEO"
+                        | "AUDIO"
+                        | "OTHER",
+                    }))}
                     onDownload={downloadFile}
                     onDelete={isAdminMode ? handleFileDelete : undefined}
                     onRename={isAdminMode ? handleFileRename : undefined}

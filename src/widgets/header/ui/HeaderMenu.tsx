@@ -24,7 +24,7 @@ const defaultMenuItems: MenuItem[] = [
   { label: "노트", href: "/notes" },
   { label: "게시판", href: "/posts" },
   { label: "사용자 관리", href: "/users" },
-  { label: "히스토리", href: "/history" },
+  { label: "스킬트리", href: "/skills" },
 ];
 
 export const HeaderMenu = ({ items = defaultMenuItems }: HeaderMenuProps) => {
