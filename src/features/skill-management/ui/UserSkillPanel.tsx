@@ -357,13 +357,10 @@ export function UserSkillPanel({
           const isCollapsed = collapsedCategories.has(category.id);
 
           return (
-            <div
-              key={category.id}
-              className="border rounded-lg overflow-hidden"
-            >
+            <div key={category.id} className="rounded-lg overflow-hidden">
               {/* 카테고리 헤더 */}
               <div
-                className="flex items-center justify-between p-3 bg-muted/50 cursor-pointer hover:bg-muted/70"
+                className="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-800 border-b cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700"
                 onClick={() => toggleCategory(category.id)}
               >
                 <div className="flex items-center gap-2">
@@ -417,7 +414,7 @@ export function UserSkillPanel({
 
               {/* 스킬 카드들 */}
               {!isCollapsed && (
-                <div className="p-3">
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/50">
                   {categorySkills.length === 0 ? (
                     <div className="text-center py-4 text-muted-foreground text-sm">
                       이 카테고리에 스킬이 없습니다.
@@ -431,7 +428,7 @@ export function UserSkillPanel({
                       </Button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4">
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
                       {categorySkills.map((skill) => {
                         const level = userSkillMap.get(skill.id) || 0;
                         const config =
@@ -440,7 +437,7 @@ export function UserSkillPanel({
                         return (
                           <div
                             key={skill.id}
-                            className="border rounded-lg p-4 hover:bg-muted/30 hover:shadow-sm transition-all"
+                            className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 shadow-sm hover:shadow-md transition-all"
                           >
                             {/* 카드 헤더 */}
                             <div className="flex items-start justify-between mb-3">
@@ -492,7 +489,7 @@ export function UserSkillPanel({
 
                             {/* 레벨 슬라이더 */}
                             {isOwnProfile && (
-                              <div className="pt-2 border-t">
+                              <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30 -mx-4 -mb-4 px-4 pb-4 rounded-b-lg">
                                 <SkillLevelSlider
                                   level={level}
                                   maxLevel={skill.maxLevel}
@@ -517,8 +514,8 @@ export function UserSkillPanel({
 
         {/* 미분류 스킬 */}
         {uncategorizedSkills.length > 0 && (
-          <div className="border rounded-lg overflow-hidden">
-            <div className="flex items-center justify-between p-3 bg-muted/30">
+          <div className="rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-800 border-b">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-gray-400" />
                 <h3 className="font-semibold text-muted-foreground">미분류</h3>
@@ -527,8 +524,8 @@ export function UserSkillPanel({
                 </span>
               </div>
             </div>
-            <div className="p-4">
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900/50">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
                 {uncategorizedSkills.map((skill) => {
                   const level = userSkillMap.get(skill.id) || 0;
                   const config = skillLevelConfig[level] || skillLevelConfig[0];
@@ -536,7 +533,7 @@ export function UserSkillPanel({
                   return (
                     <div
                       key={skill.id}
-                      className="border rounded-lg p-4 hover:bg-muted/30 hover:shadow-sm transition-all"
+                      className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 shadow-sm hover:shadow-md transition-all"
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-3">
@@ -583,7 +580,7 @@ export function UserSkillPanel({
                         </p>
                       )}
                       {isOwnProfile && (
-                        <div className="pt-2 border-t">
+                        <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30 -mx-4 -mb-4 px-4 pb-4 rounded-b-lg">
                           <SkillLevelSlider
                             level={level}
                             maxLevel={skill.maxLevel}
