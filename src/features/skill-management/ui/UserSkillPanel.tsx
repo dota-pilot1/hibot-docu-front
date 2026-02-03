@@ -3,14 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { Label } from "@/shared/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/shared/ui/dialog";
+import { FormDialog, FormField } from "@/shared/ui/dialogs/BaseDialog";
 import {
   Select,
   SelectContent,
@@ -299,66 +292,50 @@ export function UserSkillPanel({
         </div>
 
         {/* 카테고리 추가 모달 */}
-        <Dialog
+        <FormDialog
           open={modalMode === "category-add"}
           onOpenChange={() => resetForms()}
+          title="카테고리 추가"
+          onSubmit={handleSaveCategory}
+          onCancel={resetForms}
         >
-          <DialogContent className="max-w-md rounded-lg">
-            <DialogHeader className="-mx-6 -mt-6 rounded-t-lg">
-              <DialogTitle>카테고리 추가</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>카테고리 이름</Label>
-                <Input
-                  value={categoryForm.name}
-                  onChange={(e) =>
-                    setCategoryForm({ ...categoryForm, name: e.target.value })
-                  }
-                  placeholder="예: Frontend"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>설명</Label>
-                <Input
-                  value={categoryForm.description}
-                  onChange={(e) =>
-                    setCategoryForm({
-                      ...categoryForm,
-                      description: e.target.value,
-                    })
-                  }
-                  placeholder="카테고리 설명"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>색상</Label>
-                <div className="flex items-center gap-3">
-                  <Input
-                    type="color"
-                    value={categoryForm.color}
-                    onChange={(e) =>
-                      setCategoryForm({
-                        ...categoryForm,
-                        color: e.target.value,
-                      })
-                    }
-                    className="h-10 w-16 p-1 cursor-pointer"
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    {categoryForm.color}
-                  </span>
-                </div>
-              </div>
+          <FormField label="카테고리 이름">
+            <Input
+              value={categoryForm.name}
+              onChange={(e) =>
+                setCategoryForm({ ...categoryForm, name: e.target.value })
+              }
+              placeholder="예: Frontend"
+            />
+          </FormField>
+          <FormField label="설명">
+            <Input
+              value={categoryForm.description}
+              onChange={(e) =>
+                setCategoryForm({
+                  ...categoryForm,
+                  description: e.target.value,
+                })
+              }
+              placeholder="카테고리 설명"
+            />
+          </FormField>
+          <FormField label="색상">
+            <div className="flex items-center gap-3">
+              <Input
+                type="color"
+                value={categoryForm.color}
+                onChange={(e) =>
+                  setCategoryForm({ ...categoryForm, color: e.target.value })
+                }
+                className="h-10 w-16 p-1 cursor-pointer"
+              />
+              <span className="text-sm text-muted-foreground">
+                {categoryForm.color}
+              </span>
             </div>
-            <DialogFooter className="border-t pt-4 -mx-6 -mb-6 px-6 pb-4 bg-muted/30">
-              <Button variant="outline" onClick={resetForms}>
-                취소
-              </Button>
-              <Button onClick={handleSaveCategory}>저장</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          </FormField>
+        </FormDialog>
       </div>
     );
   }
@@ -628,145 +605,114 @@ export function UserSkillPanel({
       </div>
 
       {/* 카테고리 추가/수정 모달 */}
-      <Dialog
+      <FormDialog
         open={modalMode === "category-add" || modalMode === "category-edit"}
         onOpenChange={() => resetForms()}
+        title={modalMode === "category-add" ? "카테고리 추가" : "카테고리 수정"}
+        onSubmit={handleSaveCategory}
+        onCancel={resetForms}
       >
-        <DialogContent className="max-w-md rounded-lg">
-          <DialogHeader className="-mx-6 -mt-6 rounded-t-lg">
-            <DialogTitle>
-              {modalMode === "category-add" ? "카테고리 추가" : "카테고리 수정"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>카테고리 이름</Label>
-              <Input
-                value={categoryForm.name}
-                onChange={(e) =>
-                  setCategoryForm({ ...categoryForm, name: e.target.value })
-                }
-                placeholder="예: Frontend"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>설명</Label>
-              <Input
-                value={categoryForm.description}
-                onChange={(e) =>
-                  setCategoryForm({
-                    ...categoryForm,
-                    description: e.target.value,
-                  })
-                }
-                placeholder="카테고리 설명"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>색상</Label>
-              <div className="flex items-center gap-3">
-                <Input
-                  type="color"
-                  value={categoryForm.color}
-                  onChange={(e) =>
-                    setCategoryForm({ ...categoryForm, color: e.target.value })
-                  }
-                  className="h-10 w-16 p-1 cursor-pointer"
-                />
-                <span className="text-sm text-muted-foreground">
-                  {categoryForm.color}
-                </span>
-              </div>
-            </div>
+        <FormField label="카테고리 이름">
+          <Input
+            value={categoryForm.name}
+            onChange={(e) =>
+              setCategoryForm({ ...categoryForm, name: e.target.value })
+            }
+            placeholder="예: Frontend"
+          />
+        </FormField>
+        <FormField label="설명">
+          <Input
+            value={categoryForm.description}
+            onChange={(e) =>
+              setCategoryForm({
+                ...categoryForm,
+                description: e.target.value,
+              })
+            }
+            placeholder="카테고리 설명"
+          />
+        </FormField>
+        <FormField label="색상">
+          <div className="flex items-center gap-3">
+            <Input
+              type="color"
+              value={categoryForm.color}
+              onChange={(e) =>
+                setCategoryForm({ ...categoryForm, color: e.target.value })
+              }
+              className="h-10 w-16 p-1 cursor-pointer"
+            />
+            <span className="text-sm text-muted-foreground">
+              {categoryForm.color}
+            </span>
           </div>
-          <DialogFooter className="border-t pt-4 -mx-6 -mb-6 px-6 pb-4 bg-muted/30">
-            <Button variant="outline" onClick={resetForms}>
-              취소
-            </Button>
-            <Button onClick={handleSaveCategory}>저장</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </FormField>
+      </FormDialog>
 
       {/* 스킬 추가/수정 모달 */}
-      <Dialog
+      <FormDialog
         open={modalMode === "skill-add" || modalMode === "skill-edit"}
         onOpenChange={() => resetForms()}
+        title={modalMode === "skill-add" ? "스킬 추가" : "스킬 수정"}
+        onSubmit={handleSaveSkill}
+        onCancel={resetForms}
       >
-        <DialogContent className="max-w-md rounded-lg">
-          <DialogHeader className="-mx-6 -mt-6 rounded-t-lg">
-            <DialogTitle>
-              {modalMode === "skill-add" ? "스킬 추가" : "스킬 수정"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>카테고리</Label>
-              <Select
-                value={skillForm.categoryId?.toString() || ""}
-                onValueChange={(value) =>
-                  setSkillForm({
-                    ...skillForm,
-                    categoryId: value ? parseInt(value) : undefined,
-                  })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="카테고리 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories?.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id.toString()}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>스킬 이름</Label>
-              <Input
-                value={skillForm.name}
-                onChange={(e) =>
-                  setSkillForm({ ...skillForm, name: e.target.value })
-                }
-                placeholder="예: React"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>설명</Label>
-              <Input
-                value={skillForm.description}
-                onChange={(e) =>
-                  setSkillForm({ ...skillForm, description: e.target.value })
-                }
-                placeholder="스킬 설명"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>최대 레벨</Label>
-              <Input
-                type="number"
-                min={1}
-                max={10}
-                value={skillForm.maxLevel}
-                onChange={(e) =>
-                  setSkillForm({
-                    ...skillForm,
-                    maxLevel: parseInt(e.target.value) || 5,
-                  })
-                }
-              />
-            </div>
-          </div>
-          <DialogFooter className="border-t pt-4 -mx-6 -mb-6 px-6 pb-4 bg-muted/30">
-            <Button variant="outline" onClick={resetForms}>
-              취소
-            </Button>
-            <Button onClick={handleSaveSkill}>저장</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        <FormField label="카테고리">
+          <Select
+            value={skillForm.categoryId?.toString() || ""}
+            onValueChange={(value) =>
+              setSkillForm({
+                ...skillForm,
+                categoryId: value ? parseInt(value) : undefined,
+              })
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="카테고리 선택" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories?.map((cat) => (
+                <SelectItem key={cat.id} value={cat.id.toString()}>
+                  {cat.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
+        <FormField label="스킬 이름">
+          <Input
+            value={skillForm.name}
+            onChange={(e) =>
+              setSkillForm({ ...skillForm, name: e.target.value })
+            }
+            placeholder="예: React"
+          />
+        </FormField>
+        <FormField label="설명">
+          <Input
+            value={skillForm.description}
+            onChange={(e) =>
+              setSkillForm({ ...skillForm, description: e.target.value })
+            }
+            placeholder="스킬 설명"
+          />
+        </FormField>
+        <FormField label="최대 레벨">
+          <Input
+            type="number"
+            min={1}
+            max={10}
+            value={skillForm.maxLevel}
+            onChange={(e) =>
+              setSkillForm({
+                ...skillForm,
+                maxLevel: parseInt(e.target.value) || 5,
+              })
+            }
+          />
+        </FormField>
+      </FormDialog>
     </div>
   );
 }

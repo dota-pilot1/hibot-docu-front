@@ -6,13 +6,8 @@ import {
   useDeleteTaskImage,
 } from "@/entities/task/hooks/useTaskDetail";
 
+import { BaseDialog } from "@/shared/ui/dialogs/BaseDialog";
 import { ConfirmDialog } from "@/shared/ui/dialogs/ConfirmDialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/shared/ui/dialog";
 import { TaskDetailImage } from "@/entities/task/model/types";
 import { Trash2, ImageIcon, CloudUpload } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
@@ -104,7 +99,7 @@ export function TaskDetailImages({ taskId, images }: TaskDetailImagesProps) {
 
       <div className="flex items-center justify-between mb-3">
         <h4 className="font-medium text-sm flex items-center gap-2">
-          🖼️ 참고 이미지 ({images.length})
+          참고 이미지 ({images.length})
           {isUploading && (
             <div className="h-4 w-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
           )}
@@ -174,26 +169,23 @@ export function TaskDetailImages({ taskId, images }: TaskDetailImagesProps) {
         </div>
       )}
 
-      {/* 이미지 다이얼로그 */}
-      <Dialog
+      {/* 이미지 보기 다이어로그 */}
+      <BaseDialog
         open={!!selectedImage}
         onOpenChange={() => setSelectedImage(null)}
+        title="이미지 보기"
+        maxWidth="max-w-4xl"
       >
-        <DialogContent className="max-w-4xl max-h-[90vh]">
-          <DialogHeader className="pb-4">
-            <DialogTitle>이미지 보기</DialogTitle>
-          </DialogHeader>
-          <div className="overflow-auto max-h-[calc(90vh-120px)]">
-            <img
-              src={selectedImage || ""}
-              alt="확대 이미지"
-              className="w-full h-auto object-contain rounded-lg"
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+        <div className="max-h-[70vh] overflow-auto">
+          <img
+            src={selectedImage || ""}
+            alt="확대 이미지"
+            className="w-full h-auto object-contain rounded-lg"
+          />
+        </div>
+      </BaseDialog>
 
-      {/* 삭제 확인 다이얼로그 */}
+      {/* 삭제 확인 다이어로그 */}
       <ConfirmDialog
         open={!!imageToDelete}
         onOpenChange={(open) => !open && setImageToDelete(null)}
