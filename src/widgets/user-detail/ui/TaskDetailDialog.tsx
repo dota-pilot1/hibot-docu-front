@@ -61,7 +61,7 @@ export function TaskDetailDialog({
 
       {/* 상태 변경 버튼 */}
       <div className="flex gap-2 py-2">
-        {(["in_progress", "blocked", "review", "completed"] as const).map(
+        {(["pending", "in_progress", "blocked", "completed"] as const).map(
           (status) => {
             const config = taskStatusConfig[status];
             const isActive = task.status === status;
