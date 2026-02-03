@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/shared/ui/dialog";
 import {
   Select,
@@ -302,12 +303,12 @@ export function UserSkillPanel({
           open={modalMode === "category-add"}
           onOpenChange={() => resetForms()}
         >
-          <DialogContent className="max-w-xs">
-            <DialogHeader>
+          <DialogContent className="max-w-md rounded-lg">
+            <DialogHeader className="-mx-6 -mt-6 rounded-t-lg">
               <DialogTitle>카테고리 추가</DialogTitle>
             </DialogHeader>
-            <div className="space-y-3">
-              <div>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
                 <Label>카테고리 이름</Label>
                 <Input
                   value={categoryForm.name}
@@ -317,7 +318,7 @@ export function UserSkillPanel({
                   placeholder="예: Frontend"
                 />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label>설명</Label>
                 <Input
                   value={categoryForm.description}
@@ -330,26 +331,32 @@ export function UserSkillPanel({
                   placeholder="카테고리 설명"
                 />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label>색상</Label>
-                <Input
-                  type="color"
-                  value={categoryForm.color}
-                  onChange={(e) =>
-                    setCategoryForm({ ...categoryForm, color: e.target.value })
-                  }
-                  className="h-10 p-1"
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" size="sm" onClick={resetForms}>
-                  취소
-                </Button>
-                <Button size="sm" onClick={handleSaveCategory}>
-                  저장
-                </Button>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="color"
+                    value={categoryForm.color}
+                    onChange={(e) =>
+                      setCategoryForm({
+                        ...categoryForm,
+                        color: e.target.value,
+                      })
+                    }
+                    className="h-10 w-16 p-1 cursor-pointer"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {categoryForm.color}
+                  </span>
+                </div>
               </div>
             </div>
+            <DialogFooter className="border-t pt-4 -mx-6 -mb-6 px-6 pb-4 bg-muted/30">
+              <Button variant="outline" onClick={resetForms}>
+                취소
+              </Button>
+              <Button onClick={handleSaveCategory}>저장</Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
@@ -625,14 +632,14 @@ export function UserSkillPanel({
         open={modalMode === "category-add" || modalMode === "category-edit"}
         onOpenChange={() => resetForms()}
       >
-        <DialogContent className="max-w-xs">
-          <DialogHeader>
+        <DialogContent className="max-w-md rounded-lg">
+          <DialogHeader className="-mx-6 -mt-6 rounded-t-lg">
             <DialogTitle>
               {modalMode === "category-add" ? "카테고리 추가" : "카테고리 수정"}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <div>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
               <Label>카테고리 이름</Label>
               <Input
                 value={categoryForm.name}
@@ -642,7 +649,7 @@ export function UserSkillPanel({
                 placeholder="예: Frontend"
               />
             </div>
-            <div>
+            <div className="space-y-2">
               <Label>설명</Label>
               <Input
                 value={categoryForm.description}
@@ -655,26 +662,29 @@ export function UserSkillPanel({
                 placeholder="카테고리 설명"
               />
             </div>
-            <div>
+            <div className="space-y-2">
               <Label>색상</Label>
-              <Input
-                type="color"
-                value={categoryForm.color}
-                onChange={(e) =>
-                  setCategoryForm({ ...categoryForm, color: e.target.value })
-                }
-                className="h-10 p-1"
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={resetForms}>
-                취소
-              </Button>
-              <Button size="sm" onClick={handleSaveCategory}>
-                저장
-              </Button>
+              <div className="flex items-center gap-3">
+                <Input
+                  type="color"
+                  value={categoryForm.color}
+                  onChange={(e) =>
+                    setCategoryForm({ ...categoryForm, color: e.target.value })
+                  }
+                  className="h-10 w-16 p-1 cursor-pointer"
+                />
+                <span className="text-sm text-muted-foreground">
+                  {categoryForm.color}
+                </span>
+              </div>
             </div>
           </div>
+          <DialogFooter className="border-t pt-4 -mx-6 -mb-6 px-6 pb-4 bg-muted/30">
+            <Button variant="outline" onClick={resetForms}>
+              취소
+            </Button>
+            <Button onClick={handleSaveCategory}>저장</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -683,14 +693,14 @@ export function UserSkillPanel({
         open={modalMode === "skill-add" || modalMode === "skill-edit"}
         onOpenChange={() => resetForms()}
       >
-        <DialogContent className="max-w-xs">
-          <DialogHeader>
+        <DialogContent className="max-w-md rounded-lg">
+          <DialogHeader className="-mx-6 -mt-6 rounded-t-lg">
             <DialogTitle>
               {modalMode === "skill-add" ? "스킬 추가" : "스킬 수정"}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <div>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
               <Label>카테고리</Label>
               <Select
                 value={skillForm.categoryId?.toString() || ""}
@@ -713,7 +723,7 @@ export function UserSkillPanel({
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="space-y-2">
               <Label>스킬 이름</Label>
               <Input
                 value={skillForm.name}
@@ -723,7 +733,7 @@ export function UserSkillPanel({
                 placeholder="예: React"
               />
             </div>
-            <div>
+            <div className="space-y-2">
               <Label>설명</Label>
               <Input
                 value={skillForm.description}
@@ -733,7 +743,7 @@ export function UserSkillPanel({
                 placeholder="스킬 설명"
               />
             </div>
-            <div>
+            <div className="space-y-2">
               <Label>최대 레벨</Label>
               <Input
                 type="number"
@@ -748,15 +758,13 @@ export function UserSkillPanel({
                 }
               />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={resetForms}>
-                취소
-              </Button>
-              <Button size="sm" onClick={handleSaveSkill}>
-                저장
-              </Button>
-            </div>
           </div>
+          <DialogFooter className="border-t pt-4 -mx-6 -mb-6 px-6 pb-4 bg-muted/30">
+            <Button variant="outline" onClick={resetForms}>
+              취소
+            </Button>
+            <Button onClick={handleSaveSkill}>저장</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
