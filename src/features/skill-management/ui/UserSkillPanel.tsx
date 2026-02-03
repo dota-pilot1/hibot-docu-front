@@ -450,7 +450,8 @@ export function UserSkillPanel({
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
                       {categorySkills.map((skill) => {
                         const level = userSkillMap.get(skill.id) || 0;
-                        const config = skillLevelConfig[level];
+                        const config =
+                          skillLevelConfig[level] || skillLevelConfig[0];
 
                         return (
                           <div
@@ -546,7 +547,7 @@ export function UserSkillPanel({
               <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
                 {uncategorizedSkills.map((skill) => {
                   const level = userSkillMap.get(skill.id) || 0;
-                  const config = skillLevelConfig[level];
+                  const config = skillLevelConfig[level] || skillLevelConfig[0];
 
                   return (
                     <div
