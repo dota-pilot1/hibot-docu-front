@@ -24,6 +24,8 @@ interface FooterHeaderProps {
   statusCounts: StatusCounts;
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
+  hasNewNotifications: boolean;
+  isWebSocketConnected: boolean;
 }
 
 export const FooterHeader = ({
@@ -32,6 +34,8 @@ export const FooterHeader = ({
   statusCounts,
   activeTab,
   onTabChange,
+  hasNewNotifications,
+  isWebSocketConnected,
 }: FooterHeaderProps) => {
   const tabs = [
     { id: "notice" as const, label: "공지", icon: "📢" },
@@ -66,12 +70,21 @@ export const FooterHeader = ({
           >
             <span className="mr-1">{tab.icon}</span>
             {tab.label}
+            {/* 업무 탭에 새 알림 배지 */}
+            {tab.id === "task" && hasNewNotifications && (
+              <span className="ml-1.5 w-2 h-2 bg-red-500 rounded-full inline-block animate-pulse" />
+            )}
           </button>
         ))}
       </div>
 
-      {/* 오른쪽: 상태 배지 그룹 (업무 탭일 때만) + 토글 버튼 */}
+      {/* 오른쪽: WebSocket 상태 + 상태 배지 그룹 (업무 탭일 때만) + 토글 버튼 */}
       <div className="flex items-center gap-4">
+        {/* WebSocket 연결 상태 */}
+        <div
+          className={`w-2 h-2 rounded-full ${isWebSocketConnected ? "bg-green-500" : "bg-red-500"}`}
+          title={isWebSocketConnected ? "실시간 연결됨" : "연결 끊김"}
+        />
         {activeTab === "task" && (
           <div className="flex items-center gap-4">
             {/* 대기 */}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FooterHeader } from "./FooterHeader";
 import { FooterBody } from "./FooterBody";
+import { TaskNotification } from "../model/useTaskNotifications";
 
 export type TabType = "notice" | "task" | "favorite";
 
@@ -16,14 +17,28 @@ interface StatusCounts {
 
 interface FooterCardProps {
   statusCounts: StatusCounts;
+  notifications: TaskNotification[];
+  hasNewNotifications: boolean;
+  onClearNewNotifications: () => void;
+  isWebSocketConnected: boolean;
 }
 
-export const FooterCard = ({ statusCounts }: FooterCardProps) => {
+export const FooterCard = ({
+  statusCounts,
+  notifications,
+  hasNewNotifications,
+  onClearNewNotifications,
+  isWebSocketConnected,
+}: FooterCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("task");
 
   const handleToggle = () => {
     setIsExpanded((prev) => !prev);
+    if (!isExpanded) {
+      // 푸터 열 때 새 알림 표시 제거
+      onClearNewNotifications();
+    }
   };
 
   return (
@@ -37,8 +52,14 @@ export const FooterCard = ({ statusCounts }: FooterCardProps) => {
         statusCounts={statusCounts}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        hasNewNotifications={hasNewNotifications && !isExpanded}
+        isWebSocketConnected={isWebSocketConnected}
       />
-      <FooterBody isExpanded={isExpanded} activeTab={activeTab} />
+      <FooterBody
+        isExpanded={isExpanded}
+        activeTab={activeTab}
+        notifications={notifications}
+      />
     </div>
   );
 };
