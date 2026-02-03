@@ -76,7 +76,9 @@ export const JournalDetailView: React.FC<JournalDetailViewProps> = ({
 
   // 서버 데이터가 변경되면 로컬 상태 업데이트
   useEffect(() => {
-    setLocalJournals(journals);
+    if (JSON.stringify(journals) !== JSON.stringify(localJournals)) {
+      setLocalJournals(journals);
+    }
   }, [journals]);
 
   const [selectedJournal, setSelectedJournal] = useState<Journal | null>(null);

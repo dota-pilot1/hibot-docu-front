@@ -1,14 +1,20 @@
 "use client";
 
+import { useSortable } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   ChevronRight,
   Folder,
   FolderOpen,
-  Calendar,
   MoreHorizontal,
   Plus,
   Pencil,
   Trash2,
+  GripVertical,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import {
@@ -18,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import type { JournalCategory } from "../api/journalApi";
+import { SortableDateItem } from "./SortableDateItem";
 
 interface JournalTeamItemProps {
   team: JournalCategory & { children?: JournalCategory[] };
@@ -44,8 +51,32 @@ export const JournalTeamItem: React.FC<JournalTeamItemProps> = ({
 }) => {
   const dateCategories = team.children || [];
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: team.id,
+    data: {
+      type: "team",
+      team,
+    },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
-    <div>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(isDragging && "opacity-50")}
+    >
       {/* 팀 헤더 */}
       <div
         className={cn(
@@ -53,20 +84,43 @@ export const JournalTeamItem: React.FC<JournalTeamItemProps> = ({
           "hover:bg-zinc-100 dark:hover:bg-zinc-800",
           "group",
         )}
-        onClick={onToggle}
       >
+        {/* 드래그 핸들 */}
+        <div
+          {...attributes}
+          {...listeners}
+          className={cn(
+            "cursor-grab active:cursor-grabbing p-0.5 rounded",
+            "hover:bg-zinc-200 dark:hover:bg-zinc-700",
+          )}
+        >
+          <GripVertical className="h-4 w-4 text-zinc-400" />
+        </div>
+
         <ChevronRight
           className={cn(
-            "h-4 w-4 text-zinc-400 transition-transform",
+            "h-4 w-4 text-zinc-400 transition-transform cursor-pointer",
             isExpanded && "rotate-90",
           )}
+          onClick={onToggle}
         />
         {isExpanded ? (
-          <FolderOpen className="h-4 w-4 text-yellow-500" />
+          <FolderOpen
+            className="h-4 w-4 text-yellow-500 cursor-pointer"
+            onClick={onToggle}
+          />
         ) : (
-          <Folder className="h-4 w-4 text-yellow-500" />
+          <Folder
+            className="h-4 w-4 text-yellow-500 cursor-pointer"
+            onClick={onToggle}
+          />
         )}
-        <span className="flex-1 text-sm truncate">{team.name}</span>
+        <span
+          className="flex-1 text-sm truncate cursor-pointer"
+          onClick={onToggle}
+        >
+          {team.name}
+        </span>
         <span className="text-xs text-zinc-400">{dateCategories.length}</span>
 
         {/* 컨텍스트 메뉴 */}
@@ -108,48 +162,21 @@ export const JournalTeamItem: React.FC<JournalTeamItemProps> = ({
           {dateCategories.length === 0 ? (
             <div className="px-4 py-2 text-xs text-zinc-400">날짜 없음</div>
           ) : (
-            dateCategories.map((dateCategory) => {
-              const isSelected = selectedCategoryId === dateCategory.id;
-
-              return (
-                <div
+            <SortableContext
+              items={dateCategories.map((c) => c.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {dateCategories.map((dateCategory) => (
+                <SortableDateItem
                   key={dateCategory.id}
-                  className={cn(
-                    "flex items-center gap-1 px-2 py-1.5 cursor-pointer",
-                    "hover:bg-zinc-100 dark:hover:bg-zinc-800",
-                    isSelected && "bg-blue-50 dark:bg-blue-900/20",
-                    "group",
-                  )}
-                  onClick={() => onSelectCategory(dateCategory)}
-                >
-                  <Calendar className="h-4 w-4 text-zinc-400" />
-                  <span
-                    className={cn(
-                      "flex-1 text-sm truncate",
-                      isSelected &&
-                        "text-blue-600 dark:text-blue-400 font-medium",
-                    )}
-                  >
-                    {dateCategory.name}
-                  </span>
-
-                  {/* 날짜 삭제 버튼 */}
-                  <button
-                    className={cn(
-                      "p-1 rounded opacity-0 group-hover:opacity-100",
-                      "hover:bg-zinc-200 dark:hover:bg-zinc-700",
-                      "transition-opacity text-red-500",
-                    )}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteDate(dateCategory.id);
-                    }}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                </div>
-              );
-            })
+                  dateCategory={dateCategory}
+                  parentId={team.id}
+                  isSelected={selectedCategoryId === dateCategory.id}
+                  onSelect={() => onSelectCategory(dateCategory)}
+                  onDelete={() => onDeleteDate(dateCategory.id)}
+                />
+              ))}
+            </SortableContext>
           )}
         </div>
       )}

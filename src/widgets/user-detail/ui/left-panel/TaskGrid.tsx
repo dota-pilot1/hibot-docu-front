@@ -301,18 +301,32 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
     const batchUpdateMutation = useBatchUpdateTasks();
     const batchDeleteMutation = useBatchDeleteTasks();
 
-    // 모든 변경사항 저장
+    // 선택된 행의 변경사항만 저장
     const saveChanges = useCallback(async () => {
-      if (pendingChanges.size === 0) return;
-      const updates = Array.from(pendingChanges.entries()).map(
-        ([id, data]) => ({
+      if (selectedIds.length === 0) return;
+
+      // 선택된 행 중 변경사항이 있는 것만 저장
+      const updates = selectedIds
+        .filter((id) => pendingChanges.has(id))
+        .map((id) => ({
           id,
-          data,
-        }),
-      );
+          data: pendingChanges.get(id)!,
+        }));
+
+      if (updates.length === 0) return;
+
       await batchUpdateMutation.mutateAsync(updates);
-      setPendingChanges(new Map());
-    }, [pendingChanges, batchUpdateMutation]);
+
+      // 저장된 항목만 pendingChanges에서 제거
+      setPendingChanges((prev) => {
+        const newMap = new Map(prev);
+        updates.forEach(({ id }) => newMap.delete(id));
+        return newMap;
+      });
+
+      // 선택 해제
+      gridRef.current?.api.deselectAll();
+    }, [selectedIds, pendingChanges, batchUpdateMutation]);
 
     // 선택된 항목 삭제 (confirm 없이 바로 삭제 - 상위 컴포넌트에서 확인 다이얼로그 처리)
     const deleteSelected = useCallback(async () => {
@@ -558,6 +572,9 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
             newMap.set(taskId, { ...existing, [field]: value });
             return newMap;
           });
+
+          // 수정된 행 자동 선택
+          event.node.setSelected(true);
         }
       },
       [],
@@ -583,6 +600,17 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       [onTaskSelect],
     );
 
+    // 수정된 행 스타일 적용
+    const getRowClass = useCallback(
+      (params: { data: Task | undefined }) => {
+        if (params.data && pendingChanges.has(params.data.id)) {
+          return "bg-yellow-50";
+        }
+        return "";
+      },
+      [pendingChanges],
+    );
+
     if (isLoading) {
       return (
         <div className="h-full w-full flex items-center justify-center text-zinc-500">
@@ -603,8 +631,9 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
             mode: "multiRow",
             headerCheckbox: true,
             checkboxes: true,
-            enableClickSelection: true,
+            enableClickSelection: false,
           }}
+          getRowClass={getRowClass}
           onCellValueChanged={handleCellValueChanged}
           onSelectionChanged={handleSelectionChanged}
           onRowClicked={handleRowClicked}

@@ -4,14 +4,7 @@ import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Calendar, Edit2, Trash2, GripVertical } from "lucide-react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardAction,
-  CardContent,
-  CardFooter,
-} from "@/shared/ui/card";
+import { Card, CardContent, CardFooter } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
@@ -67,50 +60,53 @@ export const SortableJournalCard: React.FC<SortableJournalCardProps> = ({
           isDragging && "opacity-50 shadow-lg z-50",
         )}
       >
-        <CardHeader className="pb-2 pt-4 px-4 bg-transparent border-b-0">
-          <div className="flex items-center gap-2">
-            {/* 드래그 핸들 */}
-            <div
-              {...attributes}
-              {...listeners}
-              className={cn(
-                "cursor-grab active:cursor-grabbing p-0.5 rounded",
-                "hover:bg-zinc-200 dark:hover:bg-zinc-700",
-              )}
-            >
-              <GripVertical className="h-4 w-4 text-zinc-400" />
-            </div>
-            <CardTitle className="text-base line-clamp-1 flex-1">
-              {journal.title}
-            </CardTitle>
+        {/* 드래그 핸들 + 헤더 영역 */}
+        <div className="flex items-start gap-2 px-4 pt-4 pb-2">
+          {/* 드래그 핸들 */}
+          <div
+            {...attributes}
+            {...listeners}
+            className={cn(
+              "cursor-grab active:cursor-grabbing p-0.5 rounded mt-0.5",
+              "hover:bg-zinc-200 dark:hover:bg-zinc-700",
+            )}
+          >
+            <GripVertical className="h-4 w-4 text-zinc-400" />
           </div>
-          <CardAction>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(journal);
-                }}
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-red-500 hover:text-red-600"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(journal);
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardAction>
-        </CardHeader>
+
+          {/* 제목 */}
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-semibold line-clamp-1">
+              {journal.title}
+            </h3>
+          </div>
+
+          {/* 액션 버튼 */}
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(journal);
+              }}
+            >
+              <Edit2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-red-500 hover:text-red-600"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(journal);
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
 
         <CardContent className="px-4 py-3 space-y-3">
           {/* 날짜 */}

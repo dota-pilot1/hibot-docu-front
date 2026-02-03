@@ -70,6 +70,23 @@ export const useDeleteCategory = () => {
   });
 };
 
+export const useReorderCategories = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      categoryIds,
+      parentId,
+    }: {
+      categoryIds: number[];
+      parentId: number | null;
+    }) => journalApi.reorderCategories(categoryIds, parentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: journalKeys.all });
+    },
+  });
+};
+
 // ============================================
 // Journal Queries & Mutations
 // ============================================

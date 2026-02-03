@@ -180,13 +180,13 @@ function IssuesContent() {
               </Button>
               <Button
                 size="sm"
-                variant={pendingCount > 0 ? "default" : "ghost"}
+                variant={selectedCount > 0 ? "default" : "ghost"}
                 onClick={handleSave}
-                disabled={pendingCount === 0}
+                disabled={selectedCount === 0}
               >
                 <Save className="h-4 w-4" />
                 <span className="ml-1">
-                  저장{pendingCount > 0 && ` (${pendingCount})`}
+                  저장{selectedCount > 0 && ` (${selectedCount})`}
                 </span>
               </Button>
             </>

@@ -1,12 +1,29 @@
 "use client";
 
-import { useState } from "react";
-import { FolderPlus, FileText } from "lucide-react";
+import { useState, useEffect } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  DragStartEvent,
+  DragEndEvent,
+  DragOverEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { FolderPlus, FileText, Folder } from "lucide-react";
 import {
   useJournalTree,
   useCreateCategory,
   useUpdateCategory,
   useDeleteCategory,
+  useReorderCategories,
 } from "../model/useJournals";
 import { JournalTeamItem } from "./JournalTeamItem";
 import { Button } from "@/shared/ui/button";
@@ -34,6 +51,27 @@ export const JournalSidebar: React.FC<JournalSidebarProps> = ({
   const createCategoryMutation = useCreateCategory();
   const updateCategoryMutation = useUpdateCategory();
   const deleteCategoryMutation = useDeleteCategory();
+  const reorderCategoriesMutation = useReorderCategories();
+
+  // 드래그 앤 드롭 상태
+  const [localTree, setLocalTree] = useState<JournalCategory[]>([]);
+  const [activeTeam, setActiveTeam] = useState<JournalCategory | null>(null);
+  const [activeDate, setActiveDate] = useState<JournalCategory | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+  );
+
+  // 서버 데이터 동기화
+  useEffect(() => {
+    if (JSON.stringify(tree) !== JSON.stringify(localTree)) {
+      setLocalTree(tree);
+    }
+  }, [tree]);
 
   // 팀 다이얼로그 상태
   const [teamDialog, setTeamDialog] = useState<{
@@ -139,6 +177,86 @@ export const JournalSidebar: React.FC<JournalSidebarProps> = ({
     }
   };
 
+  // 드래그 앤 드롭 핸들러
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const activeData = active.data.current;
+
+    if (activeData?.type === "team") {
+      setActiveTeam(activeData.team);
+    } else if (activeData?.type === "date") {
+      setActiveDate(activeData.date);
+    }
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const activeData = active.data.current;
+    const overData = over.data.current;
+
+    // 팀 순서 변경
+    if (activeData?.type === "team" && overData?.type === "team") {
+      const oldIndex = localTree.findIndex((t) => t.id === active.id);
+      const newIndex = localTree.findIndex((t) => t.id === over.id);
+      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+        setLocalTree(arrayMove(localTree, oldIndex, newIndex));
+      }
+    }
+
+    // 날짜 순서 변경 (같은 팀 내에서)
+    if (activeData?.type === "date" && overData?.type === "date") {
+      const activeParentId = activeData.parentId;
+      const overParentId = overData.parentId;
+
+      if (activeParentId === overParentId) {
+        setLocalTree((prev) =>
+          prev.map((team) => {
+            if (team.id === activeParentId && team.children) {
+              const children = [...team.children];
+              const oldIndex = children.findIndex((c) => c.id === active.id);
+              const newIndex = children.findIndex((c) => c.id === over.id);
+              if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+                return {
+                  ...team,
+                  children: arrayMove(children, oldIndex, newIndex),
+                };
+              }
+            }
+            return team;
+          }),
+        );
+      }
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active } = event;
+    const activeData = active.data.current;
+
+    if (activeData?.type === "team") {
+      const teamIds = localTree.map((t) => t.id);
+      await reorderCategoriesMutation.mutateAsync({
+        categoryIds: teamIds,
+        parentId: null,
+      });
+    } else if (activeData?.type === "date") {
+      const parentId = activeData.parentId;
+      const team = localTree.find((t) => t.id === parentId);
+      if (team?.children) {
+        const dateIds = team.children.map((c) => c.id);
+        await reorderCategoriesMutation.mutateAsync({
+          categoryIds: dateIds,
+          parentId,
+        });
+      }
+    }
+
+    setActiveTeam(null);
+    setActiveDate(null);
+  };
+
   if (isLoading) {
     return <div className="p-4 text-gray-500 text-sm">로딩 중...</div>;
   }
@@ -163,7 +281,7 @@ export const JournalSidebar: React.FC<JournalSidebarProps> = ({
 
       {/* 팀/날짜 목록 */}
       <div className="flex-1 overflow-y-auto py-2">
-        {tree.length === 0 ? (
+        {localTree.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-zinc-400">
             <FileText className="h-10 w-10 mb-2" />
             <p className="text-sm">팀이 없습니다</p>
@@ -172,20 +290,48 @@ export const JournalSidebar: React.FC<JournalSidebarProps> = ({
             </Button>
           </div>
         ) : (
-          tree.map((team) => (
-            <JournalTeamItem
-              key={team.id}
-              team={team}
-              isExpanded={expandedTeams.has(team.id)}
-              selectedCategoryId={selectedCategoryId}
-              onToggle={() => onToggleTeam(team.id)}
-              onSelectCategory={onSelectCategory}
-              onCreateDate={handleOpenCreateDate}
-              onRenameTeam={handleOpenRenameTeam}
-              onDeleteTeam={handleDeleteTeam}
-              onDeleteDate={handleDeleteDate}
-            />
-          ))
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={localTree.map((t) => t.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {localTree.map((team) => (
+                <JournalTeamItem
+                  key={team.id}
+                  team={team}
+                  isExpanded={expandedTeams.has(team.id)}
+                  selectedCategoryId={selectedCategoryId}
+                  onToggle={() => onToggleTeam(team.id)}
+                  onSelectCategory={onSelectCategory}
+                  onCreateDate={handleOpenCreateDate}
+                  onRenameTeam={handleOpenRenameTeam}
+                  onDeleteTeam={handleDeleteTeam}
+                  onDeleteDate={handleDeleteDate}
+                />
+              ))}
+            </SortableContext>
+
+            <DragOverlay>
+              {activeTeam && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-zinc-800 rounded shadow-lg border">
+                  <Folder className="h-4 w-4 text-yellow-500" />
+                  <span className="text-sm font-medium">{activeTeam.name}</span>
+                </div>
+              )}
+              {activeDate && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-zinc-800 rounded shadow-lg border">
+                  <FileText className="h-4 w-4 text-zinc-400" />
+                  <span className="text-sm">{activeDate.name}</span>
+                </div>
+              )}
+            </DragOverlay>
+          </DndContext>
         )}
       </div>
 
