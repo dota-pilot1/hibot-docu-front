@@ -1,7 +1,14 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { Task, useCreateTask } from "@/entities/task";
+import { Suspense, useState, useRef, useCallback, useMemo } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import {
+  Task,
+  TaskStatus,
+  useCreateTask,
+  useAllTasks,
+  useUpdateTaskStatus,
+} from "@/entities/task";
 import {
   TaskGrid,
   TaskGridRef,
@@ -11,8 +18,21 @@ import { TaskDetailDialog } from "@/widgets/user-detail/ui/TaskDetailDialog";
 import { Button } from "@/shared/ui/button";
 import { ConfirmDialog } from "@/shared/ui/dialogs/ConfirmDialog";
 import { Plus, Save, Trash2 } from "lucide-react";
+import {
+  ViewToggle,
+  ViewType,
+  KanbanBoard,
+  GanttChart,
+} from "@/widgets/issue-views";
 
-export default function IssuesPage() {
+function IssuesContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // URL에서 뷰 타입 읽기
+  const viewParam = searchParams.get("view") as ViewType | null;
+  const view: ViewType = viewParam || "table";
+
   const [filter, setFilter] = useState<string>("all");
   const [pendingCount, setPendingCount] = useState(0);
   const [selectedCount, setSelectedCount] = useState(0);
@@ -25,6 +45,14 @@ export default function IssuesPage() {
   const gridRef = useRef<TaskGridRef>(null);
 
   const createTaskMutation = useCreateTask();
+  const { data: allTasks = [] } = useAllTasks();
+  const updateStatusMutation = useUpdateTaskStatus();
+
+  // 필터링된 태스크
+  const filteredTasks = useMemo(() => {
+    if (filter === "all") return allTasks;
+    return allTasks.filter((task) => task.status === filter);
+  }, [allTasks, filter]);
 
   const filters = [
     { key: "all", label: "전체" },
@@ -34,6 +62,16 @@ export default function IssuesPage() {
     { key: "review", label: "리뷰" },
     { key: "completed", label: "완료" },
   ];
+
+  const handleViewChange = (newView: ViewType) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (newView === "table") {
+      params.delete("view");
+    } else {
+      params.set("view", newView);
+    }
+    router.push(`/issues?${params.toString()}`);
+  };
 
   const handleSave = async () => {
     await gridRef.current?.saveChanges();
@@ -73,6 +111,18 @@ export default function IssuesPage() {
     setDetailDialogOpen(true);
   }, []);
 
+  const handleTaskClick = useCallback((task: Task) => {
+    setDetailTask(task);
+    setDetailDialogOpen(true);
+  }, []);
+
+  const handleStatusChange = useCallback(
+    (taskId: number, newStatus: TaskStatus) => {
+      updateStatusMutation.mutate({ id: taskId, status: newStatus });
+    },
+    [updateStatusMutation],
+  );
+
   return (
     <div className="flex flex-col h-full w-full p-4">
       {/* 상단 툴바 */}
@@ -96,9 +146,12 @@ export default function IssuesPage() {
               </button>
             ))}
           </div>
+
+          {/* 뷰 전환 */}
+          <ViewToggle view={view} onViewChange={handleViewChange} />
         </div>
 
-        {/* 액션 버튼들 */}
+        {/* 오른쪽: 액션 버튼 */}
         <div className="flex items-center gap-1">
           <Button
             size="sm"
@@ -114,41 +167,59 @@ export default function IssuesPage() {
           >
             <Plus className="h-4 w-4" />
           </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={handleDeleteClick}
-            disabled={selectedCount === 0}
-            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-            title="선택 항목 삭제"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={pendingCount === 0}
-            className={`h-8 px-3 ${pendingCount > 0 ? "bg-blue-600 hover:bg-blue-700" : ""}`}
-          >
-            <Save className="h-4 w-4 mr-1" />
-            저장{pendingCount > 0 && ` (${pendingCount})`}
-          </Button>
+          {view === "table" && (
+            <>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleDeleteClick}
+                disabled={selectedCount === 0}
+                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                title="선택 항목 삭제"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={pendingCount === 0}
+                className={`h-8 px-3 ${pendingCount > 0 ? "bg-blue-600 hover:bg-blue-700" : ""}`}
+              >
+                <Save className="h-4 w-4 mr-1" />
+                저장{pendingCount > 0 && ` (${pendingCount})`}
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
-      {/* AG Grid - 전체 공간 사용 */}
+      {/* 콘텐츠 영역 */}
       <div className="flex-1 min-h-0">
-        <TaskGrid
-          ref={gridRef}
-          filter={filter}
-          showAssignee={true}
-          showIssueColumn={true}
-          showDetailColumn={true}
-          onPendingChange={handlePendingChange}
-          onSelectionChange={handleSelectionChange}
-          onIssueClick={handleIssueClick}
-          onDetailClick={handleDetailClick}
-        />
+        {view === "table" && (
+          <TaskGrid
+            ref={gridRef}
+            filter={filter}
+            showAssignee={true}
+            showIssueColumn={true}
+            showDetailColumn={true}
+            onPendingChange={handlePendingChange}
+            onSelectionChange={handleSelectionChange}
+            onIssueClick={handleIssueClick}
+            onDetailClick={handleDetailClick}
+          />
+        )}
+
+        {view === "kanban" && (
+          <KanbanBoard
+            tasks={filteredTasks}
+            onTaskClick={handleTaskClick}
+            onStatusChange={handleStatusChange}
+          />
+        )}
+
+        {view === "gantt" && (
+          <GanttChart tasks={filteredTasks} onTaskClick={handleTaskClick} />
+        )}
       </div>
 
       {/* 이슈 다이얼로그 */}
@@ -177,5 +248,19 @@ export default function IssuesPage() {
         variant="destructive"
       />
     </div>
+  );
+}
+
+export default function IssuesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-full">
+          <div className="text-zinc-500">로딩중...</div>
+        </div>
+      }
+    >
+      <IssuesContent />
+    </Suspense>
   );
 }
