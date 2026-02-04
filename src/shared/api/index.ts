@@ -32,13 +32,16 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      const isHomePage =
-        typeof window !== "undefined" && window.location.pathname === "/";
+      // 로그인 불필요 페이지 (홈, 회원가입)
+      const publicPaths = ["/", "/register"];
+      const isPublicPage =
+        typeof window !== "undefined" &&
+        publicPaths.includes(window.location.pathname);
 
       // Clear state
       userStore.state.logout();
 
-      if (typeof window !== "undefined" && !isHomePage) {
+      if (typeof window !== "undefined" && !isPublicPage) {
         alert("로그인이 필요합니다. 메인 페이지로 이동합니다.");
         userStore.state.triggerLoginFocus();
         window.location.href = "/";
