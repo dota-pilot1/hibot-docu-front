@@ -4,7 +4,7 @@ import { Button } from "@/shared/ui/button";
 import { OctagonXIcon } from "lucide-react";
 
 interface ErrorBoundaryFallbackProps {
-  error: Error;
+  error: unknown;
   resetErrorBoundary: () => void;
 }
 
@@ -12,6 +12,8 @@ export function ErrorBoundaryFallback({
   error,
   resetErrorBoundary,
 }: ErrorBoundaryFallbackProps) {
+  const errorMessage =
+    error instanceof Error ? error.message : "An unknown error occurred";
   return (
     <div
       role="alert"
@@ -22,7 +24,7 @@ export function ErrorBoundaryFallback({
         <h3 className="font-semibold text-destructive">Component Error</h3>
       </div>
       <p className="mt-2 text-center text-sm text-muted-foreground">
-        Something went wrong in this part of the application.
+        {errorMessage}
       </p>
       <Button
         variant="outline"

@@ -23,7 +23,6 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 import {
   Task,
-  TaskStatus,
   TaskPriority,
   taskPriorityConfig,
   taskApi,
