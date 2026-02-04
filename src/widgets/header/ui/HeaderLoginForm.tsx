@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { Checkbox } from "@/shared/ui/checkbox";
 import { AlertDialog } from "@/shared/ui/dialogs/AlertDialog";
 import { useHeaderAuth } from "../model/useHeaderAuth";
 import { useUserStore } from "@/entities/user/model/store";
@@ -102,11 +103,10 @@ export const HeaderLoginForm = () => {
         </button>
       </div>
       <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none whitespace-nowrap">
-        <input
-          type="checkbox"
+        <Checkbox
           checked={rememberCredentials}
-          onChange={(e) => handleRememberChange(e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300 cursor-pointer accent-primary"
+          onCheckedChange={handleRememberChange}
+          className="cursor-pointer"
         />
         저장
       </label>
