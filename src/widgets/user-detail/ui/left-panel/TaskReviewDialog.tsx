@@ -28,26 +28,21 @@ const statusLabels: Record<TaskStatus, string> = {
   completed: "완료",
 };
 
-const statusColors: Record<
-  TaskStatus,
-  { bg: string; text: string; badge: "default" | "destructive" | "secondary" }
-> = {
-  pending: { bg: "", text: "", badge: "secondary" },
-  in_progress: { bg: "", text: "", badge: "default" },
+const statusColors: Record<TaskStatus, { badgeClass: string }> = {
+  pending: {
+    badgeClass: "bg-slate-100 text-slate-700 border-slate-200",
+  },
+  in_progress: {
+    badgeClass: "bg-blue-100 text-blue-700 border-blue-200",
+  },
   blocked: {
-    bg: "",
-    text: "",
-    badge: "secondary",
+    badgeClass: "bg-amber-100 text-amber-700 border-amber-200",
   },
   review: {
-    bg: "",
-    text: "",
-    badge: "secondary",
+    badgeClass: "bg-purple-100 text-purple-700 border-purple-200",
   },
   completed: {
-    bg: "",
-    text: "",
-    badge: "secondary",
+    badgeClass: "bg-green-100 text-green-700 border-green-200",
   },
 };
 
@@ -182,7 +177,6 @@ export const TaskReviewDialog = ({
                   size="sm"
                   variant={selectedStatus === status ? "default" : "outline"}
                   onClick={() => setSelectedStatus(status)}
-                  className={`${selectedStatus === status ? statusColors[status].bg + " " + statusColors[status].text : ""}`}
                 >
                   {statusLabels[status]} ({statusReviews.length})
                 </Button>
@@ -211,7 +205,10 @@ export const TaskReviewDialog = ({
             className="space-y-2 p-3 border rounded-lg bg-zinc-50 dark:bg-zinc-900"
           >
             <div className="flex items-center gap-2 mb-2">
-              <Badge variant={statusColors[selectedStatus].badge}>
+              <Badge
+                variant="outline"
+                className={statusColors[selectedStatus].badgeClass}
+              >
                 {statusLabels[selectedStatus]}
               </Badge>
               <span className="text-xs text-zinc-500">새 내역</span>
@@ -262,7 +259,10 @@ export const TaskReviewDialog = ({
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <Badge variant={statusColors[review.status].badge}>
+                    <Badge
+                      variant="outline"
+                      className={statusColors[review.status].badgeClass}
+                    >
                       {statusLabels[review.status]}
                     </Badge>
                     <span className="text-xs text-zinc-500">

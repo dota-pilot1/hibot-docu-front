@@ -3,6 +3,7 @@
 import { Button } from "@/shared/ui/button";
 import { Task } from "@/entities/task";
 import { History } from "lucide-react";
+import { cn } from "@/shared/lib/utils";
 
 interface TaskStatusButtonsProps {
   task: Task;
@@ -25,12 +26,16 @@ export const TaskStatusButtons = ({
       {/* 대기 버튼 */}
       <Button
         size="sm"
-        variant={currentStatus === "pending" ? "default" : "outline"}
+        variant="outline"
         onClick={(e) => {
           e.stopPropagation();
           onStatusChange(task.id, "pending");
         }}
-        className="h-7 px-2 text-xs"
+        className={cn(
+          "h-7 px-2 text-xs",
+          currentStatus === "pending" &&
+            "bg-slate-100 border-slate-300 text-slate-900 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100",
+        )}
       >
         대기
       </Button>
@@ -38,12 +43,16 @@ export const TaskStatusButtons = ({
       {/* 진행 버튼 */}
       <Button
         size="sm"
-        variant={currentStatus === "in_progress" ? "default" : "outline"}
+        variant="outline"
         onClick={(e) => {
           e.stopPropagation();
           onStatusChange(task.id, "in_progress");
         }}
-        className="h-7 px-2 text-xs"
+        className={cn(
+          "h-7 px-2 text-xs",
+          currentStatus === "in_progress" &&
+            "bg-blue-50 border-blue-300 text-blue-900 dark:bg-blue-950 dark:border-blue-700 dark:text-blue-100",
+        )}
       >
         진행
       </Button>
@@ -51,14 +60,16 @@ export const TaskStatusButtons = ({
       {/* 막힘 버튼 */}
       <Button
         size="sm"
-        variant={currentStatus === "blocked" ? "default" : "outline"}
+        variant="outline"
         onClick={(e) => {
           e.stopPropagation();
           onStatusChange(task.id, "blocked");
         }}
-        className={`h-7 px-2 text-xs ${
-          currentStatus === "blocked" ? "bg-orange-500 hover:bg-orange-600" : ""
-        }`}
+        className={cn(
+          "h-7 px-2 text-xs",
+          currentStatus === "blocked" &&
+            "bg-amber-50 border-amber-300 text-amber-900 dark:bg-amber-950 dark:border-amber-700 dark:text-amber-100",
+        )}
       >
         막힘
       </Button>
@@ -66,12 +77,16 @@ export const TaskStatusButtons = ({
       {/* 리뷰 버튼 */}
       <Button
         size="sm"
-        variant={currentStatus === "review" ? "default" : "outline"}
+        variant="outline"
         onClick={(e) => {
           e.stopPropagation();
           onStatusChange(task.id, "review");
         }}
-        className="h-7 px-2 text-xs"
+        className={cn(
+          "h-7 px-2 text-xs",
+          currentStatus === "review" &&
+            "bg-purple-50 border-purple-300 text-purple-900 dark:bg-purple-950 dark:border-purple-700 dark:text-purple-100",
+        )}
       >
         리뷰
       </Button>
@@ -79,14 +94,16 @@ export const TaskStatusButtons = ({
       {/* 완료 버튼 */}
       <Button
         size="sm"
-        variant={currentStatus === "completed" ? "default" : "outline"}
+        variant="outline"
         onClick={(e) => {
           e.stopPropagation();
           onStatusChange(task.id, "completed");
         }}
-        className={`h-7 px-2 text-xs ${
-          currentStatus === "completed" ? "bg-green-500 hover:bg-green-600" : ""
-        }`}
+        className={cn(
+          "h-7 px-2 text-xs",
+          currentStatus === "completed" &&
+            "bg-green-50 border-green-300 text-green-900 dark:bg-green-950 dark:border-green-700 dark:text-green-100",
+        )}
       >
         완료
       </Button>
