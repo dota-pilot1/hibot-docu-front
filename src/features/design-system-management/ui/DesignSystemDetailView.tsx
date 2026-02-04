@@ -85,7 +85,7 @@ import type {
   DesignSystemContent,
   ContentType,
   DesignSystemType,
-} from "@/entities/architecture/model/types";
+} from "@/entities/design-system/model/types";
 
 export const DesignSystemDetailView = () => {
   const router = useRouter();
@@ -118,9 +118,9 @@ export const DesignSystemDetailView = () => {
 
   // 드래그 중 임시 상태 (실시간 자리바꾸기용)
   const [tempTree, setTempTree] = useState<DesignSystemCategory[] | null>(null);
-  const [tempContents, setTempContents] = useState<DesignSystemContent[] | null>(
-    null,
-  );
+  const [tempContents, setTempContents] = useState<
+    DesignSystemContent[] | null
+  >(null);
 
   // 드래그 중일 때는 임시 상태 사용, 아니면 원본 사용
   const displayTree = tempTree ?? tree;
@@ -136,16 +136,15 @@ export const DesignSystemDetailView = () => {
   const [categoryForm, setCategoryForm] = useState({
     name: "",
     parentId: null as number | null,
-    architectureType: "NOTE" as DesignSystemType,
+    designSystemType: "NOTE" as DesignSystemType,
   });
 
   const [isContentModalOpen, setIsContentModalOpen] = useState(false);
   const [contentModalMode, setContentModalMode] = useState<"create" | "edit">(
     "create",
   );
-  const [editingContent, setEditingContent] = useState<DesignSystemContent | null>(
-    null,
-  );
+  const [editingContent, setEditingContent] =
+    useState<DesignSystemContent | null>(null);
   const [contentForm, setContentForm] = useState<{
     title: string;
     content: string;
@@ -268,7 +267,7 @@ export const DesignSystemDetailView = () => {
   const selectedCategoryData = selectedCategory
     ? findCategoryById(tree, selectedCategory)
     : null;
-  const isFileCategory = selectedCategoryData?.architectureType === "FILE";
+  const isFileCategory = selectedCategoryData?.designSystemType === "FILE";
 
   // File handlers
   const handleFileUpload = async (file: File) => {
@@ -511,7 +510,7 @@ export const DesignSystemDetailView = () => {
             ) : (
               <div className="mr-2">
                 <ContentTypeIcon
-                  type={cat.architectureType}
+                  type={cat.designSystemType}
                   className="h-4 w-4 text-gray-400"
                 />
               </div>
@@ -531,7 +530,7 @@ export const DesignSystemDetailView = () => {
                   setCategoryForm({
                     name: "",
                     parentId: cat.id,
-                    architectureType: "FILE",
+                    designSystemType: "FILE",
                   });
                   setIsCategoryModalOpen(true);
                 }}
@@ -549,7 +548,7 @@ export const DesignSystemDetailView = () => {
                   setCategoryForm({
                     name: cat.name,
                     parentId: cat.parentId,
-                    architectureType: cat.architectureType,
+                    designSystemType: cat.designSystemType,
                   });
                   setIsCategoryModalOpen(true);
                 }}
@@ -663,7 +662,7 @@ export const DesignSystemDetailView = () => {
                     title: "",
                     content: "",
                     contentType:
-                      (selectedCategoryData?.architectureType as any) || "NOTE",
+                      (selectedCategoryData?.designSystemType as any) || "NOTE",
                     metadata: {},
                   });
                   setIsContentModalOpen(true);
@@ -888,13 +887,13 @@ export const DesignSystemDetailView = () => {
             await designSystemApi.createCategory({
               name: categoryForm.name,
               parentId: categoryForm.parentId ?? undefined,
-              architectureType: categoryForm.architectureType,
+              designSystemType: categoryForm.designSystemType,
               techType: tech || undefined,
             });
           } else if (editingCategory) {
             await designSystemApi.updateCategory(editingCategory.id, {
               name: categoryForm.name,
-              architectureType: categoryForm.architectureType,
+              designSystemType: categoryForm.designSystemType,
             });
           }
           setIsCategoryModalOpen(false);
@@ -908,10 +907,10 @@ export const DesignSystemDetailView = () => {
                 key={type}
                 type="button"
                 onClick={() =>
-                  setCategoryForm({ ...categoryForm, architectureType: type })
+                  setCategoryForm({ ...categoryForm, designSystemType: type })
                 }
                 className={`flex items-center justify-center gap-1 py-1.5 rounded-md transition-all ${
-                  categoryForm.architectureType === type
+                  categoryForm.designSystemType === type
                     ? "bg-white text-blue-600 shadow-sm font-semibold"
                     : "text-gray-500 hover:text-gray-700"
                 }`}

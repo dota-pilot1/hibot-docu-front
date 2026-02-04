@@ -45,7 +45,7 @@ export const DesignSystemMatrix = () => {
       setTree(data);
     } catch (err) {
       console.error("Failed to fetch design systems:", err);
-      setError("An error occurred" || "Failed to load design systems");
+      setError("Failed to load design systems");
     } finally {
       setIsLoading(false);
     }
