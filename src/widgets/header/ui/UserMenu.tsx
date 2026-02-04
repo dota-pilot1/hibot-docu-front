@@ -34,7 +34,9 @@ export const UserMenu = () => {
             <User className="w-4 h-4 text-zinc-500" />
           )}
         </div>
-        <span className="hidden sm:inline">{user.name}님</span>
+        <span className="inline">
+          {user.name || user.email.split("@")[0]}님
+        </span>
       </Link>
 
       {/* 관리자 아이콘 */}

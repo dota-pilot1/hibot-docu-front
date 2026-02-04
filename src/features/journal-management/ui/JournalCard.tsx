@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Calendar, Edit2, Trash2, User } from "lucide-react";
+import { Calendar, Edit2, Trash2 } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -57,9 +57,9 @@ export const JournalCard: React.FC<JournalCardProps> = ({
   };
 
   return (
-    <Card className="rounded-lg hover:shadow-md transition-shadow h-[280px] flex flex-col">
-      <CardHeader className="pb-2 pt-4 px-4 bg-transparent border-b-0 flex-shrink-0">
-        <CardTitle className="text-base line-clamp-1">
+    <Card className="rounded-lg hover:shadow-md transition-shadow h-65 flex flex-col">
+      <CardHeader className="pb-2 pt-3 px-4 bg-transparent border-b-0 shrink-0">
+        <CardTitle className="text-base line-clamp-2">
           {journal.title}
         </CardTitle>
         <CardAction>
@@ -90,9 +90,9 @@ export const JournalCard: React.FC<JournalCardProps> = ({
         </CardAction>
       </CardHeader>
 
-      <CardContent className="px-4 py-3 space-y-3 flex-1 flex flex-col overflow-hidden">
+      <CardContent className="px-4 py-2 space-y-2 flex-1 flex flex-col overflow-hidden min-h-0">
         {/* 작성자 및 날짜 */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <Avatar className="h-6 w-6">
               <AvatarImage src={author?.profileImage || undefined} />
@@ -109,13 +109,13 @@ export const JournalCard: React.FC<JournalCardProps> = ({
         </div>
 
         {/* 내용 미리보기 */}
-        <p className="text-sm text-muted-foreground line-clamp-2 flex-1">
-          {truncateContent(journal.content, 100)}
+        <p className="text-sm text-muted-foreground line-clamp-3 flex-1 overflow-hidden">
+          {truncateContent(journal.content, 150)}
         </p>
 
         {/* 태그 */}
         {journal.tags && journal.tags.length > 0 && (
-          <div className="flex items-center gap-1 flex-wrap">
+          <div className="flex items-center gap-1 flex-wrap shrink-0 min-h-6">
             {journal.tags.slice(0, 3).map((tag) => (
               <Badge key={tag} variant="secondary" className="text-xs">
                 {tag}
@@ -130,7 +130,7 @@ export const JournalCard: React.FC<JournalCardProps> = ({
         )}
       </CardContent>
 
-      <CardFooter className="px-4 pb-4 pt-0 flex-shrink-0">
+      <CardFooter className="px-4 pb-3 pt-2 shrink-0">
         <Button
           variant="outline"
           size="sm"

@@ -17,6 +17,7 @@ export interface JournalCategory {
   createdAt: string;
   updatedAt: string;
   children?: JournalCategory[];
+  journalCount?: number;
 }
 
 export interface Journal {

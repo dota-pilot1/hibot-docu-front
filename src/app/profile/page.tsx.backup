@@ -250,47 +250,95 @@ export default function ProfilePage() {
         <h1 className="text-2xl font-bold text-gray-900 mb-6">내 프로필</h1>
 
         <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-          {/* 왼쪽: 히스토리 */}
           <div className="space-y-6">
-            {/* 최근 활동 */}
-            <Card className="lg:sticky lg:top-24">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Activity className="w-5 h-5" />
-                  최근 활동 ({recentActivities.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {recentActivities.length === 0 ? (
-                  <p className="text-gray-500 text-sm">최근 활동이 없습니다.</p>
-                ) : (
-                  <ul className="space-y-2">
-                    {recentActivities.slice(0, 10).map((activity) => (
-                      <li
-                        key={activity.id}
-                        className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg"
-                      >
-                        <div className="flex-1">
-                          <p className="text-sm text-gray-900">
-                            {activity.description}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {new Date(activity.createdAt).toLocaleString(
-                              "ko-KR",
-                              {
-                                month: "long",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              },
-                            )}
-                          </p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
+            <Card>
+          <CardHeader>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
+                  {getImageUrl(profile.profileImage) ? (
+                    <img
+                      src={getImageUrl(profile.profileImage)!}
+                      alt="프로필 이미지"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-10 h-10 text-blue-600" />
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingImage}
+                  className="absolute bottom-0 right-0 w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {isUploadingImage ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Camera className="w-4 h-4" />
+                  )}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-xl">
+                    {profile.name || profile.email.split("@")[0]}
+                  </CardTitle>
+                  <button
+                    type="button"
+                    onClick={openNameDialog}
+                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="이름 수정"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-sm text-gray-500">
+                  {profile.role === "ADMIN" ? "관리자" : "일반 사용자"}
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <Mail className="w-5 h-5 text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500">이메일</p>
+                <p className="font-medium">{profile.email}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <Shield className="w-5 h-5 text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500">권한</p>
+                <p className="font-medium">
+                  {profile.role === "ADMIN" ? "관리자" : "일반 사용자"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <Calendar className="w-5 h-5 text-gray-400" />
+              <div>
+                <p className="text-xs text-gray-500">가입일</p>
+                <p className="font-medium">
+                  {new Date(profile.createdAt).toLocaleDateString("ko-KR", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
+            </div>
+          </CardContent>
             </Card>
 
             {/* 내가 쓴 글 */}
@@ -306,7 +354,7 @@ export default function ProfilePage() {
                   <p className="text-gray-500 text-sm">작성한 글이 없습니다.</p>
                 ) : (
                   <ul className="space-y-2">
-                    {myPosts.slice(0, 5).map((post) => (
+                    {myPosts.map((post) => (
                       <li key={post.id}>
                         <Link
                           href={`/posts/${post.id}`}
@@ -327,99 +375,6 @@ export default function ProfilePage() {
                 )}
               </CardContent>
             </Card>
-          </div>
-
-          {/* 오른쪽: 프로필 정보 */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
-                      {getImageUrl(profile.profileImage) ? (
-                        <img
-                          src={getImageUrl(profile.profileImage)!}
-                          alt="프로필 이미지"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <User className="w-10 h-10 text-blue-600" />
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploadingImage}
-                      className="absolute bottom-0 right-0 w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
-                    >
-                      {isUploadingImage ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Camera className="w-4 h-4" />
-                      )}
-                    </button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/gif,image/webp"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-xl">
-                        {profile.name || profile.email.split("@")[0]}
-                      </CardTitle>
-                      <button
-                        type="button"
-                        onClick={openNameDialog}
-                        className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                        title="이름 수정"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <p className="text-sm text-gray-500">
-                      {profile.role === "ADMIN" ? "관리자" : "일반 사용자"}
-                    </p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Mail className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="text-xs text-gray-500">이메일</p>
-                    <p className="font-medium">{profile.email}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Shield className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="text-xs text-gray-500">권한</p>
-                    <p className="font-medium">
-                      {profile.role === "ADMIN" ? "관리자" : "일반 사용자"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Calendar className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="text-xs text-gray-500">가입일</p>
-                    <p className="font-medium">
-                      {new Date(profile.createdAt).toLocaleDateString("ko-KR", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* 회원 탈퇴 */}
             <Card className="border-red-200">
@@ -432,32 +387,73 @@ export default function ProfilePage() {
                 <p className="text-sm text-gray-500 mb-4">
                   회원 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.
                 </p>
-                <Button
-                  variant="destructive"
-                  onClick={() => setShowDeleteDialog(true)}
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  회원 탈퇴
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Activity className="w-5 h-5" />
+              최근 활동 ({recentActivities.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {recentActivities.length === 0 ? (
+              <p className="text-gray-500 text-sm">최근 활동이 없습니다.</p>
+            ) : (
+              <ul className="space-y-2">
+                {recentActivities.map((activity) => (
+                  <li
+                    key={activity.id}
+                    className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-900">
+                        {activity.description}
+                      </p>
+                            </CardContent>
+                          </Card>
+                        </div>
 
-        <ConfirmDialog
-          open={showDeleteDialog}
-          onOpenChange={setShowDeleteDialog}
-          title="회원 탈퇴"
-          description="정말로 탈퇴하시겠습니까? 모든 데이터가 삭제되며 복구할 수 없습니다."
-          onConfirm={handleDeleteAccount}
-          isLoading={isDeleting}
-          variant="destructive"
-        />
+                        {/* 최근 활동 */}
+                        <div>
+                          <Card className="lg:sticky lg:top-24">
+                        {new Date(activity.createdAt).toLocaleString("ko-KR", {
+                          month: "long",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
 
-        {/* 유저네임 수정 다이얼로그 */}
-        <FormDialog
-          open={showNameDialog}
-          onOpenChange={setShowNameDialog}
+        {/* 내가 쓴 글 */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              내가 쓴 글 ({myPosts.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {myPosts.length === 0 ? (
+              <p className="text-gray-500 text-sm">작성한 글이 없습니다.</p>
+            ) : (
+              <ul className="space-y-2">
+                {myPosts.map((post) => (
+                  <li key={post.id}>
+                    <Link
+                      href={`/posts/${post.id}`}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <span className="font-medium text-gray-900 truncate">
+                        {post.title}
+                      </span>
+                      <span className="text-xs text-gray-500 shrink-0 ml-4">
+                        </div>
+                      </div>
           title="이름 변경"
           description="새로운 이름을 입력하세요. 중복 확인 후 저장할 수 있습니다."
           submitLabel="저장"

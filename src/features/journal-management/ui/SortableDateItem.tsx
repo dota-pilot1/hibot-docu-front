@@ -77,6 +77,13 @@ export const SortableDateItem: React.FC<SortableDateItemProps> = ({
         {dateCategory.name}
       </span>
 
+      {/* 일지 개수 */}
+      {dateCategory.journalCount !== undefined && (
+        <span className="text-xs text-zinc-400">
+          {dateCategory.journalCount}
+        </span>
+      )}
+
       {/* 날짜 삭제 버튼 */}
       <button
         className={cn(
