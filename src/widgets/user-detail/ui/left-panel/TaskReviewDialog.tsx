@@ -32,22 +32,22 @@ const statusColors: Record<
   TaskStatus,
   { bg: string; text: string; badge: "default" | "destructive" | "secondary" }
 > = {
-  pending: { bg: "bg-gray-100", text: "text-gray-700", badge: "secondary" },
-  in_progress: { bg: "bg-blue-100", text: "text-blue-700", badge: "default" },
+  pending: { bg: "", text: "", badge: "secondary" },
+  in_progress: { bg: "", text: "", badge: "default" },
   blocked: {
-    bg: "bg-red-100",
-    text: "text-red-700",
-    badge: "destructive",
+    bg: "",
+    text: "",
+    badge: "secondary",
   },
   review: {
-    bg: "bg-purple-100",
-    text: "text-purple-700",
+    bg: "",
+    text: "",
     badge: "secondary",
   },
   completed: {
-    bg: "bg-green-100",
-    text: "text-green-700",
-    badge: "default",
+    bg: "",
+    text: "",
+    badge: "secondary",
   },
 };
 

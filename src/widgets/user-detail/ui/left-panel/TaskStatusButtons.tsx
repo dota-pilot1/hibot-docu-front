@@ -43,9 +43,7 @@ export const TaskStatusButtons = ({
           e.stopPropagation();
           onStatusChange(task.id, "in_progress");
         }}
-        className={`h-7 px-2 text-xs ${
-          currentStatus === "in_progress" ? "bg-blue-600 hover:bg-blue-700" : ""
-        }`}
+        className="h-7 px-2 text-xs"
       >
         진행
       </Button>
@@ -53,12 +51,14 @@ export const TaskStatusButtons = ({
       {/* 막힘 버튼 */}
       <Button
         size="sm"
-        variant={currentStatus === "blocked" ? "destructive" : "outline"}
+        variant={currentStatus === "blocked" ? "default" : "outline"}
         onClick={(e) => {
           e.stopPropagation();
           onStatusChange(task.id, "blocked");
         }}
-        className="h-7 px-2 text-xs"
+        className={`h-7 px-2 text-xs ${
+          currentStatus === "blocked" ? "bg-orange-500 hover:bg-orange-600" : ""
+        }`}
       >
         막힘
       </Button>
@@ -71,9 +71,7 @@ export const TaskStatusButtons = ({
           e.stopPropagation();
           onStatusChange(task.id, "review");
         }}
-        className={`h-7 px-2 text-xs ${
-          currentStatus === "review" ? "bg-purple-600 hover:bg-purple-700" : ""
-        }`}
+        className="h-7 px-2 text-xs"
       >
         리뷰
       </Button>
@@ -87,7 +85,7 @@ export const TaskStatusButtons = ({
           onStatusChange(task.id, "completed");
         }}
         className={`h-7 px-2 text-xs ${
-          currentStatus === "completed" ? "bg-green-600 hover:bg-green-700" : ""
+          currentStatus === "completed" ? "bg-green-500 hover:bg-green-600" : ""
         }`}
       >
         완료
