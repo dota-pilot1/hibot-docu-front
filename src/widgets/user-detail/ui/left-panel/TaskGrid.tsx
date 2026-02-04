@@ -25,7 +25,6 @@ import {
   Task,
   TaskStatus,
   TaskPriority,
-  taskStatusConfig,
   taskPriorityConfig,
   taskApi,
   useBatchUpdateTasks,
@@ -34,14 +33,8 @@ import {
 import { organizationApi } from "@/features/organization/api/organizationApi";
 import { DatePickerCellEditor } from "./editors/DatePickerCellEditor";
 import { SelectCellEditor } from "./editors/SelectCellEditor";
-
-// 상태 옵션 (한글 라벨)
-const statusOptions = Object.entries(taskStatusConfig).map(
-  ([value, config]) => ({
-    value,
-    label: config.label,
-  }),
-);
+import { TaskStatusButtons } from "./TaskStatusButtons";
+import { TaskReviewDialog } from "./TaskReviewDialog";
 
 // 우선순위 옵션 (한글 라벨)
 const priorityOptions = Object.entries(taskPriorityConfig).map(
@@ -75,19 +68,6 @@ export interface TaskGridRef {
   getSelectedTask: () => Task | null;
 }
 
-// 상태 셀 렌더러
-const StatusCellRenderer = (props: { value: TaskStatus }) => {
-  if (!props.value) return null;
-  const config = taskStatusConfig[props.value];
-  return (
-    <span
-      className={`px-2 py-0.5 rounded-full text-xs ${config.bgColor} ${config.color}`}
-    >
-      {config.label}
-    </span>
-  );
-};
-
 // 우선순위 셀 렌더러
 const PriorityCellRenderer = (props: { value: TaskPriority }) => {
   if (!props.value) return null;
@@ -100,33 +80,6 @@ const PriorityCellRenderer = (props: { value: TaskPriority }) => {
 };
 
 // 진행 시작 토글 셀 렌더러
-const StartToggleCellRenderer = (props: {
-  data: Task;
-  onToggle?: (task: Task, isStarting: boolean) => void;
-}) => {
-  if (!props.data) return null;
-
-  const isStarted = !!props.data.startedAt;
-
-  return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        props.onToggle?.(props.data, !isStarted);
-      }}
-      className={`w-8 h-5 rounded-full transition-colors relative ${
-        isStarted ? "bg-green-500" : "bg-gray-300"
-      }`}
-      title={isStarted ? "진행 중지" : "진행 시작"}
-    >
-      <span
-        className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-          isStarted ? "left-3.5" : "left-0.5"
-        }`}
-      />
-    </button>
-  );
-};
 
 // 이슈 버튼 셀 렌더러
 const IssueCellRenderer = (props: {
@@ -251,6 +204,9 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       Map<number, Partial<Task>>
     >(new Map());
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+    const [selectedTaskForReview, setSelectedTaskForReview] =
+      useState<Task | null>(null);
 
     // 부모에게 상태 변경 알림 (useEffect로 렌더링 후 호출)
     useEffect(() => {
@@ -285,7 +241,7 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
 
     // 필터링 및 정렬된 Task 목록 - 생성일 역순 (새 태스크가 맨 위)
     const filteredTasks = useMemo(() => {
-      let result =
+      const result =
         filter === "all"
           ? tasks
           : tasks.filter((task) => task.status === filter);
@@ -345,29 +301,6 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       return null;
     }, []);
 
-    // 진행 시작/중지 토글 핸들러
-    const handleStartToggle = useCallback((task: Task, isStarting: boolean) => {
-      const taskId = task.id;
-      const updates: Partial<Task> = isStarting
-        ? {
-            startedAt: new Date().toISOString(),
-            status: "in_progress" as TaskStatus,
-          }
-        : { startedAt: undefined };
-
-      setPendingChanges((prev) => {
-        const newMap = new Map(prev);
-        const existing = newMap.get(taskId) || {};
-        newMap.set(taskId, { ...existing, ...updates });
-        return newMap;
-      });
-
-      // 그리드 데이터 즉시 업데이트
-      gridRef.current?.api.applyTransaction({
-        update: [{ ...task, ...updates }],
-      });
-    }, []);
-
     // 부모 컴포넌트에 메서드 노출
     useImperativeHandle(ref, () => ({
       saveChanges,
@@ -376,6 +309,58 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       getSelectedCount: () => selectedIds.length,
       getSelectedTask,
     }));
+
+    const handleStatusChange = useCallback(
+      (
+        taskId: number,
+        status: "pending" | "in_progress" | "blocked" | "review" | "completed",
+      ) => {
+        const newMap = new Map(pendingChanges);
+        const existing = newMap.get(taskId) || {};
+
+        const updates: Partial<Task> = {
+          ...existing,
+          status: status,
+        };
+
+        // 상태별 추가 필드 설정
+        if (status === "in_progress" && !existing.startedAt) {
+          updates.startedAt = new Date().toISOString();
+        } else if (status === "completed") {
+          updates.completedAt = new Date().toISOString();
+        }
+
+        newMap.set(taskId, updates);
+        setPendingChanges(newMap);
+      },
+      [pendingChanges],
+    );
+
+    const handleHistoryClick = useCallback(
+      (taskId: number) => {
+        const task = tasks.find((t) => t.id === taskId);
+        if (task) {
+          setSelectedTaskForReview(task);
+          setReviewDialogOpen(true);
+        }
+      },
+      [tasks],
+    );
+
+    // TaskStatusButtons 셀 렌더러
+    const TaskStatusButtonsRenderer = useCallback(
+      (props: { data: Task | undefined }) => {
+        if (!props.data) return null;
+        return (
+          <TaskStatusButtons
+            task={props.data}
+            onStatusChange={handleStatusChange}
+            onHistoryClick={handleHistoryClick}
+          />
+        );
+      },
+      [handleStatusChange, handleHistoryClick],
+    );
 
     const columnDefs = useMemo<ColDef<Task>[]>(() => {
       const cols: ColDef<Task>[] = [
@@ -386,18 +371,24 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
           minWidth: 200,
           maxWidth: 500,
           editable: true,
+          cellEditor: "agLargeTextCellEditor",
+          cellEditorParams: {
+            maxLength: 500,
+            rows: 3,
+            cols: 50,
+          },
+          wrapText: true,
+          autoHeight: true,
         },
         {
-          headerName: "시작",
-          width: 70,
-          cellRenderer: StartToggleCellRenderer,
-          cellRendererParams: {
-            onToggle: handleStartToggle,
-          },
+          headerName: "상태",
+          width: 320,
+          cellRenderer: TaskStatusButtonsRenderer,
           cellStyle: {
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "flex-start",
+            padding: "4px",
           },
         },
       ];
@@ -426,17 +417,6 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       }
 
       cols.push(
-        {
-          field: "status",
-          headerName: "상태",
-          width: 95,
-          editable: true,
-          cellRenderer: StatusCellRenderer,
-          cellEditor: SelectCellEditor,
-          cellEditorParams: {
-            options: statusOptions,
-          },
-        },
         {
           field: "priority",
           headerName: "우선순위",
@@ -541,7 +521,7 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
       onIssueClick,
       onDetailClick,
       onCurrentTaskChange,
-      handleStartToggle,
+      TaskStatusButtonsRenderer,
     ]);
 
     const defaultColDef = useMemo<ColDef>(
@@ -620,25 +600,38 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
     }
 
     return (
-      <div className="ag-theme-alpine h-full w-full">
-        <AgGridReact<Task>
-          ref={gridRef}
-          rowData={filteredTasks}
-          columnDefs={columnDefs}
-          defaultColDef={defaultColDef}
-          animateRows={true}
-          rowSelection={{
-            mode: "multiRow",
-            headerCheckbox: true,
-            checkboxes: true,
-            enableClickSelection: false,
-          }}
-          getRowClass={getRowClass}
-          onCellValueChanged={handleCellValueChanged}
-          onSelectionChanged={handleSelectionChanged}
-          onRowClicked={handleRowClicked}
-        />
-      </div>
+      <>
+        <div className="ag-theme-alpine h-full w-full">
+          <AgGridReact<Task>
+            ref={gridRef}
+            rowData={filteredTasks}
+            columnDefs={columnDefs}
+            defaultColDef={defaultColDef}
+            animateRows={true}
+            rowSelection={{
+              mode: "multiRow",
+              headerCheckbox: true,
+              checkboxes: true,
+              enableClickSelection: false,
+            }}
+            getRowClass={getRowClass}
+            onCellValueChanged={handleCellValueChanged}
+            onSelectionChanged={handleSelectionChanged}
+            onRowClicked={handleRowClicked}
+          />
+        </div>
+
+        {/* 업무 리뷰 다이얼로그 */}
+        {selectedTaskForReview && (
+          <TaskReviewDialog
+            open={reviewDialogOpen}
+            onOpenChange={setReviewDialogOpen}
+            taskId={selectedTaskForReview.id}
+            taskTitle={selectedTaskForReview.title}
+            currentStatus={selectedTaskForReview.status}
+          />
+        )}
+      </>
     );
   },
 );
