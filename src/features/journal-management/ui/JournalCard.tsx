@@ -57,8 +57,8 @@ export const JournalCard: React.FC<JournalCardProps> = ({
   };
 
   return (
-    <Card className="rounded-lg hover:shadow-md transition-shadow">
-      <CardHeader className="pb-2 pt-4 px-4 bg-transparent border-b-0">
+    <Card className="rounded-lg hover:shadow-md transition-shadow h-[280px] flex flex-col">
+      <CardHeader className="pb-2 pt-4 px-4 bg-transparent border-b-0 flex-shrink-0">
         <CardTitle className="text-base line-clamp-1">
           {journal.title}
         </CardTitle>
@@ -90,7 +90,7 @@ export const JournalCard: React.FC<JournalCardProps> = ({
         </CardAction>
       </CardHeader>
 
-      <CardContent className="px-4 py-3 space-y-3">
+      <CardContent className="px-4 py-3 space-y-3 flex-1 flex flex-col overflow-hidden">
         {/* 작성자 및 날짜 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -109,7 +109,7 @@ export const JournalCard: React.FC<JournalCardProps> = ({
         </div>
 
         {/* 내용 미리보기 */}
-        <p className="text-sm text-muted-foreground line-clamp-3">
+        <p className="text-sm text-muted-foreground line-clamp-2 flex-1">
           {truncateContent(journal.content, 100)}
         </p>
 
@@ -130,7 +130,7 @@ export const JournalCard: React.FC<JournalCardProps> = ({
         )}
       </CardContent>
 
-      <CardFooter className="px-4 pb-4 pt-0">
+      <CardFooter className="px-4 pb-4 pt-0 flex-shrink-0">
         <Button
           variant="outline"
           size="sm"
