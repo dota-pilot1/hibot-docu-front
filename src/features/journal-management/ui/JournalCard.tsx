@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Calendar, Edit2, Trash2 } from "lucide-react";
+import { Calendar, Edit2, Trash2, User } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -12,7 +12,10 @@ import {
 } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import type { Journal } from "../api/journalApi";
+import { useQuery } from "@tanstack/react-query";
+import { organizationApi } from "@/features/organization/api/organizationApi";
 
 interface JournalCardProps {
   journal: Journal;
@@ -27,6 +30,17 @@ export const JournalCard: React.FC<JournalCardProps> = ({
   onEdit,
   onDelete,
 }) => {
+  // 작성자 정보 조회
+  const { data: users = [] } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => organizationApi.getUsers(),
+  });
+
+  const author = users.find((u) => u.id === journal.userId);
+  const authorName =
+    author?.name || author?.email.split("@")[0] || "알 수 없음";
+  const authorInitial = authorName.charAt(0).toUpperCase();
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString("ko-KR", {
@@ -77,10 +91,21 @@ export const JournalCard: React.FC<JournalCardProps> = ({
       </CardHeader>
 
       <CardContent className="px-4 py-3 space-y-3">
-        {/* 날짜 */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Calendar className="h-3 w-3" />
-          <span>{formatDate(journal.journalDate)}</span>
+        {/* 작성자 및 날짜 */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={author?.profileImage || undefined} />
+              <AvatarFallback className="text-xs bg-zinc-200 dark:bg-zinc-700">
+                {authorInitial}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-xs text-muted-foreground">{authorName}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Calendar className="h-3 w-3" />
+            <span>{formatDate(journal.journalDate)}</span>
+          </div>
         </div>
 
         {/* 내용 미리보기 */}
