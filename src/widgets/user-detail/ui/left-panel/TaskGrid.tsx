@@ -28,6 +28,7 @@ import {
   taskApi,
   useBatchUpdateTasks,
   useBatchDeleteTasks,
+  useUpdateTaskStatus,
 } from "@/entities/task";
 import { organizationApi } from "@/features/organization/api/organizationApi";
 import { DatePickerCellEditor } from "./editors/DatePickerCellEditor";
@@ -255,6 +256,7 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
     // 배치 수정/삭제 훅
     const batchUpdateMutation = useBatchUpdateTasks();
     const batchDeleteMutation = useBatchDeleteTasks();
+    const updateStatusMutation = useUpdateTaskStatus(userId);
 
     // 선택된 행의 변경사항만 저장
     const saveChanges = useCallback(async () => {
@@ -314,25 +316,10 @@ export const TaskGrid = forwardRef<TaskGridRef, TaskGridProps>(
         taskId: number,
         status: "pending" | "in_progress" | "blocked" | "review" | "completed",
       ) => {
-        const newMap = new Map(pendingChanges);
-        const existing = newMap.get(taskId) || {};
-
-        const updates: Partial<Task> = {
-          ...existing,
-          status: status,
-        };
-
-        // 상태별 추가 필드 설정
-        if (status === "in_progress" && !existing.startedAt) {
-          updates.startedAt = new Date().toISOString();
-        } else if (status === "completed") {
-          updates.completedAt = new Date().toISOString();
-        }
-
-        newMap.set(taskId, updates);
-        setPendingChanges(newMap);
+        // 즉시 API 호출하여 상태 업데이트
+        updateStatusMutation.mutate({ id: taskId, status });
       },
-      [pendingChanges],
+      [updateStatusMutation],
     );
 
     const handleHistoryClick = useCallback(
