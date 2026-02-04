@@ -11,6 +11,7 @@ import {
 import { DataTable } from "@/shared/ui/DataTable";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { Checkbox } from "@/shared/ui/checkbox";
 import { ConfirmDialog } from "@/shared/ui/dialogs/ConfirmDialog";
 import { usePosts, useDeletePost } from "../model/usePosts";
 import { useUserStore } from "@/entities/user/model/store";
@@ -68,23 +69,18 @@ export function PostList() {
       cols.push({
         id: "select",
         header: ({ table }) => (
-          <input
-            type="checkbox"
+          <Checkbox
             checked={table.getIsAllPageRowsSelected()}
-            onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
-            className="h-4 w-4 rounded border-gray-300"
+            onCheckedChange={(checked) => table.toggleAllPageRowsSelected(!!checked)}
           />
         ),
         cell: ({ row }) => (
-          <input
-            type="checkbox"
+          <Checkbox
             checked={row.getIsSelected()}
-            onChange={(e) => {
-              e.stopPropagation();
-              row.toggleSelected(e.target.checked);
+            onCheckedChange={(checked) => {
+              row.toggleSelected(!!checked);
             }}
             onClick={(e) => e.stopPropagation()}
-            className="h-4 w-4 rounded border-gray-300"
           />
         ),
         size: 40,

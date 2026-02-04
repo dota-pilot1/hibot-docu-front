@@ -54,6 +54,7 @@ const defaultMenuItems: MenuEntry[] = [
   { label: "게시판", basePath: "/boards", items: boardMenuItems },
   { label: "문서 관리", href: "/documents" },
   { label: "사용자 관리", href: "/users" },
+  { label: "전체 채팅", href: "/global-chat" },
 ];
 
 export const HeaderMenu = ({ items = defaultMenuItems }: HeaderMenuProps) => {

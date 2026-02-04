@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useUpdateTaskDetail } from "@/entities/task/hooks/useTaskDetail";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
+import { Checkbox } from "@/shared/ui/checkbox";
 import { ChecklistItem } from "@/entities/task/model/types";
 import { Trash2, Plus } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
@@ -81,11 +82,10 @@ export function TaskDetailChecklist({
               key={item.id}
               className="flex items-center gap-2 group py-1 hover:bg-gray-50 rounded px-2 -mx-2 transition-colors"
             >
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={item.completed}
-                onChange={() => handleToggle(item.id)}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                onCheckedChange={() => handleToggle(item.id)}
+                className="cursor-pointer"
               />
               <span
                 className={cn(
