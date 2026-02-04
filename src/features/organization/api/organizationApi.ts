@@ -6,6 +6,10 @@ export interface OrganizationUser {
   name?: string;
   profileImage?: string | null;
   role: "ADMIN" | "USER";
+  department?: {
+    id: number;
+    name: string;
+  };
 }
 
 export interface Department {

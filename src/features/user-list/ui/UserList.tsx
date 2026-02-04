@@ -20,6 +20,7 @@ import {
   List,
   LayoutGrid,
   Mail,
+  Building2,
 } from "lucide-react";
 import { ConfirmDialog } from "@/shared/ui/dialogs/ConfirmDialog";
 import {
@@ -214,6 +215,7 @@ export const UserList = () => {
                 <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
                   <TableHead className="w-[80px] font-semibold">ID</TableHead>
                   <TableHead className="font-semibold">이메일</TableHead>
+                  <TableHead className="w-[160px] font-semibold">팀</TableHead>
                   <TableHead className="w-[140px] font-semibold">
                     권한
                   </TableHead>
@@ -234,6 +236,18 @@ export const UserList = () => {
                       {user.id}
                     </TableCell>
                     <TableCell className="font-medium">{user.email}</TableCell>
+                    <TableCell>
+                      {user.department ? (
+                        <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <Building2 className="w-3.5 h-3.5" />
+                          {user.department.name}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-muted-foreground/50">
+                          미배정
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <RoleBadge user={user} clickable={isAdmin} />
                     </TableCell>
@@ -282,6 +296,12 @@ export const UserList = () => {
                       {/* 이메일 */}
                       <p className="font-medium text-sm truncate w-full mb-1">
                         {user.email}
+                      </p>
+
+                      {/* 팀 정보 */}
+                      <p className="text-xs text-muted-foreground mb-2 flex items-center justify-center gap-1">
+                        <Building2 className="w-3 h-3" />
+                        {user.department?.name || "미배정"}
                       </p>
 
                       {/* 권한 배지 */}
