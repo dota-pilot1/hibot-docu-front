@@ -21,6 +21,7 @@ import {
 import { DocumentTabBar } from "./DocumentTabBar";
 import { DocumentFileViewer } from "./DocumentFileViewer";
 import { DocumentUploadForm } from "./DocumentUploadForm";
+import { FigmaUrlList } from "./FigmaUrlList";
 import { cn } from "@/shared/lib/utils";
 
 const MIN_PANEL_WIDTH = 0.15;
@@ -319,8 +320,10 @@ const DocumentTabContent = ({ panel, isDragging }: DocumentTabContentProps) => {
     }
 
     if (activeTab.type === "folder") {
-      // 폴더 탭: 음수 ID를 양수로 변환하여 folderId로 사용
       const folderId = Math.abs(activeTab.id);
+      if (activeTab.folderType === "figma") {
+        return <FigmaUrlList folderId={folderId} />;
+      }
       return <DocumentUploadForm folderId={folderId} />;
     }
 

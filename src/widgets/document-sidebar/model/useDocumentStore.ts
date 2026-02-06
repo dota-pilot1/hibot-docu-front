@@ -5,6 +5,7 @@ export interface DocumentTab {
   title: string;
   isDirty: boolean;
   type: "document" | "folder";
+  folderType?: "general" | "figma";
 }
 
 export interface DocumentPanel {
@@ -51,7 +52,11 @@ export interface DocumentStoreState {
 
   // 탭 액션
   openTab: (doc: { id: number; title: string }) => void;
-  openFolderTab: (folder: { id: number; title: string }) => void;
+  openFolderTab: (folder: {
+    id: number;
+    title: string;
+    folderType?: "general" | "figma";
+  }) => void;
   closeTab: (docId: number) => void;
   setActiveTab: (docId: number) => void;
   updateTabTitle: (docId: number, title: string) => void;
@@ -294,7 +299,11 @@ export const documentStore = new Store<DocumentStoreState>({
   },
 
   // 폴더 탭 열기 (폴더 ID를 음수로 사용하여 문서 탭과 구분)
-  openFolderTab: (folder: { id: number; title: string }) => {
+  openFolderTab: (folder: {
+    id: number;
+    title: string;
+    folderType?: "general" | "figma";
+  }) => {
     const tabId = -folder.id; // 폴더는 음수 ID
     documentStore.setState((state) => {
       // 모든 패널에서 이미 열린 폴더 탭 찾기
@@ -324,6 +333,7 @@ export const documentStore = new Store<DocumentStoreState>({
             title: folder.title,
             isDirty: false,
             type: "folder",
+            folderType: folder.folderType ?? "general",
           },
         ],
         activeTabId: tabId,

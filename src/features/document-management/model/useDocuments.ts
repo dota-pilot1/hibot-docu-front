@@ -154,6 +154,18 @@ export const useDeleteDocument = () => {
   });
 };
 
+// 피그마 URL 추가
+export const useCreateFigmaDocument = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: documentApi.createFigmaDocument,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents", "folders"] });
+    },
+  });
+};
+
 // 문서 폴더 이동
 export const useMoveDocument = () => {
   const queryClient = useQueryClient();

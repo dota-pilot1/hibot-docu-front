@@ -89,7 +89,11 @@ export const DocumentFolderItem = ({
   };
 
   const handleOpenTab = () => {
-    openFolderTab({ id: folder.id, title: folder.name });
+    openFolderTab({
+      id: folder.id,
+      title: folder.name,
+      folderType: folder.type,
+    });
   };
 
   return (
@@ -134,7 +138,19 @@ export const DocumentFolderItem = ({
             )}
           />
         </button>
-        {isExpanded ? (
+        {folder.type === "figma" ? (
+          <svg
+            className="h-4 w-4 shrink-0 text-purple-500"
+            viewBox="0 0 38 57"
+            fill="currentColor"
+          >
+            <path d="M19 28.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 0 1-19 0z" />
+            <path d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 1 1-19 0z" />
+            <path d="M19 0v19h9.5a9.5 9.5 0 1 0 0-19H19z" />
+            <path d="M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5z" />
+            <path d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z" />
+          </svg>
+        ) : isExpanded ? (
           <FolderOpen
             className={cn(
               "h-4 w-4 shrink-0",
@@ -174,10 +190,12 @@ export const DocumentFolderItem = ({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onUploadToFolder(folder.id)}>
-              <Upload className="h-4 w-4 mr-2" />
-              파일 업로드
-            </DropdownMenuItem>
+            {folder.type !== "figma" && (
+              <DropdownMenuItem onClick={() => onUploadToFolder(folder.id)}>
+                <Upload className="h-4 w-4 mr-2" />
+                파일 업로드
+              </DropdownMenuItem>
+            )}
             {depth === 0 && (
               <DropdownMenuItem onClick={() => onCreateSubFolder(folder.id)}>
                 <FolderPlus className="h-4 w-4 mr-2" />새 하위 폴더

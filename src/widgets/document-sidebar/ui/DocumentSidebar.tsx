@@ -173,6 +173,7 @@ export const DocumentSidebar = () => {
     parentId?: number;
   }>({ open: false, mode: "create" });
   const [folderName, setFolderName] = useState("");
+  const [folderType, setFolderType] = useState<"general" | "figma">("general");
 
   const [documentDialog, setDocumentDialog] = useState<{
     open: boolean;
@@ -190,6 +191,7 @@ export const DocumentSidebar = () => {
 
   const handleOpenCreateSubFolder = (parentId: number) => {
     setFolderName("");
+    setFolderType("general");
     setFolderDialog({ open: true, mode: "subfolder", parentId });
   };
 
@@ -207,6 +209,7 @@ export const DocumentSidebar = () => {
       await createFolder.mutateAsync({
         name: folderName.trim(),
         parentId: folderDialog.parentId,
+        type: folderType,
       });
     } else if (folderDialog.folder) {
       await updateFolder.mutateAsync({
@@ -439,6 +442,42 @@ export const DocumentSidebar = () => {
           placeholder="폴더 이름"
           autoFocus
         />
+        {folderDialog.mode === "subfolder" && (
+          <div className="flex gap-2 mt-3">
+            <button
+              type="button"
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md border text-sm transition-colors",
+                folderType === "general"
+                  ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                  : "border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800",
+              )}
+              onClick={() => setFolderType("general")}
+            >
+              <Folder className="h-4 w-4" />
+              일반
+            </button>
+            <button
+              type="button"
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md border text-sm transition-colors",
+                folderType === "figma"
+                  ? "border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                  : "border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800",
+              )}
+              onClick={() => setFolderType("figma")}
+            >
+              <svg className="h-4 w-4" viewBox="0 0 38 57" fill="currentColor">
+                <path d="M19 28.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 0 1-19 0z" />
+                <path d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 1 1-19 0z" />
+                <path d="M19 0v19h9.5a9.5 9.5 0 1 0 0-19H19z" />
+                <path d="M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5z" />
+                <path d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z" />
+              </svg>
+              피그마
+            </button>
+          </div>
+        )}
       </FormDialog>
 
       {/* 문서 이름 변경 다이얼로그 */}

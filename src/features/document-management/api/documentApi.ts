@@ -3,6 +3,7 @@ import { api } from "@/shared/api";
 export interface DocumentInfo {
   id: number;
   title: string;
+  content: string | null;
   originalName: string | null;
   mimeType: string | null;
   fileSize: number | null;
@@ -14,6 +15,7 @@ export interface DocumentFolder {
   id: number;
   name: string;
   parentId: number | null;
+  type: "general" | "figma";
   displayOrder: number;
   children: DocumentFolder[];
   documents: DocumentInfo[];
@@ -52,6 +54,7 @@ export const documentApi = {
   createFolder: async (data: {
     name: string;
     parentId?: number;
+    type?: "general" | "figma";
   }): Promise<DocumentFolder> => {
     const response = await api.post("/document-folders", data);
     return response.data;
@@ -132,6 +135,20 @@ export const documentApi = {
   // 문서 삭제
   deleteDocument: async (id: number): Promise<void> => {
     await api.delete(`/documents/${id}`);
+  },
+
+  // 피그마 URL 추가 (documents 테이블 재활용, content에 URL 저장)
+  createFigmaDocument: async (data: {
+    title: string;
+    folderId: number;
+    figmaUrl: string;
+  }): Promise<Document> => {
+    const response = await api.post("/documents", {
+      title: data.title,
+      folderId: data.folderId,
+      content: data.figmaUrl,
+    });
+    return response.data;
   },
 
   // 문서 폴더 이동
