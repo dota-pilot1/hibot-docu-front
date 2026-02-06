@@ -19,7 +19,8 @@ import {
   DocumentTab,
 } from "@/widgets/document-sidebar";
 import { DocumentTabBar } from "./DocumentTabBar";
-import { DocumentEditor } from "./DocumentEditor";
+import { DocumentFileViewer } from "./DocumentFileViewer";
+import { DocumentUploadForm } from "./DocumentUploadForm";
 import { cn } from "@/shared/lib/utils";
 
 const MIN_PANEL_WIDTH = 0.15;
@@ -299,6 +300,34 @@ const DocumentTabContent = ({ panel, isDragging }: DocumentTabContentProps) => {
     data: { type: "CONTENT", panelId: panel.id },
   });
 
+  const activeTabId = panel.activeTabId;
+  const activeTab = activeTabId
+    ? panel.tabs.find((t) => t.id === activeTabId)
+    : null;
+
+  const renderContent = () => {
+    if (!activeTab) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full text-zinc-400">
+          <FileText className="h-16 w-16 mb-4" />
+          <p className="text-lg">문서를 선택하세요</p>
+          <p className="text-sm mt-1">
+            사이드바에서 폴더를 더블클릭하면 파일을 업로드할 수 있습니다
+          </p>
+        </div>
+      );
+    }
+
+    if (activeTab.type === "folder") {
+      // 폴더 탭: 음수 ID를 양수로 변환하여 folderId로 사용
+      const folderId = Math.abs(activeTab.id);
+      return <DocumentUploadForm folderId={folderId} />;
+    }
+
+    // 문서 탭
+    return <DocumentFileViewer documentId={activeTab.id} />;
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -307,11 +336,7 @@ const DocumentTabContent = ({ panel, isDragging }: DocumentTabContentProps) => {
         isOver && isDragging && "bg-blue-50 dark:bg-blue-900/20",
       )}
     >
-      <div className="flex flex-col items-center justify-center h-full text-zinc-400">
-        <FileText className="h-16 w-16 mb-4" />
-        <p className="text-lg">구현 예정</p>
-        <p className="text-sm mt-1">문서 에디터는 추후 구현 예정입니다</p>
-      </div>
+      {renderContent()}
     </div>
   );
 };

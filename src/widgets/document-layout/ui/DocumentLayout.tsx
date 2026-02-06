@@ -14,8 +14,13 @@ export const DocumentLayout = () => {
   const sidebarWidth = useDocumentStore((s) => s.sidebarWidth);
   const setSidebarWidth = useDocumentStore((s) => s.setSidebarWidth);
 
+  const [mounted, setMounted] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -64,9 +69,10 @@ export const DocumentLayout = () => {
     };
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
-  const currentWidth = sidebarWidth >= MIN_SIDEBAR_WIDTH && sidebarWidth <= MAX_SIDEBAR_WIDTH
-    ? sidebarWidth
-    : 256;
+  const currentWidth =
+    sidebarWidth >= MIN_SIDEBAR_WIDTH && sidebarWidth <= MAX_SIDEBAR_WIDTH
+      ? sidebarWidth
+      : 256;
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -77,7 +83,7 @@ export const DocumentLayout = () => {
           "h-full border-r border-zinc-200 dark:border-zinc-800 shrink-0",
           !isResizing && "transition-all duration-300 ease-in-out",
         )}
-        style={{ width: isOpen ? currentWidth : 48 }}
+        style={{ width: isOpen ? (mounted ? currentWidth : 256) : 48 }}
       >
         <DocumentSidebar />
       </div>

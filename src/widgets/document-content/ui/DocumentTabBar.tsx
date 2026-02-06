@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { X, FileText, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import {
+  X,
+  FileText,
+  Folder,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+} from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import {
   useDocumentStore,
@@ -256,7 +263,11 @@ const DraggableDocumentTab = ({
         {...attributes}
         {...listeners}
       >
-        <FileText className="h-4 w-4 shrink-0 pointer-events-none" />
+        {tab.type === "folder" ? (
+          <Folder className="h-4 w-4 shrink-0 pointer-events-none text-yellow-500" />
+        ) : (
+          <FileText className="h-4 w-4 shrink-0 pointer-events-none" />
+        )}
         <span className="text-sm font-medium truncate max-w-[120px] pointer-events-none">
           {tab.isDirty && <span className="text-blue-500 mr-1">*</span>}
           {tab.title}

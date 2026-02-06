@@ -1,7 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronRight, Folder, FolderOpen, MoreHorizontal, Plus, Pencil, Trash2 } from "lucide-react";
+import {
+  ChevronRight,
+  Folder,
+  FolderOpen,
+  FolderPlus,
+  GripVertical,
+  MoreHorizontal,
+  Upload,
+  Pencil,
+  Trash2,
+} from "lucide-react";
+import { useDroppable } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/shared/lib/utils";
 import { DocumentFolder, DocumentInfo } from "@/features/document-management";
 import { useDocumentStore } from "../model/useDocumentStore";
@@ -10,12 +22,15 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 
 interface DocumentFolderItemProps {
   folder: DocumentFolder;
-  onCreateDocument: (folderId: number) => void;
+  depth?: number;
+  onUploadToFolder: (folderId: number) => void;
+  onCreateSubFolder: (parentId: number) => void;
   onRenameFolder: (folder: DocumentFolder) => void;
   onDeleteFolder: (folderId: number) => void;
   onRenameDocument: (doc: DocumentInfo) => void;
@@ -24,7 +39,9 @@ interface DocumentFolderItemProps {
 
 export const DocumentFolderItem = ({
   folder,
-  onCreateDocument,
+  depth = 0,
+  onUploadToFolder,
+  onCreateSubFolder,
   onRenameFolder,
   onDeleteFolder,
   onRenameDocument,
@@ -32,36 +49,115 @@ export const DocumentFolderItem = ({
 }: DocumentFolderItemProps) => {
   const expandedFolders = useDocumentStore((s) => s.expandedFolders);
   const toggleFolder = useDocumentStore((s) => s.toggleFolder);
-  const [isHovered, setIsHovered] = useState(false);
+  const openFolderTab = useDocumentStore((s) => s.openFolderTab);
 
   const isExpanded = expandedFolders.has(folder.id);
+  const totalCount =
+    folder.documents.length +
+    folder.children.reduce((sum, c) => sum + c.documents.length, 0);
+
+  // 최상위 폴더만 sortable 적용
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: folder.id,
+    disabled: depth > 0,
+  });
+
+  // 파일 드롭 대상
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: `folder-drop-${folder.id}`,
+    data: { type: "folder", folderId: folder.id },
+  });
+
+  const style =
+    depth === 0
+      ? {
+          transform: CSS.Transform.toString(transform),
+          transition,
+        }
+      : undefined;
+
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleFolder(folder.id);
+  };
+
+  const handleOpenTab = () => {
+    openFolderTab({ id: folder.id, title: folder.name });
+  };
 
   return (
-    <div>
+    <div ref={depth === 0 ? setNodeRef : undefined} style={style}>
       {/* 폴더 헤더 */}
       <div
+        ref={setDropRef}
         className={cn(
           "flex items-center gap-1 px-2 py-1.5 rounded-md cursor-pointer",
           "hover:bg-zinc-100 dark:hover:bg-zinc-800",
-          "group"
+          "group",
+          isDragging && "opacity-40",
+          isOver && "bg-blue-50 dark:bg-blue-900/30 ring-1 ring-blue-400",
         )}
-        onClick={() => toggleFolder(folder.id)}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        style={{ paddingLeft: `${depth === 0 ? 4 : 8 + depth * 16}px` }}
+        onClick={handleOpenTab}
       >
-        <ChevronRight
-          className={cn(
-            "h-4 w-4 text-zinc-400 transition-transform",
-            isExpanded && "rotate-90"
-          )}
-        />
-        {isExpanded ? (
-          <FolderOpen className="h-4 w-4 text-yellow-500" />
-        ) : (
-          <Folder className="h-4 w-4 text-yellow-500" />
+        {/* 드래그 핸들 (최상위 폴더만) */}
+        {depth === 0 && (
+          <div
+            {...attributes}
+            {...listeners}
+            className={cn(
+              "cursor-grab active:cursor-grabbing p-0.5 rounded shrink-0",
+              "hover:bg-zinc-200 dark:hover:bg-zinc-700",
+            )}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GripVertical className="h-4 w-4 text-zinc-400" />
+          </div>
         )}
-        <span className="flex-1 text-sm truncate">{folder.name}</span>
-        <span className="text-xs text-zinc-400">{folder.documents.length}</span>
+
+        {/* 화살표 클릭 → 펼치기/접기 */}
+        <button
+          className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 shrink-0"
+          onClick={handleToggle}
+        >
+          <ChevronRight
+            className={cn(
+              "h-4 w-4 text-zinc-400 transition-transform",
+              isExpanded && "rotate-90",
+            )}
+          />
+        </button>
+        {isExpanded ? (
+          <FolderOpen
+            className={cn(
+              "h-4 w-4 shrink-0",
+              depth === 0 ? "text-yellow-500" : "text-blue-400",
+            )}
+          />
+        ) : (
+          <Folder
+            className={cn(
+              "h-4 w-4 shrink-0",
+              depth === 0 ? "text-yellow-500" : "text-blue-400",
+            )}
+          />
+        )}
+        <span
+          className={cn(
+            "flex-1 text-sm truncate",
+            depth > 0 && "text-zinc-600 dark:text-zinc-400",
+          )}
+        >
+          {folder.name}
+        </span>
+        <span className="text-xs text-zinc-400">{totalCount}</span>
 
         {/* 컨텍스트 메뉴 */}
         <DropdownMenu>
@@ -70,7 +166,7 @@ export const DocumentFolderItem = ({
               className={cn(
                 "p-1 rounded opacity-0 group-hover:opacity-100",
                 "hover:bg-zinc-200 dark:hover:bg-zinc-700",
-                "transition-opacity"
+                "transition-opacity",
               )}
               onClick={(e) => e.stopPropagation()}
             >
@@ -78,10 +174,16 @@ export const DocumentFolderItem = ({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onCreateDocument(folder.id)}>
-              <Plus className="h-4 w-4 mr-2" />
-              새 문서
+            <DropdownMenuItem onClick={() => onUploadToFolder(folder.id)}>
+              <Upload className="h-4 w-4 mr-2" />
+              파일 업로드
             </DropdownMenuItem>
+            {depth === 0 && (
+              <DropdownMenuItem onClick={() => onCreateSubFolder(folder.id)}>
+                <FolderPlus className="h-4 w-4 mr-2" />새 하위 폴더
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onRenameFolder(folder)}>
               <Pencil className="h-4 w-4 mr-2" />
               이름 변경
@@ -97,9 +199,25 @@ export const DocumentFolderItem = ({
         </DropdownMenu>
       </div>
 
-      {/* 문서 목록 */}
+      {/* 하위 폴더 + 문서 목록 */}
       {isExpanded && (
-        <div className="ml-4 border-l border-zinc-200 dark:border-zinc-700">
+        <div className="ml-4 pl-2 border-l-2 border-zinc-200 dark:border-zinc-700">
+          {/* 하위 폴더 */}
+          {folder.children.map((child) => (
+            <DocumentFolderItem
+              key={child.id}
+              folder={child}
+              depth={depth + 1}
+              onUploadToFolder={onUploadToFolder}
+              onCreateSubFolder={onCreateSubFolder}
+              onRenameFolder={onRenameFolder}
+              onDeleteFolder={onDeleteFolder}
+              onRenameDocument={onRenameDocument}
+              onDeleteDocument={onDeleteDocument}
+            />
+          ))}
+
+          {/* 문서 목록 */}
           {folder.documents.map((doc) => (
             <DocumentItem
               key={doc.id}
@@ -108,10 +226,9 @@ export const DocumentFolderItem = ({
               onDelete={onDeleteDocument}
             />
           ))}
-          {folder.documents.length === 0 && (
-            <div className="px-4 py-2 text-xs text-zinc-400">
-              문서 없음
-            </div>
+
+          {folder.children.length === 0 && folder.documents.length === 0 && (
+            <div className="px-4 py-2 text-xs text-zinc-400">비어 있음</div>
           )}
         </div>
       )}

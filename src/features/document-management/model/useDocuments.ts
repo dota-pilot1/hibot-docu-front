@@ -41,13 +41,20 @@ export const useUpdateFolder = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: number;
-      data: { name?: string };
-    }) => documentApi.updateFolder(id, data),
+    mutationFn: ({ id, data }: { id: number; data: { name?: string } }) =>
+      documentApi.updateFolder(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents", "folders"] });
+    },
+  });
+};
+
+// 폴더 순서 변경
+export const useReorderFolders = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (folderIds: number[]) => documentApi.reorderFolders(folderIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents", "folders"] });
     },
@@ -72,6 +79,42 @@ export const useCreateDocument = () => {
 
   return useMutation({
     mutationFn: documentApi.createDocument,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents", "folders"] });
+    },
+  });
+};
+
+// 파일 업로드로 문서 생성
+export const useUploadDocument = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      file,
+      folderId,
+    }: {
+      file: File;
+      folderId?: number | null;
+    }) => documentApi.uploadDocument(file, folderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents", "folders"] });
+    },
+  });
+};
+
+// 다중 파일 업로드
+export const useUploadMultipleDocuments = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      files,
+      folderId,
+    }: {
+      files: File[];
+      folderId?: number | null;
+    }) => documentApi.uploadMultipleDocuments(files, folderId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents", "folders"] });
     },

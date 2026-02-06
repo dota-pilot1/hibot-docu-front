@@ -4,6 +4,7 @@ export interface DocumentTab {
   id: number;
   title: string;
   isDirty: boolean;
+  type: "document" | "folder";
 }
 
 export interface DocumentPanel {
@@ -50,6 +51,7 @@ export interface DocumentStoreState {
 
   // 탭 액션
   openTab: (doc: { id: number; title: string }) => void;
+  openFolderTab: (folder: { id: number; title: string }) => void;
   closeTab: (docId: number) => void;
   setActiveTab: (docId: number) => void;
   updateTabTitle: (docId: number, title: string) => void;
@@ -100,7 +102,13 @@ const loadPersistedState = (): {
       const storedPanels = parsed.panels;
       const panels =
         Array.isArray(storedPanels) && storedPanels.length > 0
-          ? storedPanels
+          ? storedPanels.map((p: DocumentPanel) => ({
+              ...p,
+              tabs: p.tabs.map((t: DocumentTab) => ({
+                ...t,
+                type: t.type || "document",
+              })),
+            }))
           : [createDefaultPanel()];
 
       // panelIdCounter 복원
@@ -274,8 +282,51 @@ export const documentStore = new Store<DocumentStoreState>({
       const newPanels = [...state.panels];
       newPanels[panelIndex] = {
         ...panel,
-        tabs: [...panel.tabs, { id: doc.id, title: doc.title, isDirty: false }],
+        tabs: [
+          ...panel.tabs,
+          { id: doc.id, title: doc.title, isDirty: false, type: "document" },
+        ],
         activeTabId: doc.id,
+      };
+
+      return { ...state, panels: newPanels };
+    });
+  },
+
+  // 폴더 탭 열기 (폴더 ID를 음수로 사용하여 문서 탭과 구분)
+  openFolderTab: (folder: { id: number; title: string }) => {
+    const tabId = -folder.id; // 폴더는 음수 ID
+    documentStore.setState((state) => {
+      // 모든 패널에서 이미 열린 폴더 탭 찾기
+      for (let i = 0; i < state.panels.length; i++) {
+        const panel = state.panels[i];
+        const existingTab = panel.tabs.find((t) => t.id === tabId);
+        if (existingTab) {
+          const newPanels = [...state.panels];
+          newPanels[i] = { ...panel, activeTabId: tabId };
+          return { ...state, panels: newPanels, activePanelId: panel.id };
+        }
+      }
+
+      const panelIndex = state.panels.findIndex(
+        (p) => p.id === state.activePanelId,
+      );
+      if (panelIndex === -1) return state;
+
+      const panel = state.panels[panelIndex];
+      const newPanels = [...state.panels];
+      newPanels[panelIndex] = {
+        ...panel,
+        tabs: [
+          ...panel.tabs,
+          {
+            id: tabId,
+            title: folder.title,
+            isDirty: false,
+            type: "folder",
+          },
+        ],
+        activeTabId: tabId,
       };
 
       return { ...state, panels: newPanels };
