@@ -166,6 +166,30 @@ export const useCreateFigmaDocument = () => {
   });
 };
 
+// MMD 다이어그램 추가
+export const useCreateMmdDocument = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: documentApi.createMmdDocument,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents", "folders"] });
+    },
+  });
+};
+
+// MMD 다이어그램 수정
+export const useUpdateMmdDocument = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: documentApi.updateMmdDocument,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents", "folders"] });
+    },
+  });
+};
+
 // 문서 폴더 이동
 export const useMoveDocument = () => {
   const queryClient = useQueryClient();

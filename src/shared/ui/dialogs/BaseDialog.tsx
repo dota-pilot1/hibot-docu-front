@@ -51,7 +51,14 @@ export function BaseDialog({
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto px-6 py-4">{children}</div>
+        <div
+          className={cn(
+            "flex-1 overflow-y-auto px-6 py-4",
+            fullScreen && "flex flex-col",
+          )}
+        >
+          {children}
+        </div>
         {footer && (
           <DialogFooter className="px-6 py-4 shrink-0 border-t bg-muted/30 rounded-b-lg">
             {footer}

@@ -5,7 +5,7 @@ export interface DocumentTab {
   title: string;
   isDirty: boolean;
   type: "document" | "folder";
-  folderType?: "general" | "figma";
+  folderType?: "general" | "figma" | "mmd";
 }
 
 export interface DocumentPanel {
@@ -55,7 +55,7 @@ export interface DocumentStoreState {
   openFolderTab: (folder: {
     id: number;
     title: string;
-    folderType?: "general" | "figma";
+    folderType?: "general" | "figma" | "mmd";
   }) => void;
   closeTab: (docId: number) => void;
   setActiveTab: (docId: number) => void;
@@ -302,7 +302,7 @@ export const documentStore = new Store<DocumentStoreState>({
   openFolderTab: (folder: {
     id: number;
     title: string;
-    folderType?: "general" | "figma";
+    folderType?: "general" | "figma" | "mmd";
   }) => {
     const tabId = -folder.id; // 폴더는 음수 ID
     documentStore.setState((state) => {

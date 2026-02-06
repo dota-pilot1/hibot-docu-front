@@ -22,6 +22,7 @@ import { DocumentTabBar } from "./DocumentTabBar";
 import { DocumentFileViewer } from "./DocumentFileViewer";
 import { DocumentUploadForm } from "./DocumentUploadForm";
 import { FigmaUrlList } from "./FigmaUrlList";
+import { MmdDiagramList } from "./MmdDiagramList";
 import { cn } from "@/shared/lib/utils";
 
 const MIN_PANEL_WIDTH = 0.15;
@@ -323,6 +324,9 @@ const DocumentTabContent = ({ panel, isDragging }: DocumentTabContentProps) => {
       const folderId = Math.abs(activeTab.id);
       if (activeTab.folderType === "figma") {
         return <FigmaUrlList folderId={folderId} />;
+      }
+      if (activeTab.folderType === "mmd") {
+        return <MmdDiagramList folderId={folderId} />;
       }
       return <DocumentUploadForm folderId={folderId} />;
     }

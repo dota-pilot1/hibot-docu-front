@@ -59,8 +59,11 @@ export function FormDialog({
         </div>
       }
     >
-      <form onSubmit={handleOnSubmit} className="space-y-4">
-        <div className="py-2">{children}</div>
+      <form
+        onSubmit={handleOnSubmit}
+        className={fullScreen ? "h-full flex flex-col" : "space-y-4"}
+      >
+        <div className={fullScreen ? "flex-1 min-h-0" : "py-2"}>{children}</div>
       </form>
     </BaseDialog>
   );

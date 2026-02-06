@@ -254,7 +254,9 @@ export const DocumentSidebar = () => {
     parentId?: number;
   }>({ open: false, mode: "create" });
   const [folderName, setFolderName] = useState("");
-  const [folderType, setFolderType] = useState<"general" | "figma">("general");
+  const [folderType, setFolderType] = useState<"general" | "figma" | "mmd">(
+    "general",
+  );
 
   const [documentDialog, setDocumentDialog] = useState<{
     open: boolean;
@@ -556,6 +558,32 @@ export const DocumentSidebar = () => {
                 <path d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z" />
               </svg>
               피그마
+            </button>
+            <button
+              type="button"
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md border text-sm transition-colors",
+                folderType === "mmd"
+                  ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                  : "border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800",
+              )}
+              onClick={() => setFolderType("mmd")}
+            >
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="18" cy="18" r="3" />
+                <circle cx="6" cy="6" r="3" />
+                <path d="M13 6h3a2 2 0 0 1 2 2v7" />
+                <path d="M6 9v12" />
+              </svg>
+              MMD
             </button>
           </div>
         )}

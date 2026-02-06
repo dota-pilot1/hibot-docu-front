@@ -15,7 +15,7 @@ export interface DocumentFolder {
   id: number;
   name: string;
   parentId: number | null;
-  type: "general" | "figma";
+  type: "general" | "figma" | "mmd";
   displayOrder: number;
   children: DocumentFolder[];
   documents: DocumentInfo[];
@@ -54,7 +54,7 @@ export const documentApi = {
   createFolder: async (data: {
     name: string;
     parentId?: number;
-    type?: "general" | "figma";
+    type?: "general" | "figma" | "mmd";
   }): Promise<DocumentFolder> => {
     const response = await api.post("/document-folders", data);
     return response.data;
@@ -147,6 +147,33 @@ export const documentApi = {
       title: data.title,
       folderId: data.folderId,
       content: data.figmaUrl,
+    });
+    return response.data;
+  },
+
+  // MMD(Mermaid) 다이어그램 추가 (documents 테이블 재활용, content에 MMD 코드 저장)
+  createMmdDocument: async (data: {
+    title: string;
+    folderId: number;
+    mmdCode: string;
+  }): Promise<Document> => {
+    const response = await api.post("/documents", {
+      title: data.title,
+      folderId: data.folderId,
+      content: data.mmdCode,
+    });
+    return response.data;
+  },
+
+  // MMD(Mermaid) 다이어그램 수정
+  updateMmdDocument: async (data: {
+    id: number;
+    title?: string;
+    mmdCode?: string;
+  }): Promise<Document> => {
+    const response = await api.patch(`/documents/${data.id}`, {
+      ...(data.title && { title: data.title }),
+      ...(data.mmdCode !== undefined && { content: data.mmdCode }),
     });
     return response.data;
   },
