@@ -13,6 +13,10 @@ import {
 } from "lucide-react";
 import { useDroppable } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/shared/lib/utils";
 import { DocumentFolder, DocumentInfo } from "@/features/document-management";
@@ -66,7 +70,7 @@ export const DocumentFolderItem = ({
     isDragging,
   } = useSortable({
     id: folder.id,
-    disabled: depth > 0,
+    data: { type: "sortable-folder", parentId: folder.parentId },
   });
 
   // 파일 드롭 대상
@@ -75,13 +79,10 @@ export const DocumentFolderItem = ({
     data: { type: "folder", folderId: folder.id },
   });
 
-  const style =
-    depth === 0
-      ? {
-          transform: CSS.Transform.toString(transform),
-          transition,
-        }
-      : undefined;
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -97,7 +98,7 @@ export const DocumentFolderItem = ({
   };
 
   return (
-    <div ref={depth === 0 ? setNodeRef : undefined} style={style}>
+    <div ref={setNodeRef} style={style}>
       {/* 폴더 헤더 */}
       <div
         ref={setDropRef}
@@ -111,20 +112,18 @@ export const DocumentFolderItem = ({
         style={{ paddingLeft: `${depth === 0 ? 4 : 8 + depth * 16}px` }}
         onClick={handleOpenTab}
       >
-        {/* 드래그 핸들 (최상위 폴더만) */}
-        {depth === 0 && (
-          <div
-            {...attributes}
-            {...listeners}
-            className={cn(
-              "cursor-grab active:cursor-grabbing p-0.5 rounded shrink-0",
-              "hover:bg-zinc-200 dark:hover:bg-zinc-700",
-            )}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <GripVertical className="h-4 w-4 text-zinc-400" />
-          </div>
-        )}
+        {/* 드래그 핸들 */}
+        <div
+          {...attributes}
+          {...listeners}
+          className={cn(
+            "cursor-grab active:cursor-grabbing p-0.5 rounded shrink-0",
+            "hover:bg-zinc-200 dark:hover:bg-zinc-700",
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical className="h-4 w-4 text-zinc-400" />
+        </div>
 
         {/* 화살표 클릭 → 펼치기/접기 */}
         <button
@@ -221,19 +220,24 @@ export const DocumentFolderItem = ({
       {isExpanded && (
         <div className="ml-4 pl-2 border-l-2 border-zinc-200 dark:border-zinc-700">
           {/* 하위 폴더 */}
-          {folder.children.map((child) => (
-            <DocumentFolderItem
-              key={child.id}
-              folder={child}
-              depth={depth + 1}
-              onUploadToFolder={onUploadToFolder}
-              onCreateSubFolder={onCreateSubFolder}
-              onRenameFolder={onRenameFolder}
-              onDeleteFolder={onDeleteFolder}
-              onRenameDocument={onRenameDocument}
-              onDeleteDocument={onDeleteDocument}
-            />
-          ))}
+          <SortableContext
+            items={folder.children.map((c) => c.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {folder.children.map((child) => (
+              <DocumentFolderItem
+                key={child.id}
+                folder={child}
+                depth={depth + 1}
+                onUploadToFolder={onUploadToFolder}
+                onCreateSubFolder={onCreateSubFolder}
+                onRenameFolder={onRenameFolder}
+                onDeleteFolder={onDeleteFolder}
+                onRenameDocument={onRenameDocument}
+                onDeleteDocument={onDeleteDocument}
+              />
+            ))}
+          </SortableContext>
 
           {/* 문서 목록 */}
           {folder.documents.map((doc) => (

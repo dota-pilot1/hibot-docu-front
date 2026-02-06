@@ -49,6 +49,55 @@ import { Button } from "@/shared/ui/button";
 import { FormDialog } from "@/shared/ui/dialogs/FormDialog";
 import { Input } from "@/shared/ui/input";
 
+// 트리에서 폴더 찾기
+const findFolderInTree = (
+  folders: DocumentFolder[],
+  id: number,
+): DocumentFolder | null => {
+  for (const folder of folders) {
+    if (folder.id === id) return folder;
+    if (folder.children?.length) {
+      const found = findFolderInTree(folder.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
+// 하위 폴더 reorder
+const reorderChildFolders = (
+  folders: DocumentFolder[],
+  parentId: number,
+  activeId: number,
+  overId: number,
+): DocumentFolder[] => {
+  return folders.map((folder) => {
+    if (folder.id === parentId) {
+      const oldIndex = folder.children.findIndex((c) => c.id === activeId);
+      const newIndex = folder.children.findIndex((c) => c.id === overId);
+      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+        return {
+          ...folder,
+          children: arrayMove(folder.children, oldIndex, newIndex),
+        };
+      }
+      return folder;
+    }
+    if (folder.children?.length) {
+      return {
+        ...folder,
+        children: reorderChildFolders(
+          folder.children,
+          parentId,
+          activeId,
+          overId,
+        ),
+      };
+    }
+    return folder;
+  });
+};
+
 export const DocumentSidebar = () => {
   const isOpen = useDocumentStore((s) => s.isOpen);
   const toggle = useDocumentStore((s) => s.toggle);
@@ -96,10 +145,10 @@ export const DocumentSidebar = () => {
         | undefined;
       if (doc) setActiveDocument(doc);
     } else {
-      // 폴더 드래그
+      // 폴더 드래그 - 최상위 또는 하위 폴더
       const id = event.active.id as number;
       setLocalFolders((prev) => {
-        const folder = prev.find((f) => f.id === id);
+        const folder = findFolderInTree(prev, id);
         if (folder) setActiveFolder(folder);
         return prev;
       });
@@ -113,11 +162,31 @@ export const DocumentSidebar = () => {
     // 파일 드래그 중에는 폴더 reorder 안 함
     if (String(active.id).startsWith("doc-")) return;
 
+    // sortable-folder끼리만 reorder (droppable 무시)
+    if (active.data.current?.type !== "sortable-folder") return;
+    if (over.data.current?.type !== "sortable-folder") return;
+
+    // 같은 부모의 폴더끼리만 reorder
+    const activeParentId = active.data.current?.parentId ?? null;
+    const overParentId = over.data.current?.parentId ?? null;
+    if (activeParentId !== overParentId) return;
+
     setLocalFolders((prev) => {
-      const oldIndex = prev.findIndex((f) => f.id === active.id);
-      const newIndex = prev.findIndex((f) => f.id === over.id);
-      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-        return arrayMove(prev, oldIndex, newIndex);
+      if (activeParentId === null) {
+        // 최상위 폴더 reorder
+        const oldIndex = prev.findIndex((f) => f.id === active.id);
+        const newIndex = prev.findIndex((f) => f.id === over.id);
+        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+          return arrayMove(prev, oldIndex, newIndex);
+        }
+      } else {
+        // 하위 폴더 reorder
+        return reorderChildFolders(
+          prev,
+          activeParentId,
+          active.id as number,
+          over.id as number,
+        );
       }
       return prev;
     });
@@ -141,12 +210,24 @@ export const DocumentSidebar = () => {
             }
           }
         }
-      } else {
+      } else if (active.data.current?.type === "sortable-folder") {
         // 폴더 reorder
         setActiveFolder(null);
+        const activeParentId = active.data.current?.parentId ?? null;
+
         setLocalFolders((prev) => {
-          const folderIds = prev.map((f) => f.id);
-          reorderFolders.mutateAsync(folderIds);
+          if (activeParentId === null) {
+            // 최상위 폴더 reorder
+            const folderIds = prev.map((f) => f.id);
+            reorderFolders.mutateAsync(folderIds);
+          } else {
+            // 하위 폴더 reorder - 부모 폴더의 children에서 ID 추출
+            const parent = findFolderInTree(prev, activeParentId);
+            if (parent) {
+              const childIds = parent.children.map((c) => c.id);
+              reorderFolders.mutateAsync(childIds);
+            }
+          }
           return prev;
         });
       }
